@@ -26,10 +26,10 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * The entry point into the TicketMonster bot.
- * 
+ *
  * The {@code @EntryPoint} annotation indicates to the Errai framework that this class should be instantiated inside the web
  * browser when the web page is first loaded.
- * 
+ *
  * @author Christian Sadilek <csadilek@redhat.com>
  * @author Pete Muir
  */
@@ -55,7 +55,7 @@ public class Bot {
 
     /**
      * This method constructs the UI.
-     * 
+     *
      * Methods annotated with Errai's {@link AfterInitialization} are only called once everything is up and running, including
      * the communication channel to the server.
      */
@@ -116,7 +116,7 @@ public class Bot {
         stop.setStyleName("btn", true);
         stop.setStyleName("btn-danger", true);
         deleteAll.setTitle("Stop the bot");
-        
+
         deleteAll.addClickHandler(new ClickHandler() {
 
             @Override
@@ -166,14 +166,14 @@ public class Bot {
         String newLogContent = append + orig;
         if (newLogContent.length() > MAX_LOG_LENGTH) {
             newLogContent = newLogContent.substring(0, MAX_LOG_LENGTH);
-            newLogContent.substring(0, newLogContent.lastIndexOf("\n"));
+            newLogContent = newLogContent.substring(0, newLogContent.lastIndexOf("\n"));
         }
         Bot.log.setText(newLogContent);
     }
 
     /**
      * Responds to the CDI event that's fired on the server when a {@link Booking} is created.
-     * 
+     *
      * @param booking the create booking
      */
     public void onLogUpdated(@Observes @BotMessage String append) {
