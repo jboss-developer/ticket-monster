@@ -1,7 +1,6 @@
 package org.jboss.jdf.example.ticketmonster.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class CircularBuffer<T> {
