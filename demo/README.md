@@ -18,7 +18,8 @@ Before building and running TicketMonster, you must generate the administration 
 3. From the JBoss Forge prompt, execute the script for generating the administration site
     
 	    $ run admin_layer.fsh
-	
+
+_NOTE: If you encounter "**ERROR** [run] String index out of range: -1" while executing admin_layer.fsh script, you should install richfaces forge plugin. For instructions how to add plugins to Forge [have a look here](https://docs.jboss.org/author/display/FORGE/Installing+new+Plugins)._
 
 On step 3, answer _yes_ to all the the questions concerning patches. Deployment to JBoss AS7 is optional. 
 
