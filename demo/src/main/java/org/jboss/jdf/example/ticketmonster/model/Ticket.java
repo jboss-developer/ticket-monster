@@ -16,7 +16,7 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  * <p>
  * A ticket represents a seat sold for a particular price.
  * </p>
- * 
+ *
  * @author Shane Bryzak
  * @author Marius Bogoevici
  * @author Pete Muir
@@ -43,9 +43,9 @@ public class Ticket implements Serializable {
      * <p>
      * The seat for which this ticket has been sold.
      * </p>
-     * 
+     *
      * <p>
-     * The seat must be specifed, and the Bean Validation constraint <code>@NotNull</code> ensures this.
+     * The seat must be specified, and the Bean Validation constraint <code>@NotNull</code> ensures this.
      * </p>
      */
     @NotNull
@@ -55,7 +55,7 @@ public class Ticket implements Serializable {
      * <p>
      * The ticket price category for which this ticket has been sold.
      * </p>
-     * 
+     *
      * <p>
      * The ticket price category must be specifed, and the Bean Validation constraint <code>@NotNull</code> ensures this.
      * </p>
@@ -97,9 +97,9 @@ public class Ticket implements Serializable {
     public Seat getSeat() {
         return seat;
     }
-    
+
     @Override
     public String toString() {
-        return new StringBuilder().append(getSeat()).append(" @ ").append(getPrice()).append(" (").append(getTicketCategory()).append(")").toString(); 
+        return new StringBuilder().append(getSeat()).append(" @ ").append(getPrice()).append(" (").append(getTicketCategory()).append(")").toString();
     }
 }
