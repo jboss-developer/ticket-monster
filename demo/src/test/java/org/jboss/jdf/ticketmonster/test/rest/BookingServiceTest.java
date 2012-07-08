@@ -2,7 +2,6 @@ package org.jboss.jdf.ticketmonster.test.rest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -56,7 +55,7 @@ public class BookingServiceTest {
         BookingRequest br3 = createBookingRequest(3l, 0, 0, 1);
         bookingService.createBooking(br3);
     }
-    
+
     @Test
     @InSequence(10)
     public void testGetBookings() {
@@ -64,7 +63,7 @@ public class BookingServiceTest {
         checkBooking2();
         checkBooking3();
     }
-    
+
     private void checkBooking1() {
         Booking booking = bookingService.getSingleInstance(1l);
         assertNotNull(booking);
@@ -86,7 +85,7 @@ public class BookingServiceTest {
 
         checkTickets(requiredTickets, booking);
     }
-    
+
     private void checkBooking2() {
         Booking booking = bookingService.getSingleInstance(2l);
         assertNotNull(booking);
@@ -106,7 +105,7 @@ public class BookingServiceTest {
 
         checkTickets(requiredTickets, booking);
     }
-    
+
     private void checkBooking3() {
         Booking booking = bookingService.getSingleInstance(3l);
         assertNotNull(booking);
@@ -120,7 +119,7 @@ public class BookingServiceTest {
         requiredTickets.add("B @ 199.5 (Adult)");
         requiredTickets.add("D @ 149.5 (Adult)");
         requiredTickets.add("B @ 199.5 (Adult)");
-        
+
         checkTickets(requiredTickets, booking);
     }
 
@@ -131,14 +130,14 @@ public class BookingServiceTest {
         // Test pagination logic
         MultivaluedMap<String, String> queryParameters = new MockMultivaluedMap<String, String>();
 
-        queryParameters.add("first", "2");
+        queryParameters.add("first", "1");
         queryParameters.add("maxResults", "1");
 
         List<Booking> bookings = bookingService.getAll(queryParameters);
         assertNotNull(bookings);
         assertEquals(1, bookings.size());
         assertEquals("Roy Thomson Hall", bookings.get(0).getPerformance().getShow().getVenue().getName());
-        assertEquals("Shane's Sock Puppets", bookings.get(0).getPerformance().getShow().getEvent().getName());
+        assertEquals("Rock concert of the decade", bookings.get(0).getPerformance().getShow().getEvent().getName());
     }
 
     @Test
@@ -173,7 +172,7 @@ public class BookingServiceTest {
 
         return bookingRequest;
     }
-    
+
     private void checkTickets(List<String> requiredTickets, Booking booking) {
         List<String> bookedTickets = new ArrayList<String>();
         for (Ticket t : booking.getTickets()) {
