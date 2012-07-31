@@ -15,6 +15,255 @@ The tutorial will show you how to perform all these steps in JBoss Developer Stu
 
 In this tutorial, we will create a booking monitor using Errai and GWT, and add it to the TicketMonster application. It will show live updates on the booking status of all performances and shows. These live updates are powered by CDI events crossing the client-server boundary, a feature provided by the Errai Framework. 
 
+Before we start
+~~~~~~~~~~~~~~~
+
+Let us quickly review the starting point of this chapter. If you are re-creating TicketMonster as part of reading this tutorial, this is a good time to check that all the prerequisites are in place. If you are not re-creating TicketMonster on your own, then you can skip this section.
+
+Before everything, make sure that you have read and created the code described in chapter <<BuildingBusinessServices>>.
+
+Afterwards, make sure that Errai is properly configured in the application. 
+
+First, we check if `pom.xml` contains a reference to the Bill Of Materials (BOM) that describes the correct
+version for the Errai artifacts. Make sure that you have the following in the `dependencyManagement` section:
+
+.pom.xml
+[source,xml]
+---------------------------------------------------------------------------------
+<project ...>  
+  ... 
+  <dependencyManagement>
+    <dependencies>
+      ...
+      <dependency>
+         <groupId>org.jboss.bom</groupId>
+         <artifactId>jboss-javaee-6.0-with-errai</artifactId>
+         <version>${jboss.bom.version}</version>
+         <type>pom</type>
+         <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>
+---------------------------------------------------------------------------------
+
+Next, we check if the GWT and Errai artifacts are included in the project.
+.pom.xml
+[source,xml]
+---------------------------------------------------------------------------------
+<project ...>  
+  ...  
+  <dependencies>
+  
+    <!-- The next set of dependencies are for Errai, which we use for 
+           the TicketMonster booking monitor -->
+   <dependency>
+       <groupId>org.jboss.errai</groupId>
+       <artifactId>errai-bus</artifactId>
+       <exclusions>
+           <exclusion>
+               <groupId>javax.inject</groupId>
+               <artifactId>javax.inject</artifactId>
+           </exclusion>
+           <exclusion>
+               <groupId>javax.annotation</groupId>
+               <artifactId>jsr250-api</artifactId>
+           </exclusion>
+       </exclusions>
+   </dependency>
+   <dependency>
+       <groupId>org.jboss.errai</groupId>
+       <artifactId>errai-ioc</artifactId>
+       <exclusions>
+           <exclusion>
+               <groupId>javax.inject</groupId>
+               <artifactId>javax.inject</artifactId>
+           </exclusion>
+           <exclusion>
+               <groupId>javax.annotation</groupId>
+               <artifactId>jsr250-api</artifactId>
+           </exclusion>
+       </exclusions>
+   </dependency>
+   <dependency>
+       <groupId>org.jboss.errai</groupId>
+       <artifactId>errai-tools</artifactId>
+   </dependency>
+   <dependency>
+       <groupId>org.mvel</groupId>
+       <artifactId>mvel2</artifactId>
+   </dependency>
+
+   <!-- CDI/ Errai Integration Modules -->
+   <dependency>
+       <groupId>org.jboss.errai</groupId>
+       <artifactId>errai-cdi-client</artifactId>
+   </dependency>
+
+   <dependency>
+       <groupId>org.jboss.errai</groupId>
+       <artifactId>errai-javax-enterprise</artifactId>
+       <scope>provided</scope>
+   </dependency>
+
+   <dependency>
+    <groupId>org.jboss.errai</groupId>
+    <artifactId>errai-weld-integration</artifactId>
+    <exclusions>
+      <exclusion>
+        <groupId>org.jboss.weld.servlet</groupId>
+        <artifactId>weld-servlet</artifactId>
+      </exclusion>
+    </exclusions>
+  </dependency>
+
+  <dependency>
+    <groupId>com.google.gwt</groupId>
+    <artifactId>gwt-user</artifactId>
+    <scope>provided</scope>
+  </dependency>
+
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-dev</artifactId>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+  
+  ...
+</project>
+---------------------------------------------------------------------------------
+
+Make sure that the appropriate Maven plugins are configured too, and your build configuration
+contains the following:
+
+.pom.xml
+[source.xml]
+---------------------------------------------------------------------------------
+<build>
+    <!-- Maven will append the version to the finalName (which is the
+   name given to the generated war, and hence the context root) -->
+    <finalName>${project.artifactId}</finalName>
+    <pluginManagement>
+
+        <plugins>
+            <!-- Compiler plugin enforces Java 1.6 compatibility and activates
+          annotation processors -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.1.1</version>
+                <configuration>
+                    <!-- We must exclude GWT client local classes from the
+               deployment, or classpath scanners such as Hibernate and Weld get confused
+               when the webapp is bootstrapping. -->
+                    <packagingExcludes>**/javax/**/*.*,**/client/local/**/*.class</packagingExcludes>
+                    <archive>
+                        <manifestEntries>
+                            <Dependencies>org.jboss.as.naming,org.jboss.as.server,org.jboss.msc</Dependencies>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- The JBoss AS plugin deploys your war to a local JBoss AS container -->
+            <!-- To use run: mvn package jboss-as:deploy -->
+            <plugin>
+                <groupId>org.jboss.as.plugins</groupId>
+                <artifactId>jboss-as-maven-plugin</artifactId>
+                <version>7.1.1.Final</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>.errai</directory>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+            <!-- m2e (Maven integration for Eclipse) requires the following
+                configuration -->
+            <plugin>
+                <groupId>org.eclipse.m2e</groupId>
+                <artifactId>lifecycle-mapping</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <lifecycleMappingMetadata>
+                        <pluginExecutions>
+                            <pluginExecution>
+                                <pluginExecutionFilter>
+                                    <groupId>org.codehaus.mojo</groupId>
+                                    <artifactId>gwt-maven-plugin</artifactId>
+                                    <versionRange>[2.3.0,)</versionRange>
+                                    <goals>
+                                        <goal>resources</goal>
+                                    </goals>
+                                </pluginExecutionFilter>
+                                <action>
+                                    <execute/>
+                                </action>
+                            </pluginExecution>
+                        </pluginExecutions>
+                    </lifecycleMappingMetadata>
+                </configuration>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+    <plugins>
+        <!-- GWT plugin to compile client-side java code to javascript
+        and to run GWT development mode -->
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>gwt-maven-plugin</artifactId>
+            <version>2.4.0</version>
+            <configuration>
+                <inplace>true</inplace>
+                <logLevel>INFO</logLevel>
+                <extraJvmArgs>-Xmx512m</extraJvmArgs>
+                <draftCompile>true</draftCompile>
+                <!-- Configure GWT's development mode (formerly known
+                as hosted mode) to not start the default server (embedded jetty), but to
+                download the HTML host page from the configured runTarget. -->
+                <noServer>true</noServer>
+                <runTarget>http://localhost:8080/ticket-monster/booking-monitor.html</runTarget>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>resources</goal>
+                        <goal>compile</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>gwt-clean</id>
+                    <phase>clean</phase>
+                    <goals>
+                        <goal>clean</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+---------------------------------------------------------------------------------
+
+If one or more of the above is not true, please make the appropriate changes.
+
 Module definition
 -----------------
 
