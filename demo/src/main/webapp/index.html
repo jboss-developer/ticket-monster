@@ -16,7 +16,13 @@
     <script type="text/javascript">
         var loader = document.createElement("script")
         loader.setAttribute("src", "resources/js/libs/require.js");
-        if (Modernizr.touch || Modernizr.mq("only all and (max-width: 480px)")) {
+        if ( navigator.userAgent == "TicktetMonster Cordova Webview iOS" ) {
+			environment="hybrid-ios"
+        }
+        else if ( navigator.userAgent == "TicketMonster Cordova Webview Android" ) {
+			environment="hybrid-android"
+        }
+        else if (Modernizr.touch || Modernizr.mq("only all and (max-width: 480px)")) {
            environment = "mobile"
         } else {
            environment = "desktop"
