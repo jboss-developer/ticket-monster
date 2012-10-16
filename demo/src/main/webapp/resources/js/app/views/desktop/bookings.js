@@ -46,6 +46,8 @@ define([
                             self.render();
                             $("a[data-tm-page='"+self.options.page+"']").addClass("active")
                         }});
+                    } else {
+                        self.render();    
                     }
                 });
 
