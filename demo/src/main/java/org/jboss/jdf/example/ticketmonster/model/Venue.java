@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -23,7 +22,7 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  * <p>
  * Represents a single venue
  * </p>
- * 
+ *
  * @author Shane Bryzak
  * @author Pete Muir
  */
@@ -49,11 +48,11 @@ public class Venue implements Serializable {
      * <p>
      * The name of the event.
      * </p>
-     * 
+     *
      * <p>
      * The name of the event forms it's natural identity and cannot be shared between events.
      * </p>
-     * 
+     *
      * <p>
      * The name must not be null and must be one or more characters, the Bean Validation constrain <code>@NotEmpty</code>
      * enforces this.
@@ -79,7 +78,7 @@ public class Venue implements Serializable {
      * </p>
      * 
      * <p>
-     * The <code>@OneToMany<code> JPA mapping establishes this relationship. TODO Explain EAGER fetch. 
+     * The <code>@OneToMany<code> JPA mapping establishes this relationship. TODO Explain EAGER fetch.
      * This relationship is bi-directional (a section knows which venue it is part of), and the <code>mappedBy</code>
      * attribute establishes this. We cascade all persistence operations to the set of performances, so, for example if a venue
      * is removed, then all of it's sections will also be removed.
@@ -100,7 +99,7 @@ public class Venue implements Serializable {
     private MediaItem mediaItem;
 
     /* Boilerplate getters and setters */
-    
+
     public Long getId() {
         return id;
     }
@@ -158,7 +157,7 @@ public class Venue implements Serializable {
     }
 
     /* toString(), equals() and hashCode() for Venue, using the natural identity of the object */
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
