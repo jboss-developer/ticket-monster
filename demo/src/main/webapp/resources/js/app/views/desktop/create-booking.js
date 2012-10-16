@@ -60,8 +60,8 @@ define([
             // are there any outstanding errors after this update?
             // if yes, disable the input button
             if (
-               $("div[id^='ticket-category-fieldset-']").hasClass("error") &&
-                   !_.isUndefined(modifiedModelEntry.quantity) ) {
+               $("div[id^='ticket-category-fieldset-']").hasClass("error") ||
+                   _.isUndefined(modifiedModelEntry.quantity) ) {
               $("input[name='add']").attr("disabled", true)
             } else {
               $("input[name='add']").removeAttr("disabled")
