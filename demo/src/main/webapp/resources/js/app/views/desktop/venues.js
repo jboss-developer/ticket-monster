@@ -16,6 +16,7 @@ define([
                 }));
             utilities.applyTemplate($(this.el), venuesTemplate, {cities: cities, model:this.model});
             $(this.el).find('.item:first').addClass('active');
+            $(".carousel").carousel()
             $(".collapse").collapse();
             $("a[rel='popover']").popover({trigger:'hover'});
             return this;
