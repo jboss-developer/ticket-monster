@@ -122,8 +122,11 @@ define([
             var ticketPrices = _.filter(this.show.ticketPrices, function (item) {
                 return item.section.id == event.currentTarget.value;
             });
+            var sortedTicketPrices = _.sortBy(ticketPrices, function(ticketPrice) {
+                return ticketPrice.ticketCategory.description;
+            });
             var ticketPriceInputs = new Array();
-            _.each(ticketPrices, function (ticketPrice) {
+            _.each(sortedTicketPrices, function (ticketPrice) {
                 ticketPriceInputs.push({ticketPrice:ticketPrice});
             });
             this.ticketCategoriesView.model = ticketPriceInputs;
