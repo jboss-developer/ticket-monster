@@ -16,7 +16,7 @@ VERSION_REGEX='([0-9]*)\.([0-9]*)([a-zA-Z0-9\.]*)'
 # EAP team email subject
 EAP_SUBJECT="\${RELEASEVERSION} of Ticket Monster released, please merge with https://github.com/jboss-eap/ticket-monster, tag and add to EAP maven repo build"
 # EAP team email To ?
-EAP_EMAIL_TO="pgier@redhat.com kpiwko@redhat.com"
+EAP_EMAIL_TO="pgier@redhat.com kpiwko@redhat.com lvogel@redhat.com"
 EAP_EMAIL_FROM="\"JDF Publish Script\" <benevides@redhat.com>"
 
 
