@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -47,11 +46,11 @@ public class Venue implements Serializable {
 
     /**
      * <p>
-     * The name of the event.
+     * The name of the venue.
      * </p>
      * 
      * <p>
-     * The name of the event forms it's natural identity and cannot be shared between events.
+     * The name of the venue forms it's natural identity and cannot be shared between events.
      * </p>
      * 
      * <p>

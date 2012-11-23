@@ -48,7 +48,7 @@ public class MediaItem implements Serializable {
 
     /**
      * <p>
-     * The type of the media, required to render the media item corectly.
+     * The type of the media, required to render the media item correctly.
      * </p>
      * 
      * <p>
@@ -68,7 +68,7 @@ public class MediaItem implements Serializable {
      * </p>
      * 
      * <p>
-     * The url of the media item forms it's natural id and cannot be shared between event categories
+     * The url of the media item forms it's natural id and cannot be shared between media items
      * </p>
      * 
      * <p>

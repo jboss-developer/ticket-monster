@@ -52,7 +52,7 @@ public class EventCategory implements Serializable {
      * </p>
      * 
      * <p>
-     * The <code>@NotEmpty<code> Bean Validation constraint means that the event category descripton must be least 1 character and cannot be null.
+     * The <code>@NotEmpty<code> Bean Validation constraint means that the event category description must be least 1 character and cannot be null.
      * </p>
      */
     @Column(unique=true)

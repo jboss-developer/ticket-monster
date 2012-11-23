@@ -83,7 +83,7 @@ public class Event implements Serializable {
      * <ol>
      * <li><code>@NotNull</code> &mdash; the description must not be null.</li>
      * <li><code>@Size</code> &mdash; the name must be at least 20 characters and no more than 1000 characters. This allows for
-     * better formatting consistency in the view layer, and also ensures that event organisers provide at least some description
+     * better formatting consistency in the view layer, and also ensures that event organizers provide at least some description
      * - a classic example of a business constraint.</li>
      * </ol>
      */
