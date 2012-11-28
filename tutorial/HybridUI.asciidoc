@@ -1,0 +1,459 @@
+Creating hybrid mobile versions of the application with Apache Cordova
+====================================================================
+
+What will you learn here?
+-------------------------
+
+You finished creating the front-end for your application, and it has mobile support. You would now like to provide native client applications that your users can download from an application store. After reading this tutorial, you will understand how to reuse the existing HTML5 code for create nativing mobile clients for each target platform with Apache Cordova.
+
+You will learn how to:
+
+* make changes to an existing web application for being transformed into a native application;
+* create a native application for Android with Apache Cordova;
+* create a native application for iOS with Apache Cordova;
+
+
+What are hybrid mobile applications ?
+-------------------------------------
+
+Hybrid mobile applications are developed in HTML5 - unlike native applications that are compiled to platform-specific binaries. The client code - which consists exclusively of HTML, CSS, and JavaScript - is packaged and installed on the client device just as any native application, and executes in a browser process created by a surrounding native shell. 
+
+Besides wrapping the browser process, the native shell also allows access to native device capabilities, such as the accelerometer, GPS, contact list, etc., made available to the application through JavaScript libraries.
+
+In this example, we use Apache Cordova to implement a hybrid application using the existing HTML5 mobile front-end for TicketMonster.
+
+Tweak your application for remote access
+--------------------------------------
+
+Before we actually get to make the application hybrid, we need to make some changes in the way in which it accesses remote services. Please note that at the start of this tutorial, the changes are already implemented in the user front end, but we will show you the specific areas of code where we did just that.
+
+In the web version of the application the client code is deployed together with the server-side code, so the models and collections (and generally any piece of code that does REST service invocations) can use URLs relative to the root of the application: all resources are serviced from the same server, so the browser will do the correct invocation. This is also consistent with the same origin policy, to prevent cross-site scripting attacks.
+
+Once the client code is deployed separately from the services, the REST invocations must use absolute URLs (we will see the same-origin policy implications and how to solve that a bit further). Furthermore, since the location of the application deployment can change during the lifetime of the application, it must be configurable.
+
+You already have caught a glimpse of this in the user front end chapter. We allowed for it by defining the `configuration` module for the mobile version of the application. 
+
+.src/main/webapp/resources/js/configurations/mobile.js
+[source,javascript]
+------------------------------------------------------------------------------------------------------
+...
+define("configuration", function() {
+    if (window.TicketMonster != undefined && TicketMonster.config != undefined) {
+        return {
+            baseUrl: TicketMonster.config.baseRESTUrl
+        };
+    } else {
+        return {
+            baseUrl: ""
+        }
+    }
+})
+...
+-------------------------------------------------------------------------------------------------------
+
+This module has a `baseURL` property that is either set to an empty string for relative URLs or to an actual prefix value, depending on whether a global variabile named `TicketMonster` has already been defined, and it has a `baseRESTUrl`
+property.
+
+All our code that performs REST services invocations depends on this module, thus the base REST URL can be configured in a single place and injected throughout the code, as in the following code example:
+
+.src/main/webapp/resources/js/app/models/event.js
+[source,javascript]
+-------------------------------------------------------------------------------------------------------
+/**
+ * Module for the Event model
+ */
+define([ 
+    'configuration',
+    'backbone'
+], function (config) {
+    /**
+     * The Event model class definition
+     * Used for CRUD operations against individual events
+     */
+    var Event = Backbone.Model.extend({
+        urlRoot: config.baseUrl + 'rest/events' // the URL for performing CRUD operations
+    });
+    // export the Event class
+    return Event;
+});
+-------------------------------------------------------------------------------------------------------
+
+The prefix is applied in a similar fashion to all the other modules that perform REST service invocations. You don't need to do anything additional right now, because the code we created in the user front end tutorial is already defined like this. However, as said earlier, for mobile web applications that use relative URLs exclusively, introducing some form of URL customization is a requirement for being able to migrate them in a hybrid form. 
+
+Downloading Phonegap
+--------------------
+
+The next step is downloading and installing Apache Cordova. Download the distribution from `http://phonegap.com/download` and unzip it. 
+
+[[phonegap-distro-structure]]
+.Apache Cordova distribution
+image::gfx/cordova-distro-structure.png[]
+
+While migrating TicketMonster, we will work with the files in the `lib` directory. They contain native libraries for each of the supported platforms, as well JavaScript libraries . We have highlighted the contents of the `android` folder. The folders for the other platforms have similar content.
+
+Creating an Android hybrid mobile application
+----------------------------------------------
+
+Creating an Android project using Phonegap
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we will create an Android project in JBDS. The prerequisites for that are having the Android SDK installed locally , as well as the Android (ADT) plugin for Eclipse installed in JBDS.
+
+For the former, download the Android SDK from 'http://developer.android.com/sdk/index.html' and unzip it in a directory of your choice, remembering its location.
+
+For the latter, select _Help -> Install New Software_ from the menu, using the URL `https://dl-ssl.google.com/android/eclipse/` and selecting the *Developer Tools* option. Restart Eclipse.
+
+Now we can create a new Android project.
+
+1. Select _File -> New -> Other_ and selecting 'Android Application Project'.
++
+
+2. Enter the project information: application name, project name, package. 
++
+    Application Name::
+        TicketMonster
+    Project Name::
+        TicketMonster
+    package::
+        org.jboss.jdf.ticketmonster.android
+
+[[android-app-project-package]]
+.Entering the application name, project name and package
+image::gfx/android-app-project-package.png[]
+
+3. Select default values for the next couple of screens ('Configure New Project', 'Launcher icon').
++
+
+4. Select `BlankActivity` as the activity type.
++
+[[android-activity-type]]
+.Select activity type
+ image::gfx/android-activity-type.png[]
+
+5. Name the newly created activity `TicketMonsterActivity`.
++
+[[android-activity-name]]
+.Name the new activity
+image::gfx/android-activity-name.png[]
+
+
+A final step involves adding the Apache Cordova library to the project. Copy the `lib/android/cordova-2.0.0.jar` file from the Cordova distribution into the `lib` folder of the project.
+
+[[add-cordova-jar]]
+.Add the Cordova jar
+image::gfx/add-cordova-jar.png[]
+ 
+
+Once you have finished creating the project, navigate to the `assets` directory. Now we need to create a `www` directory, that will contain the HTML5 code of the application. Since we are reusing the TicketMonster code you can simply create a symbolic link to the `webapp` directory of TicketMonster. Alternatively, you can copy the code of TicketMonster and make all necessary changes there (however, in that case you will have to maintain the code of the application).
+
+    $ 
+
+
+Inside the Android project, modify permissions and additional configurations to `AndroidManifest.xml` to look as follows
+
+.AndroidManifest.xml
+[source,xml]
+-------------------------------------------------------------------------------------------------------
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.jboss.jdf.ticketmonster.android"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="15" />
+
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:resizeable="true"
+        android:smallScreens="true" />
+
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+
+    <application
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" 
+        android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale">
+        <activity
+            android:name=".TicketMonsterActivity"
+            android:label="@string/title_activity_ticket_monster" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+-------------------------------------------------------------------------------------------------------
+
+Also, we need to add our REST service URL to the whitelist (you can use `"*"` too, for simplicity, during development) :
+
+.res/xml/config.xml
+[source,xml]
+-------------------------------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?>
+<cordova>
+    
+	...
+
+    <!--
+    access elements control the Android whitelist.
+    Domains are assumed blocked unless set otherwise
+     -->
+
+    <access origin="http://localhost"/> <!-- allow local pages -->
+    <access origin="http://ticketmonster-jdf.rhcloud.com"/>
+    
+    ... 
+
+</cordova>
+-------------------------------------------------------------------------------------------------------
+
+Finally, we will update the Android `TicketMonsterActivity` class, the entry point of our Android application.
+
+.src/org/jboss/jdf/ticketmonster/android/TicketMonsterActivity.java
+[source,java]
+-------------------------------------------------------------------------------------------------------
+package org.jboss.jdf.ticketmonster.android;
+
+import org.apache.cordova.DroidGap;
+
+import android.os.Bundle;
+import android.webkit.WebSettings;
+
+public class TicketMonsterActivity extends DroidGap {
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        super.loadUrl("file:///android_asset/www/index.html");
+    }
+
+    @Override
+    public void init() {
+     super.init();
+    
+     WebSettings settings = this.appView.getSettings();
+     settings.setUserAgentString("TicketMonster Cordova Webview Android");
+    }
+
+}
+-------------------------------------------------------------------------------------------------------
+
+Note how we customize the user agent information for the wrapped browser. This will allow us to identify that the application runs in Cordova, on an Android platform, which will be useful later on.
+
+Adding Apache Cordova to TicketMonster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we will copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\android\cordova-2.0.0.js` file to the `src/main/webapp/resources/js/libs' folder, renaming it to `cordova-android-2.1.0.js`, to avoid naming conflicts with other platforms (such as iOS which we will also implement as part of this tutorial).
+
+Next, we need to load the library in the application. We will create a separate module, that will load the rest of the mobile application, as well as the Apache Cordova JavaScript library for Android. We also need to configure a base URL for the application. For this example, we will use the URL of the cloud deployment of TicketMonster.
+
+.src/main/webapp/resources/js/libs/hybrid-android.js
+[source,javascript]
+-------------------------------------------------------------------------------------------------------
+// override configuration for RESTful services
+var TicketMonster = {
+    config:{
+        baseRESTUrl:"http://ticketmonster-jdf.rhcloud.com/"
+    }
+}
+
+require (["resources/js/libs/cordova-android-2.0.0.js","mobile"], function() {
+
+});
+-------------------------------------------------------------------------------------------------------
+
+The final step will involve adjusting `src/main/webapp/index.html` to loead this module when running on Android, using the user agent setting we have already configured in the project.
+
+.src/main/webapp/index.html
+[source,html]
+-------------------------------------------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ticket Monster</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0"/>
+
+    <script type="text/javascript" src="resources/js/libs/modernizr-2.0.6.js"></script>
+
+    <!--
+         A simple check on the client. For touch devices or small-resolution screens)
+         show the mobile client. By enabling the mobile client on a small-resolution screen
+         we allow for testing outside a mobile device (like for example the Mobile Browser
+         simulator in JBoss Tools and JBoss Developer Studio).
+      -->
+    <script type="text/javascript">
+        var loader = document.createElement("script")
+        loader.setAttribute("src", "resources/js/libs/require.js");
+        if ( navigator.userAgent == "TicketMonster Cordova Webview Android" ) {
+			environment="hybrid-android"
+        }
+        else if (Modernizr.touch || Modernizr.mq("only all and (max-width: 480px)")) {
+           environment = "mobile"
+        } else {
+           environment = "desktop"
+        };
+        loader.setAttribute("data-main","resources/js/configurations/" + environment);
+        document.head.appendChild(loader)
+    </script>
+</head>
+<body>
+</body>
+</html>
+-------------------------------------------------------------------------------------------------------
+
+Now you are ready to run the application. Right-click on project _Run as_->_Android Application_.
+
+Creating an iOS hybrid mobile application
+------------------------------------------
+
+In order to create the iOS hybrid mobile version of the application make you sure you have the following software installed:
+
+* Xcode 4.5+
+* XCode Command Line Tools
+
+[NOTE]
+.You need a Mac OS X for this
+=================================================================================
+Creating the iOS hybrid mobile version of the application requires a system running
+Mac OS X Lion or later (10.7+), mainly for running Xcode.
+=================================================================================
+
+Also, we assume that you have installed and extracted Apache Cordova already as described in a previous section.
+
+The last step is to install the `CordovaLib` library using the `.dmg` installer found in the `lib/ios` directory of the Apache Cordova distribution.
+
+Creating an iOS project using Phonegap
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we need to create an iOS project. In order to do so we run the `create` command, to be found in the `lib/ios/bin` of your Apache Cordova distribution. Run the command with the following parameters:
+
+    $ $LIB_IOS_BIN/create $TICKET_MONSTER_HOME/cordova/ios org.jboss.ticketmonster.cordova.ios TicketMonster
+
+For the purpose of this tutorial, we assume that the 'cordova' directory which is the parent of the 'ios' directory where the project is created, is at the same level as the directory where the original project exists.
+
+Now we create a symbolic link inside the 'ios' directory to the original TicketMonster project, with the name `www`.
+
+    $ ln -s www $TICKET_MONSTER_HOME/
+
+Now we can open the created project in Xcode. 
+
+Just as in the case of the Android application, we will customize the user agent information that gets passed on to the browser. We will use this information to load the proper JavaScript library. So we will adjust the `initialize` method in the generated code to that effect.
+
+
+.Classes/AppDelegate.m
+[source,c]
+-------------------------------------------------------------------------------------------------------
+...
+
++ (void)initialize {
+    // Set user agent
+    NSDictionary *dictionary = [[NSDictionary alloc] 
+                      initWithObjectsAndKeys:@"TicketMonster Cordova Webview iOS", @"UserAgent", nil];
+    [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
+    [dictionary release];
+}
+
+...
+-------------------------------------------------------------------------------------------------------
+
+The Cordova library for iOS is already included in the generated project. 
+
+Adding Apache Cordova for iOS to TicketMonster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, we will copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\ios\cordova-2.0.0.js` file to the `src/main/webapp/resources/js/libs' folder, renaming it to `cordova-ios-2.0.0.js`, to avoid naming conflicts with other platforms (such as Android which we already implemented as part of this tutorial).
+
+Next, we need to load the library in the application. We will create a separate module, that will load the rest of the mobile application, as well as the Apache Cordova JavaScript library for iOS. We also need to configure a base URL for the application. For this example, we will use the URL of the cloud deployment of TicketMonster.
+
+.src/main/webapp/resources/js/libs/hybrid-ios.js
+[source,javascript]
+-------------------------------------------------------------------------------------------------------
+// override configuration for RESTful services
+var TicketMonster = {
+    config:{
+        baseRESTUrl:"http://ticketmonster-jdf.rhcloud.com/"
+    }
+}
+
+require (["resources/js/libs/cordova-ios-2.0.0.js","mobile"], function() {
+
+});
+-------------------------------------------------------------------------------------------------------
+
+Finally, we edit the landing page to add support for iOS.
+
+.src/main/webapp/index.html
+[source,html]
+-------------------------------------------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ticket Monster</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0"/>
+
+    <script type="text/javascript" src="resources/js/libs/modernizr-2.0.6.js"></script>
+
+    <!--
+         A simple check on the client. For touch devices or small-resolution screens)
+         show the mobile client. By enabling the mobile client on a small-resolution screen
+         we allow for testing outside a mobile device (like for example the Mobile Browser
+         simulator in JBoss Tools and JBoss Developer Studio).
+      -->
+    <script type="text/javascript">
+        var loader = document.createElement("script")
+        loader.setAttribute("src", "resources/js/libs/require.js");
+        if ( navigator.userAgent == "TicktetMonster Cordova Webview iOS" ) {
+            environment="hybrid-ios"
+        }
+        else if ( navigator.userAgent == "TicketMonster Cordova Webview Android" ) {
+            environment="hybrid-android"
+        }
+        else if (Modernizr.touch || Modernizr.mq("only all and (max-width: 480px)")) {
+           environment = "mobile"
+        } else {
+           environment = "desktop"
+        };
+        loader.setAttribute("data-main","resources/js/configurations/" + environment);
+        document.head.appendChild(loader)
+    </script>
+</head>
+<body>
+</body>
+</html>
+-------------------------------------------------------------------------------------------------------
+
+Now you are ready to run the application. Select a simulator and run (Cmd-R).
+
+Conclusion
+-----------
+
+This concludes our tutorial for building a hybrid application with Apache Cordova. You have seen how we have turned a working HTML5 web application into one that can run natively on Android and iOS.
+
+
+
+
+
+
