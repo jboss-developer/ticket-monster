@@ -488,7 +488,7 @@ such as Tomcat, shut it down now to avoid any port conflicts.
 .Run As -> Run on Server
 image::gfx/introduction/run_as_run_on_server.png[]
 
-Now, deploy the h2console webapp. You can read how to do this in the link:http://www.jboss.org/jdf/stage/quickstarts/jboss-as-quickstart/h2-console/[h2console quickstart].
+Now, deploy the h2console webapp. You can read how to do this in the link:http://www.jboss.org/jdf/quickstarts/jboss-as-quickstart/h2-console/[h2console quickstart].
 
 The *Run As -> Run on Server* option will also launch the internal Eclipse browser with the appropriate URL so that you can immediately begin interacting with the application.
 
