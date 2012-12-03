@@ -37,9 +37,9 @@ image::gfx/introduction/jbds5_mobile_browsersim.png[]
 Installation
 ------------
 
-The first order of business is to get your development environment setup and JBoss Developer Studio v5 installed. JBoss Developer Studio is Eclipse Indigo (3.7.2) for Java EE Developers plus select JBoss Tools and is available for free. Visit http://www.jboss.org/developer to download it.  You may also choose to install JBoss Tools 3.3 into your existing Eclipse Indigo for Java EE Developers. This document uses screenshots depicting JBoss Developer Studio.
+The first order of business is to get your development environment setup and JBoss Developer Studio v5 installed. JBoss Developer Studio is Eclipse Indigo (3.7.2) for Java EE Developers plus select JBoss Tools and is available for free. Visit http://www.jboss.org/tools/download/ to download it.  You may also choose to install JBoss Tools 3.3 into your existing Eclipse Indigo for Java EE Developers. This document uses screenshots depicting JBoss Developer Studio.
 
-You must have a Java Development Kit (JDK) installed, either v6 or v7 will work - whilst a JVM runtime will work for most use cases, for a developer environment it is normally best to have the full JDK. System requirements for JBoss Developer Studio are link:http://docs.redhat.com/docs/en-US/JBoss_Developer_Studio/5.0.Beta/html/Getting_Started_Guide/minimumrequirements.html[listed in the online documentation].
+You must have a Java Development Kit (JDK) installed, either v6 or v7 will work - whilst a JVM runtime will work for most use cases, for a developer environment it is normally best to have the full JDK. System requirements for JBoss Developer Studio are listed in the System Requirements chapter of the link:https://access.redhat.com/knowledge/docs/en-US/JBoss_Developer_Studio/5.0/html-single/Getting_Started_Guide/index.html#minimumrequirements[JBoss Developer Studio 5.0 Getting Started Guide] online documentation.
 
 [TIP]
 ==============================================================
@@ -488,7 +488,7 @@ such as Tomcat, shut it down now to avoid any port conflicts.
 .Run As -> Run on Server
 image::gfx/introduction/run_as_run_on_server.png[]
 
-Now, deploy the h2console webapp. You can read how to do this in the link:http://www.jboss.org/jdf/stage/quickstarts/jboss-as-quickstart/h2-console/[h2console quickstart].
+Now, deploy the h2console webapp. You can read how to do this in the link:http://www.jboss.org/jdf/quickstarts/jboss-as-quickstart/h2-console/[h2console quickstart].
 
 The *Run As -> Run on Server* option will also launch the internal Eclipse browser with the appropriate URL so that you can immediately begin interacting with the application.
 
