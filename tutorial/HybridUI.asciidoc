@@ -1,5 +1,5 @@
 Creating hybrid mobile versions of the application with Apache Cordova
-====================================================================
+======================================================================
 
 What will you learn here?
 -------------------------
@@ -12,8 +12,8 @@ You will learn how to:
 * create a native application for Android with Apache Cordova;
 * create a native application for iOS with Apache Cordova;
 
-What are hybrid mobile applications ?
--------------------------------------
+What are hybrid mobile applications?
+------------------------------------
 
 Hybrid mobile applications are developed in HTML5 - unlike native applications that are compiled to platform-specific binaries. The client code - which consists exclusively of HTML, CSS, and JavaScript - is packaged and installed on the client device just as any native application, and executes in a browser process created by a surrounding native shell. 
 
@@ -26,7 +26,7 @@ In this example, we use Apache Cordova to implement a hybrid application using t
 image::gfx/ticket_monster_hybrid.png[]
 
 Tweak your application for remote access
---------------------------------------
+----------------------------------------
 
 Before we make the application hybrid, we need to make some changes in the way in which it accesses remote services. Note that the changes have already been implemented in the user front end, here we show you the code that we needed to modify.
 
@@ -52,7 +52,7 @@ define("configuration", function() {
     }
 })
 ...
--------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
 
 This module has a `baseURL` property that is either set to an empty string for relative URLs or to a prefix, such as a domain name, depending on whether a global variabile named `TicketMonster` has already been defined, and it has a `baseRESTUrl`
 property.
@@ -336,7 +336,7 @@ The final step will involve adjusting `src/main/webapp/index.html` to loead this
 </html>
 -------------------------------------------------------------------------------------------------------
 
-Now you are ready to run the application. Right-click on project _Run as_->_Android Application_.
+Now you are ready to run the application. Right-click on project _Run as_->__Android Application__.
 
 Creating an iOS hybrid mobile application
 ------------------------------------------

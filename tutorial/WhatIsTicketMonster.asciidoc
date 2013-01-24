@@ -12,7 +12,7 @@ Apart from being a demo, TicketMonster provides an already existing application 
 you can use as a starting point for your app. You could try out your use cases, 
 test your own ideas, or, contribute improvements back to the community. 
 
-image::gfx/octocat_social.png[] 
+image::gfx/octocat_social.png[]
 
 link:http://github.com/jboss-jdf/ticket-monster[Fork us on GitHub!]
 
@@ -154,7 +154,7 @@ Then, _build and deploy it_.
             
             mvn clean package -Ppostgresql-openshift
 			
-2. Copy the `target/ticket-monster.war`file in the OpenShift Git repository(located at `<root-of-openshift-application-git-repository>`).
+2. Copy the `target/ticket-monster.war` file in the OpenShift Git repository(located at `<root-of-openshift-application-git-repository>`).
 
 	    cp target/ticket-monster.war <root-of-openshift-application-git-repository>/deployments/ROOT.war
 
@@ -163,7 +163,7 @@ Then, _build and deploy it_.
 4. Remove the existing `src` folder and `pom.xml` file. 
 
         git rm -r src
-		git rm pom.xml
+        git rm pom.xml
 
 5.  Add the copied file to the repository, commit and push to Openshift
         

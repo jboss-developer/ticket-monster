@@ -2,6 +2,9 @@ Ticket Monster Tutorial
 =======================
 Marius Bogoevici, Pete Muir, Burr Sutter
 :doctype: book
+ifdef::asciidoctor[]
+// put Asciidoctor-specific settings here
+endif::asciidoctor[]
 
 [preface]
 include::WhatIsTicketMonster.asciidoc[]

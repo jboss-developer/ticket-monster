@@ -68,7 +68,7 @@ Also, the 32-bit version uses less memory than the 64-bit
 version. You may still run your application server in 64-bit 
 JVMs if needed to insure compatibility with the production
 environment whilst keeping your IDE in 32-bit mode.
-================================================================
+===============================================================
 
 [[installer-wizard_image]]
 .Installation Wizard, Step 1 of 9

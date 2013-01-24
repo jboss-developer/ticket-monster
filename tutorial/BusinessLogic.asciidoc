@@ -616,7 +616,7 @@ public abstract class BaseEntityService<T> {
     }
 
 }
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 Now we add a method to retrieve all entities of a given type:
 
@@ -679,7 +679,7 @@ public abstract class BaseEntityService<T> {
     }
 
 }
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 The newly added method `getAll` is annotated with `@GET` which instructs JAX-RS to call it when a `GET` HTTP requests on the JAX-RS' endpoint base URL '/rest/<entityRoot>' is performed. But remember, this is not a true JAX-RS endpoint. It is an abstract class and it is not mapped to a path. The classes that extend it are JAX-RS endpoints, and will have to be mapped to a path, and are able to process requests.
 
@@ -762,7 +762,7 @@ public abstract class BaseEntityService<T> {
         return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 }
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 This method is similar to `getAll` and `getCount`, and we use the `@Path` annotation to map it to a sub-path of '/rest/<entityRoot>'. The annotation attribute identifies the expected format of the URL (here, the last segment has to be a number) and binds a  portion of the URL to a variable (here named `id`). The `@PathParam` annotation allows the value of the variable to be passed as amethod argument. Data conversion is performed automatically.
 
