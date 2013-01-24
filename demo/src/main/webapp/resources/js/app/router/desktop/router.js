@@ -90,7 +90,7 @@ define("router", [
             	new CreateBookingView({
             		model:{ showId:showId, 
             			    performanceId:performanceId, 
-            			    bookingRequest:{tickets:[]}}, 
+            			    bookingRequest:{seatAllocations:[]}},
             			    el:$("#content")
             			   });
             utilities.viewManager.showView(createBookingView);

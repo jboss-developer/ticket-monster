@@ -19,10 +19,7 @@ import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 import org.jboss.jdf.example.ticketmonster.model.Ticket;
 import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
-import org.jboss.jdf.example.ticketmonster.rest.BookingRequest;
-import org.jboss.jdf.example.ticketmonster.rest.BookingService;
-import org.jboss.jdf.example.ticketmonster.rest.ShowService;
-import org.jboss.jdf.example.ticketmonster.rest.TicketRequest;
+import org.jboss.jdf.example.ticketmonster.rest.*;
 import org.jboss.jdf.example.ticketmonster.util.MultivaluedHashMap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
@@ -166,7 +163,7 @@ public class BookingServiceTest {
         List<TicketPrice> possibleTicketPrices = new ArrayList<TicketPrice>(show.getTicketPrices());
         int i = 1;
         for (int index : ticketPriceNos) {
-            bookingRequest.addTicketRequest(new TicketRequest(possibleTicketPrices.get(index), i));
+            bookingRequest.addTicketRequest(new TicketReservationRequest(possibleTicketPrices.get(index).getId(), i));
             i++;
         }
 

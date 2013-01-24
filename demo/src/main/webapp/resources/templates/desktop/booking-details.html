@@ -29,7 +29,9 @@
             </tr>
             </thead>
             <tbody>
-            <% $.each(_.sortBy(booking.tickets, function(ticket) {return ticket.id}), function (i, ticket) { %>
+            <% $.each(_.sortBy(booking.tickets, function(ticket) {return ticket.seat.section.id*1000
+                                           + ticket.seat.rowNumber*100
+                                           + ticket.seat.number}), function (i, ticket) { %>
             <tr>
                 <td><%= ticket.id %></td>
                 <td><%=ticket.ticketCategory.description%></td>

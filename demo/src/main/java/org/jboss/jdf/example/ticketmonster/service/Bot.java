@@ -22,10 +22,7 @@ import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.BotMessage;
-import org.jboss.jdf.example.ticketmonster.rest.BookingRequest;
-import org.jboss.jdf.example.ticketmonster.rest.BookingService;
-import org.jboss.jdf.example.ticketmonster.rest.ShowService;
-import org.jboss.jdf.example.ticketmonster.rest.TicketRequest;
+import org.jboss.jdf.example.ticketmonster.rest.*;
 import org.jboss.jdf.example.ticketmonster.util.MultivaluedHashMap;
 
 @Stateless
@@ -101,7 +98,7 @@ public class Bot {
         for (int index : indicies) {
             int no = random.nextInt(MAX_TICKETS_PER_REQUEST);
             TicketPrice price = possibleTicketPrices.get(index);  
-            bookingRequest.addTicketRequest(new TicketRequest(price, no));
+            bookingRequest.addTicketRequest(new TicketReservationRequest(price.getId(), no));
             message
                 .append(no)
                 .append(" of ")

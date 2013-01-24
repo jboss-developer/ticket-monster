@@ -4,33 +4,33 @@ import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 
 /**
  * <p>
- * A {@link BookingRequest} will contain multiple {@link TicketRequest}s.
+ * A {@link org.jboss.jdf.example.ticketmonster.rest.BookingRequest} will contain multiple {@link org.jboss.jdf.example.ticketmonster.rest.TicketReservationRequest}s.
  * </p>
- * 
+ *
  * @author Marius Bogoevici
  * @author Pete Muir
- * 
+ *
  */
-public class TicketRequest {
+public class TicketReservationRequest {
 
-    private TicketPrice ticketPrice;
+    private long ticketPrice;
 
     private int quantity;
 
-    public TicketRequest() {
+    public TicketReservationRequest() {
         // Empty constructor
     }
 
-    public TicketRequest(TicketPrice ticketPrice, int quantity) {
+    public TicketReservationRequest(Long ticketPrice, int quantity) {
         this.ticketPrice = ticketPrice;
         this.quantity = quantity;
     }
 
-    public TicketPrice getTicketPrice() {
+    public long getTicketPrice() {
         return ticketPrice;
     }
 
-    public void setTicketPrice(TicketPrice ticketPrice) {
+    public void setTicketPrice(long ticketPrice) {
         this.ticketPrice = ticketPrice;
     }
 

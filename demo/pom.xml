@@ -32,7 +32,8 @@
             line below to use version 1.0.0.M10-redhat-1 which is a release certified 
             to work with JBoss EAP 6. It requires you have access to the JBoss EAP 6 
             maven repository. -->
-        <jboss.bom.version>1.0.0.Final</jboss.bom.version>
+        <jboss.bom.version>1.0.1.Final</jboss.bom.version>
+        <buildhelper.plugin.version>1.7</buildhelper.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -63,6 +64,13 @@
             <dependency>
                 <groupId>org.jboss.bom</groupId>
                 <artifactId>jboss-javaee-6.0-with-errai</artifactId>
+                <version>${jboss.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.bom</groupId>
+                <artifactId>jboss-javaee-6.0-with-infinispan</artifactId>
                 <version>${jboss.bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -262,6 +270,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -407,6 +420,7 @@
                 </plugins>
             </build>
         </profile>
+
 
         <profile>
             <!-- An optional Arquillian testing profile that executes tests 

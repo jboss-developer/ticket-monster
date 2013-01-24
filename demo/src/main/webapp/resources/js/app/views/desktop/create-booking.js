@@ -78,8 +78,19 @@ define([
             var self = this;
             utilities.applyTemplate($(this.el), ticketSummaryViewTemplate, this.model.bookingRequest);
         },
-        removeEntry:function () {
-            this.model.bookingRequest.tickets.splice(this.model.index, 1);
+        removeEntry:function (event) {
+           var index = $(event.currentTarget).data("index");
+           var ticketPriceId = this.model.bookingRequest.seatAllocations[index].ticketRequest.ticketPrice.id;
+           var self = this;
+           $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data: JSON.stringify([{ticketPrice:ticketPriceId, quantity:-1}]),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json",
+                success: function(cart) {
+                    self.owner.refreshSummary(cart, self.owner)
+                }
+           });
         }
     });
 
@@ -90,32 +101,42 @@ define([
             "change select[id='sectionSelect']":"refreshPrices",
             "keyup #email":"updateEmail",
             "change #email":"updateEmail",
-            "click input[name='add']":"addQuantities",
-            "click i":"updateQuantities"
+            "click input[name='add']":"addQuantities"
         },
         render:function () {
 
             var self = this;
-            $.getJSON(config.baseUrl + "rest/shows/" + this.model.showId, function (selectedShow) {
+            $.ajax({url: (config.baseUrl + "rest/carts"),
+                    data:JSON.stringify({performance:this.model.performanceId}),
+                    type:"POST",
+                    dataType:"json",
+                    contentType:"application/json",
+                    success: function (cart) {
+                        self.model.cartId = cart.id;
+                        $.getJSON(config.baseUrl + "rest/shows/" + self.model.showId, function (selectedShow) {
 
-                self.currentPerformance = _.find(selectedShow.performances, function (item) {
-                    return item.id == self.model.performanceId;
-                });
+                            self.currentPerformance = _.find(selectedShow.performances, function (item) {
+                                return item.id == self.model.performanceId;
+                            });
 
-                var id = function (item) {return item.id;};
-                // prepare a list of sections to populate the dropdown
-                var sections = _.uniq(_.sortBy(_.pluck(selectedShow.ticketPrices, 'section'), id), true, id);
-                utilities.applyTemplate($(self.el), createBookingTemplate, {
-                    sections:sections,
-                    show:selectedShow,
-                    performance:self.currentPerformance});
-                self.ticketCategoriesView = new TicketCategoriesView({model:{}, el:$("#ticketCategoriesViewPlaceholder") });
-                self.ticketSummaryView = new TicketSummaryView({model:self.model, el:$("#ticketSummaryView")});
-                self.show = selectedShow;
-                self.ticketCategoriesView.render();
-                self.ticketSummaryView.render();
-                $("#sectionSelector").change();
-            });
+                            var id = function (item) {return item.id;};
+                            // prepare a list of sections to populate the dropdown
+                            var sections = _.uniq(_.sortBy(_.pluck(selectedShow.ticketPrices, 'section'), id), true, id);
+                            utilities.applyTemplate($(self.el), createBookingTemplate, {
+                                sections:sections,
+                                show:selectedShow,
+                                performance:self.currentPerformance});
+                            self.ticketCategoriesView = new TicketCategoriesView({model:{}, el:$("#ticketCategoriesViewPlaceholder")});
+                            self.ticketSummaryView = new TicketSummaryView({model:self.model, el:$("#ticketSummaryView")});
+                            self.ticketSummaryView.owner = self;
+                            self.show = selectedShow;
+                            self.ticketCategoriesView.render();
+                            self.ticketSummaryView.render();
+                            $("#sectionSelector").change();
+                        });
+                    }
+                }
+            );
             return this;
         },
         refreshPrices:function (event) {
@@ -135,14 +156,11 @@ define([
         save:function (event) {
             var bookingRequest = {ticketRequests:[]};
             var self = this;
-            bookingRequest.ticketRequests = _.map(this.model.bookingRequest.tickets, function (ticket) {
-                return {ticketPrice:ticket.ticketPrice.id, quantity:ticket.quantity}
-            });
             bookingRequest.email = this.model.bookingRequest.email;
             bookingRequest.performance = this.model.performanceId
             $("input[name='submit']").attr("disabled", true)
-            $.ajax({url: (config.baseUrl + "rest/bookings"),
-                data:JSON.stringify(bookingRequest),
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId + "/checkout"),
+                data:JSON.stringify({email:this.model.bookingRequest.email}),
                 type:"POST",
                 dataType:"json",
                 contentType:"application/json",
@@ -164,47 +182,51 @@ define([
                 })
 
         },
-        addQuantities:function () {
-            var self = this;
-            _.each(this.ticketCategoriesView.model, function (model) {
-                if (model.quantity != undefined) {
-                    var found = false;
-                    _.each(self.model.bookingRequest.tickets, function (ticket) {
-                        if (ticket.ticketPrice.id == model.ticketPrice.id) {
-                            ticket.quantity += model.quantity;
-                            found = true;
-                        }
-                    });
-                    if (!found) {
-                        self.model.bookingRequest.tickets.push({ticketPrice:model.ticketPrice, quantity:model.quantity});
-                    }
-                }
-            });
-            this.ticketCategoriesView.model = null;
-            $('option:selected', 'select').removeAttr('selected');
-            this.ticketCategoriesView.render();
-            this.updateQuantities();
-        },
-        updateQuantities:function () {
+        calculateTotals:function () {
             // make sure that tickets are sorted by section and ticket category
-            this.model.bookingRequest.tickets.sort(function (t1, t2) {
-                if (t1.ticketPrice.section.id != t2.ticketPrice.section.id) {
-                    return t1.ticketPrice.section.id - t2.ticketPrice.section.id;
+            this.model.bookingRequest.seatAllocations.sort(function (t1, t2) {
+                if (t1.ticketRequest.ticketPrice.section.id != t2.ticketRequest.ticketPrice.section.id) {
+                    return t1.ticketRequest.ticketPrice.section.id - t2.ticketRequest.ticketPrice.section.id;
                 }
                 else {
-                    return t1.ticketPrice.ticketCategory.id - t2.ticketPrice.ticketCategory.id;
+                    return t1.ticketRequest.ticketPrice.ticketCategory.id - t2.ticketRequest.ticketPrice.ticketCategory.id;
                 }
             });
 
-            this.model.bookingRequest.totals = _.reduce(this.model.bookingRequest.tickets, function (totals, ticketRequest) {
+            this.model.bookingRequest.totals = _.reduce(this.model.bookingRequest.seatAllocations, function (totals, seatAllocation) {
+                var ticketRequest = seatAllocation.ticketRequest;
                 return {
                     tickets:totals.tickets + ticketRequest.quantity,
                     price:totals.price + ticketRequest.quantity * ticketRequest.ticketPrice.price
                 };
             }, {tickets:0, price:0.0});
-
-            this.ticketSummaryView.render();
-            this.setCheckoutStatus();
+        },
+        addQuantities:function () {
+            var self = this;
+            var ticketRequests = [];
+            _.each(this.ticketCategoriesView.model, function (model) {
+                if (model.quantity != undefined) {
+                    ticketRequests.push({ticketPrice:model.ticketPrice.id, quantity:model.quantity})
+                }
+            });
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data:JSON.stringify(ticketRequests),
+                type:"POST",
+                dataType:"json",
+                contentType:"application/json",
+                success: function(cart) {
+                   self.refreshSummary(cart, self)
+                }}
+            );
+        },
+        refreshSummary: function(cart, view) {
+            view.model.bookingRequest.seatAllocations = cart.seatAllocations;
+            view.ticketCategoriesView.model = null;
+            $('option:selected', 'select').removeAttr('selected');
+            view.calculateTotals();
+            view.ticketCategoriesView.render();
+            view.ticketSummaryView.render();
+            view.setCheckoutStatus();
         },
         updateEmail:function (event) {
             if ($(event.currentTarget).is(':valid')) {

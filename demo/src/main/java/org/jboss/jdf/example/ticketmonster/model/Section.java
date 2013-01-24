@@ -36,7 +36,9 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @SuppressWarnings("serial")
 @Entity
 @Table(uniqueConstraints=@UniqueConstraint(columnNames={"name", "venue_id"}))
-// TODO Document @JsonIgnoreProperties
+/*
+ * We indicate that some properties of the class shouldn't be marshalled in JSON format
+ */
 @JsonIgnoreProperties({ "venue", "sectionRows" })
 @Portable
 public class Section implements Serializable {

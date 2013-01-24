@@ -1,26 +1,32 @@
 <div class="span12">
-    <% if (tickets.length>0) { %>
+    <% if (seatAllocations.length>0) { %>
     <table class="table table-bordered table-condensed row-fluid" style="background-color: #fffffa;">
         <thead>
         <tr>
-            <th colspan="5"><strong>Requested tickets</strong></th>
+            <th colspan="7"><strong>Requested tickets</strong></th>
         </tr>
         <tr>
             <th>Section</th>
             <th>Category</th>
             <th>Quantity</th>
             <th>Price</th>
+            <th>Row</th>
+            <th>Seat</th>
             <th></th>
         </tr>
         </thead>
         <tbody id="ticketRequestSummary">
-        <% _.each(tickets, function (ticketRequest, index, tickets) { %>
+        <% _.each(seatAllocations, function (seatAllocation, index, seatAllocations) { %>
         <tr>
-            <td><%= ticketRequest.ticketPrice.section.name %></td>
-            <td><%= ticketRequest.ticketPrice.ticketCategory.description %></td>
-            <td><%= ticketRequest.quantity %></td>
-            <td>$<%=ticketRequest.ticketPrice.price%></td>
-            <td><i class="icon-trash"/></td>
+            <td><%= seatAllocation.ticketRequest.ticketPrice.section.name %></td>
+            <td><%= seatAllocation.ticketRequest.ticketPrice.ticketCategory.description %></td>
+            <td><%= seatAllocation.ticketRequest.quantity %></td>
+            <td>$<%= seatAllocation.ticketRequest.ticketPrice.price%></td>
+            <td><%= seatAllocation.allocatedSeats[0].rowNumber %></td>
+            <td><% _.each(seatAllocation.allocatedSeats, function (ticketRequest, index, seat) { %>
+                <% if (index > 0) { %><p/><% } %><%= seatAllocation.allocatedSeats[index].number%>
+           <% });%></td>
+            <td><i class="icon-trash" data-index='<%= index %>'/></td>
         </tr>
         <% }); %>
         </tbody>
