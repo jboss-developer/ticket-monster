@@ -172,6 +172,25 @@
             </exclusions>
         </dependency>
         <dependency>
+          <groupId>javax.validation</groupId>
+          <artifactId>validation-api</artifactId>
+          <scope>provided</scope>
+        </dependency>
+
+        <!-- Errai supports Bean Validation in client-side code, and the GWT compiler
+             needs the source jar on the classpath at compile time. -->
+        <dependency>
+          <groupId>javax.validation</groupId>
+          <artifactId>validation-api</artifactId>
+
+          <!-- should be ${version.javax.validation}, but we don't inherit this property from the BOM -->
+          <version>1.0.0.GA</version>
+
+          <classifier>sources</classifier>
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.jboss.errai</groupId>
             <artifactId>errai-ioc</artifactId>
             <exclusions>
@@ -211,10 +230,12 @@
             <artifactId>errai-weld-integration</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>
-                        org.jboss.weld.servlet
-                    </groupId>
-                    <artifactId>weld-servlet</artifactId>
+                    <groupId>org.jboss.errai</groupId>
+                    <artifactId>errai-cdi-jetty</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.weld.servlet</groupId>
+                    <artifactId>weld-servlet-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
