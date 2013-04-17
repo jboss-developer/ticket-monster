@@ -19,7 +19,7 @@ import org.jboss.jdf.example.ticketmonster.model.Performance;
  */
 public class BookingRequest {
 
-    private List<TicketReservationRequest> ticketRequests = new ArrayList<TicketReservationRequest>();
+    private List<TicketRequest> ticketRequests = new ArrayList<TicketRequest>();
     private long performance;
     private String email;
     
@@ -32,15 +32,15 @@ public class BookingRequest {
         this.email = email;
     }
 
-    public List<TicketReservationRequest> getTicketRequests() {
+    public List<TicketRequest> getTicketRequests() {
         return ticketRequests;
     }
 
-    public void setTicketRequests(List<TicketReservationRequest> ticketRequests) {
+    public void setTicketRequests(List<TicketRequest> ticketRequests) {
         this.ticketRequests = ticketRequests;
     }
     
-    public BookingRequest addTicketRequest(TicketReservationRequest ticketRequest) {
+    public BookingRequest addTicketRequest(TicketRequest ticketRequest) {
         ticketRequests.add(ticketRequest);
         return this;
     }
@@ -69,7 +69,7 @@ public class BookingRequest {
      */
     Set<Long> getUniquePriceCategoryIds() {
         Set<Long> priceCategoryIds = new HashSet<Long>();
-        for (TicketReservationRequest ticketRequest : getTicketRequests()) {
+        for (TicketRequest ticketRequest : getTicketRequests()) {
             if (priceCategoryIds.contains(ticketRequest.getTicketPrice())) {
                 throw new RuntimeException("Duplicate price category id");
             }

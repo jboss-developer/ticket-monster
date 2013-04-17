@@ -247,6 +247,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- This is the dependency for Infinispan, which we use for carts and
+             seat reservation
+        -->
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+        </dependency>
+
         <!-- Now we declare any tools needed -->
 
         <!-- Annotation processor to generate the JPA 2.0 metamodel classes 
@@ -291,11 +299,6 @@
             <artifactId>jackson-core-asl</artifactId>
             <version>1.8.1</version>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
         </dependency>
 
     </dependencies>

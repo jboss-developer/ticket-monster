@@ -1,0 +1,1499 @@
+Adding a data grid
+==================
+:Author: Marius Bogoevici
+
+What Will You Learn Here?
+-------------------------
+
+You've just finished implementing TicketMonster, and are wondering how can you improve its concurrency and scalability. One possible solution is to reconsider the storage strategy and use a data grid, at least for a part of your application data. In this tutorial, you will learn how to:
+
+* Add JBoss Data Grid to your web application;
+* Configure caches programmatically;
+* Use caches to implement scalable server-side stateful components such as shopping carts;
+* Use caches to implement a highly-concurrent data access mechanism for seat allocations.
+
+The problem at hand
+-------------------
+
+When it comes to performance, TicketMonster has a few special requirements:
+
+High concurrency ::
+   tickets will sell out very fast, maybe in 5 minutes;
+High volume :: 
+   there may be thousands of shows with thousands of tickets to sell, each;
+Location awareness ::
+   shows can take place all around the world, and we'd like the data to be available in the same region where the show takes place.
+
+So far, in the tutorial we have used exclusively a database. While it works as an initial implementation, we plan to address the concerns above with a better-suited solution. We will do this by adding Infinispan to our project, thus addressing the above concerns as follows:
+
+High concurrency ::
+   In-memory data access and optimized locking;
+High volume :: 
+   The application can handle increasingly large data amounts by adding new data grid nodes;
+Location awareness ::
+   A multi-node data grid can be configured so that data is stored on specific nodes.  
+
+
+[TIP]
+.What is a data grid? What is Infinispan?
+=====================================================================================
+A data grid is a cluster of (typically commodity) servers, normally residing on a single local-area network, connected to each other using IP based networking. Data grids behave as a single resource, exposing the aggregate storage capacity of all servers in the cluster. Data stored in the grid is usually partitioned, using a variety of techniques, to balance load across all servers in the cluster as evenly as possible. Data is often redundantly stored in the grid to provide resilience to individual servers in the grid failing i.e. more than one copy is stored in the grid, transparently to the application.
+
+link:http://www.jboss.org/infinispan[Infinispan] is an extremely scalable, highly available key/value NoSQL datastore and distributed data grid platform - 100% open source, and written in Java.  The purpose of Infinispan is to expose a data structure that is highly concurrent, designed ground-up to make the most of modern multi-processor/multi-core architectures while at the same time providing distributed cache capabilities.
+
+link
+=====================================================================================
+
+Adding Infinispan
+-----------------
+
+First, you need to decide how you will use Infinispan in the project. You can opt between two access patterns:
+
+Library ::
+    The data grid nodes are embedded in the application. In this case, we need to add the core data grid libraries as a dependency to the project.
+
+Remote client-server ::
+    The data grid nodes are started separately and accessed through a client library. It is this library that will be added as a dependency. 
+
+For TicketMonster, we will use the library access pattern, as in this particular case we can benefit from the simpler setup. For a more detailed description of the pros and cons of each access pattern, you can read a more detailed explanation in the project documentation. In any case, switching from one mode to the other is non-intrusive, the only major difference being the infrastructure setup. 
+
+Next, we will begin by adding the JBoss Developer Framework Bill of Materials (BOM) that describes the correct version for the Infinispan artifacts. 
+
+.pom.xml
+[source,xml]
+---------------------------------------------------------------------------------
+<project ...>  
+  ... 
+  <dependencyManagement>
+    <dependencies>
+      ...
+      <dependency>
+         <groupId>org.jboss.bom</groupId>
+         <artifactId>jboss-javaee-6.0-with-infinispan</artifactId>
+         <version>${jboss.bom.version}</version>
+         <type>pom</type>
+         <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>
+---------------------------------------------------------------------------------
+
+Next, we will add the `infinispan-core` library to the project.
+
+
+Next, we will include the Infinispan library in the project.
+.pom.xml
+[source,xml]
+---------------------------------------------------------------------------------
+<project ...>  
+  ...  
+  <dependencies>
+     <!-- This is the dependency for Infinispan, which we use for carts and
+        seat reservation
+     -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+      </dependency>
+  </dependencies>
+  ...
+</project>
+---------------------------------------------------------------------------------
+
+Configuring the infrastructure
+------------------------------
+
+First, we will create a producer and disposer for the Infinispan cache manager, where we define the global cache configuration and set up default options for the caches used in the application. The cache manager is unique for the application and to the data grid node, so we will create it as an application scoped bean.
+
+.src/main/org/jboss/jdf/example/ticketmonster/util/CacheProducer
+[source,java]
+---------------------------------------------------------------------------------
+/**
+ * Producer for the {@link EmbeddedCacheManager} instance used by the application. Defines
+ * the default configuration for caches.
+ */
+@ApplicationScoped
+public class CacheProducer {
+
+    @Produces
+    @ApplicationScoped
+    public EmbeddedCacheManager getCacheContainer() {
+        GlobalConfiguration glob = new GlobalConfigurationBuilder()
+                .nonClusteredDefault() //Helper method that gets you a default constructed GlobalConfiguration, preconfigured for use in LOCAL mode
+                .globalJmxStatistics().enable() //This method allows enables the jmx statistics of the global configuration.
+                .transport().defaultTransport()
+                .build(); //Builds  the GlobalConfiguration object
+        Configuration loc = new ConfigurationBuilder()
+                .jmxStatistics().enable() //Enable JMX statistics
+                .clustering().cacheMode(CacheMode.LOCAL) //Set Cache mode to LOCAL - Data is not replicated.
+                .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+                .transactionManagerLookup(new GenericTransactionManagerLookup())
+                .lockingMode(LockingMode.PESSIMISTIC)
+                .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking
+                .eviction().maxEntries(4).strategy(EvictionStrategy.LIRS) //Sets  4 as maximum number of entries in a cache instance and uses the LIRS strategy - an efficient low inter-reference recency set replacement policy to improve buffer cache performance
+                .loaders().passivation(false).addFileCacheStore().purgeOnStartup(true) //Disable passivation and adds a FileCacheStore that is Purged on Startup
+                .build(); //Builds the Configuration object
+        return new DefaultCacheManager(glob, loc, true);
+
+    }
+
+    public void cleanUp(@Disposes EmbeddedCacheManager manager) {
+        manager.stop();
+    }
+}
+---------------------------------------------------------------------------------
+
+We will inject the cache manager instance in various services that use the data grid, which will use it in turn to get access to application caches.
+
+Using caches for seat reservations
+----------------------------------
+
+First, we are going to change the existing implementation of the `SeatAllocationService` to use the Infinispan datagrid. Rather than storing the seat allocations in a database, we will store them as data grid entries.
+
+This requires a few changes to our existing classes. If in the database implementation we used properties of the `SectionAllocation` class to identify the entity that corresponds to a given `Section` and `Performance`, for the datagrid implementation we will create a key class, making sure that its `equals()` and `hashCode()` methods are implemented correctly.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/service/SectionAllocationKey.java
+[source,java]
+---------------------------------------------------------------------------------
+public class SectionAllocationKey implements Serializable {
+
+    private final Section section;
+    private final Performance performance;
+
+    private SectionAllocationKey(Section section, Performance performance) {
+
+        this.section = section;
+        this.performance = performance;
+    }
+
+    public static SectionAllocationKey of (Section section, Performance performance) {
+        return new SectionAllocationKey(section, performance);
+    }
+
+
+    public Section getSection() {
+        return section;
+    }
+
+    public Performance getPerformance() {
+        return performance;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SectionAllocationKey that = (SectionAllocationKey) o;
+
+        if (performance != null ? !performance.equals(that.performance) : that.performance != null) return false;
+        if (section != null ? !section.equals(that.section) : that.section != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = section != null ? section.hashCode() : 0;
+        result = 31 * result + (performance != null ? performance.hashCode() : 0);
+        return result;
+    }
+}
+---------------------------------------------------------------------------------
+
+Now we can proceed with modifying the `SeatAllocationService`. Since we are not persisting seat allocations in the database, we will remove the `EntityManager` reference and use a cache acquired from the cache manager. We inject the cache manager instance produced previously and create a `SeatAllocation`-specific cache in the constructor.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/service/SeatAllocationService.java
+[source,java]
+---------------------------------------------------------------------------------
+public class SeatAllocationService {
+
+
+    public static final String ALLOCATIONS = "TICKETMONSTER_ALLOCATIONS";
+
+    private Cache<SectionAllocationKey, SectionAllocation> cache;
+
+    /**
+     * We inject the {@link EmbeddedCacheManager} and retri
+     *
+     * @param manager
+     */
+    @Inject
+    public SeatAllocationService(EmbeddedCacheManager manager) {
+        Configuration allocation = new ConfigurationBuilder()
+                .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+                .transactionManagerLookup(new JBossTransactionManagerLookup())
+                .lockingMode(LockingMode.PESSIMISTIC)
+                .loaders().addFileCacheStore().purgeOnStartup(true)
+                .build();
+        manager.defineConfiguration(ALLOCATIONS, allocation);
+        this.cache = manager.getCache(ALLOCATIONS);
+    }
+    .....
+}
+---------------------------------------------------------------------------------    
+
+Now, we can proceed with changing the implementation of the rest of the class.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/service/SeatAllocationService.java
+[source,java]
+---------------------------------------------------------------------------------
+public class SeatAllocationService {
+
+
+    ....
+
+    public AllocatedSeats allocateSeats(Section section, Performance performance,
+                                        int seatCount, boolean contiguous) {
+        SectionAllocationKey sectionAllocationKey = SectionAllocationKey.of(section, performance);
+        SectionAllocation allocation = getSectionAllocation(sectionAllocationKey);
+        ArrayList<Seat> seats = allocation.allocateSeats(seatCount, contiguous);
+        cache.replace(sectionAllocationKey, allocation);
+        return new AllocatedSeats(allocation, seats);
+    }
+
+    public void deallocateSeats(Section section, Performance performance, List<Seat> seats) {
+        SectionAllocationKey sectionAllocationKey = SectionAllocationKey.of(section, performance);
+        SectionAllocation sectionAllocation = getSectionAllocation(sectionAllocationKey);
+        for (Seat seat : seats) {
+            if (!seat.getSection().equals(section)) {
+                throw new SeatAllocationException("All seats must be in the same section!");
+            }
+            sectionAllocation.deallocate(seat);
+        }
+        cache.replace(sectionAllocationKey, sectionAllocation);
+   
+    }
+
+    /**
+     * Mark the seats as being allocated
+     * @param performance
+     * @param allocatedSeats
+     */
+    public void finalizeAllocation(AllocatedSeats allocatedSeats) {
+        allocatedSeats.markOccupied();
+    }
+
+    /**
+     * Mark the seats as being allocated
+     * @param performance
+     * @param allocatedSeats
+     */
+    public void finalizeAllocation(Performance performance, List<Seat> allocatedSeats) {
+        SectionAllocation sectionAllocation = cache.get(
+                SectionAllocationKey.of(allocatedSeats.get(0).getSection(), performance));
+        sectionAllocation.markOccupied(allocatedSeats);
+    }
+
+    /**
+     * Retrieve a {@link SectionAllocation} instance for a given {@link Performance} and
+     * {@link Section} (embedded in the {@link SectionAllocationKey}). Lock it for the scope
+     * of the current transaction.
+     *
+     * @param sectionAllocationKey - wrapper for a {@link Performance} and {@link Section} pair
+     *
+     * @return the corresponding {@link SectionAllocation}
+     */
+    private SectionAllocation getSectionAllocation(SectionAllocationKey sectionAllocationKey) {
+        SectionAllocation newAllocation = new SectionAllocation(sectionAllocationKey.getPerformance(),
+                sectionAllocationKey.getSection());
+        SectionAllocation sectionAllocation = cache.putIfAbsent(sectionAllocationKey,
+                newAllocation);
+        cache.getAdvancedCache().lock(sectionAllocationKey);
+        return sectionAllocation == null?newAllocation:sectionAllocation;
+    }
+}
+---------------------------------------------------------------------------------    
+
+Implementing carts
+------------------
+
+Once we have stored our allocation status in the data grid, we can move on to implementing a cart system for TicketMonster. Rather than composing the orders on the client and sending the entire order as a single requests, users will be able to add and remove seats to their orders while they're shopping. 
+
+We will store the carts in the datagrid, thus ensuring that they're accessible across the cluster, without the complications of using a web session.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/Cart.java
+[source,java]
+---------------------------------------------------------------------------------
+public class Cart implements Serializable  {
+
+    private String id;
+
+    private Performance performance;
+
+    private ArrayList<SeatAllocation> seatAllocations = new ArrayList<SeatAllocation>();
+
+    /**
+     * Constructor for deserialization
+     */
+    private Cart() {
+    }
+
+    private Cart(String id) {
+        this.id = id;
+    }
+
+    public static Cart initialize() {
+        return new Cart(UUID.randomUUID().toString());
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Performance getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(Performance performance) {
+        this.performance = performance;
+    }
+
+    public ArrayList<SeatAllocation> getSeatAllocations() {
+        return seatAllocations;
+    }
+}
+---------------------------------------------------------------------------------
+
+A `Cart` contains `SeatAllocation`s - collections of `Seats`s corresponding to a particular `TicketRequest` (which represents a number of seats requested for a particular perfomance).
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/SeatAllocation.java
+[source,java]
+---------------------------------------------------------------------------------
+public class SeatAllocation {
+
+    private TicketRequest ticketRequest;
+
+    private ArrayList<Seat> allocatedSeats;
+
+    public SeatAllocation(TicketRequest ticketRequest, ArrayList<Seat> allocatedSeats) {
+        this.ticketRequest = ticketRequest;
+        this.allocatedSeats = allocatedSeats;
+    }
+
+
+    public TicketRequest getTicketRequest() {
+        return ticketRequest;
+    }
+
+    public ArrayList<Seat> getAllocatedSeats() {
+        return allocatedSeats;
+    }
+}
+---------------------------------------------------------------------------------
+
+We use this structure so that we can easily add or update seats to the cart, when the client issues a new request.
+
+
+We will update the `SectionAllocation` class, introducing an expiration time for each allocated seat. With this implementation, seats can have three different states:
+
+free::
+    The seat has not been allocated;
+allocated permanently::
+    The seat has been sold and remains allocated until the ticket is canceled;
+allocated temporarily::
+    The seat is allocated, but can be re-allocated after a specific time.
+
+So, when a cart expires and is removed from the cache, the seats it held become available again. With these changes, the updated implementation of the `SectionAllocation` class will be as follows:
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/service/SectionAllocation.java
+[source,java]
+---------------------------------------------------------------------------------
+@Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = { "performance_id", "section_id" }))
+public class SectionAllocation implements Serializable {
+    public static final int EXPIRATION_TIME = 60 * 1000;
+
+    /* Declaration of fields */
+
+    /**
+     * The synthetic id of the object.
+     */
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    private Long id;
+
+    /**
+     * <p>
+     * The version used to optimistically lock this entity.
+     * </p>
+     * 
+     * <p>
+     * Adding this field enables optimistic locking. As we don't access this field in the application, we need to suppress the
+     * warnings the java compiler gives us about not using the field!
+     * </p>
+     */
+    @SuppressWarnings("unused")
+    @Version
+    private long version;
+
+    /**
+     * <p>
+     * The performance to which this allocation relates. The <code>@ManyToOne<code> JPA mapping establishes this relationship.
+     * </p>
+     * 
+     * <p>
+     * The performance must be specified, so we add the Bean Validation constrain <code>@NotNull</code>
+     * </p>
+     */
+    @ManyToOne
+    @NotNull
+    private Performance performance;
+
+    /**
+     * <p>
+     * The section to which this allocation relates. The <code>@ManyToOne<code> JPA mapping establishes this relationship.
+     * </p>
+     * 
+     * <p>
+     * The section must be specified, so we add the Bean Validation constrain <code>@NotNull</code>
+     * </p>
+     */
+    @ManyToOne
+    @NotNull
+    private Section section;
+
+    /**
+     * <p>
+     * A two dimensional matrix of allocated seats in a section, represented by a 2 dimensional array.
+     * </p>
+     * 
+     * <p>
+     * A two dimensional array doesn't have a natural RDBMS mapping, so we simply store this a binary object in the database, an
+     * approach which requires no additional mapping logic. Any analysis of which seats within a section are allocated is done
+     * in the business logic, below, not by the RDBMS.
+     * </p>
+     * 
+     * <p>
+     * <code>@Lob</code> instructs JPA to map this a large object in the database
+     * </p>
+     */
+    @Lob
+    private long allocated[][];
+
+    /**
+     * <p>
+     *     The number of occupied seats in a section. It is updated whenever tickets are sold or canceled.
+     * </p>
+     *
+     * <p>
+     *     This field contains a summary of the information found in the <code>allocated</code> fields, and
+     *     it is intended to be used for analytics purposes only.
+     * </p>
+     */
+    private int occupiedCount = 0;
+
+    /**
+     * Constructor for persistence
+     */
+    public SectionAllocation() {
+    }
+
+    public SectionAllocation(Performance performance, Section section) {
+        this.performance = performance;
+        this.section = section;
+        this.allocated = new long[section.getNumberOfRows()][section.getRowCapacity()];
+        for (long[] seatStates : allocated) {
+            Arrays.fill(seatStates, 0l);
+        }
+    }
+
+    /**
+     * Post-load callback method initializes the allocation table if it not populated already
+     * for the entity
+     */
+    @PostLoad
+    void initialize() {
+        if (this.allocated == null) {
+            this.allocated = new long[this.section.getNumberOfRows()][this.section.getRowCapacity()];
+            for (long[] seatStates : allocated) {
+                Arrays.fill(seatStates, 0l);
+            }
+        }
+    }
+
+    /**
+     * Check if a particular seat is allocated in this section for this performance.
+     * 
+     * @return true if the seat is allocated, otherwise false
+     */
+    public boolean isAllocated(Seat s) {
+        // Examine the allocation matrix, using the row and seat number as indices
+        return allocated[s.getRowNumber() - 1][s.getNumber() - 1] != 0;
+    }
+
+    /**
+     * Allocate the specified number seats within this section for this performance. Optionally allocate them in a contiguous
+     * block.
+     * 
+     * @param seatCount the number of seats to allocate
+     * @param contiguous whether the seats must be allocated in a contiguous block or not
+     * @return the allocated seats
+     */
+    public ArrayList<Seat> allocateSeats(int seatCount, boolean contiguous) {
+        // The list of seats allocated
+        ArrayList<Seat> seats = new ArrayList<Seat>();
+
+        // The seat allocation algorithm starts by iterating through the rows in this section
+        for (int rowCounter = 0; rowCounter < section.getNumberOfRows(); rowCounter++) {
+
+            if (contiguous) {
+                // identify the first block of free seats of the requested size
+                int startSeat = findFreeGapStart(rowCounter, 0, seatCount);
+                // if a large enough block of seats is available
+                if (startSeat >= 0) {
+                    // Create the list of allocated seats to return
+                    for (int i = 1; i <= seatCount; i++) {
+                        seats.add(new Seat(section, rowCounter + 1, startSeat + i));
+                    }
+                    // Seats are allocated now, so we can stop checking rows
+                    break;
+                }
+            } else {
+                // As we aren't allocating contiguously, allocate each seat needed, one at a time
+                int startSeat = findFreeGapStart(rowCounter, 0, 1);
+                // if a seat is found
+                if (startSeat >= 0) {
+                    do {
+                        // Create the seat to return to the user
+                        seats.add(new Seat(section, rowCounter + 1, startSeat + 1));
+                        // Find the next free seat in the row
+                        startSeat = findFreeGapStart(rowCounter, startSeat, 1);
+                    } while (startSeat >= 0 && seats.size() < seatCount);
+                    if (seats.size() == seatCount) {
+                        break;
+                    }
+                }
+            }
+        }
+        // Simple check to make sure we could actually allocate the required number of seats
+
+        if (seats.size() == seatCount) {
+            for (Seat seat : seats) {
+                allocate(seat.getRowNumber() - 1, seat.getNumber() - 1, 1, getExpirationTimestamp());
+            }
+            return seats;
+        } else {
+            return new ArrayList<Seat>(0);
+        }
+    }
+
+    public void markOccupied(List<Seat> seats) {
+        for (Seat seat : seats) {
+            allocate(seat.getRowNumber() - 1, seat.getNumber() - 1, 1, -1);
+        }
+    }
+
+    /**
+     * Helper method which can locate blocks of seats
+     * 
+     * @param row The row number to check
+     * @param startSeat The seat to start with in the row
+     * @param size The size of the block to locate
+     * @return
+     */
+    private int findFreeGapStart(int row, int startSeat, int size) {
+
+        // An array of occupied seats in the row
+        long[] occupied = allocated[row];
+        int candidateStart = -1;
+
+        // Iterate over the seats, and locate the first free seat block
+        for (int i = startSeat; i < occupied.length; i++) {
+            // if the seat isn't allocated
+            long currentTimestamp = System.currentTimeMillis();
+            if (occupied[i] >=0 && currentTimestamp > occupied[i]) {
+                // then set this as a possible start
+                if (candidateStart == -1) {
+                    candidateStart = i;
+                }
+                // if we've counted out enough seats since the possible start, then we are done
+                if ((size == (i - candidateStart + 1))) {
+                    return candidateStart;
+                }
+            } else {
+                candidateStart = -1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Helper method to allocate a specific block of seats
+     * 
+     * @param row the row in which the seat should be allocated
+     * @param start the seat number to start allocating from
+     * @param size the size of the block to allocate
+     * @throws SeatAllocationException if less than 1 seat is to be allocated
+     * @throws SeatAllocationException if the first seat to allocate is more than the number of seats in the row
+     * @throws SeatAllocationException if the last seat to allocate is more than the number of seats in the row
+     * @throws SeatAllocationException if the seats are already occupied.
+     */
+    private void allocate(int row, int start, int size, long finalState) throws SeatAllocationException {
+        long[] occupied = allocated[row];
+        if (size <= 0) {
+            throw new SeatAllocationException("Number of seats must be greater than zero");
+        }
+        if (start < 0 || start >= occupied.length) {
+            throw new SeatAllocationException("Seat number must be betwen 1 and " + occupied.length);
+        }
+        if ((start + size) > occupied.length) {
+            throw new SeatAllocationException("Cannot allocate seats above row capacity");
+        }
+
+        // Now that we know we can allocate the seats, set them to occupied in the allocation matrix
+        for (int i = start; i < (start + size); i++) {
+            occupied[i] = finalState;
+            occupiedCount++;
+        }
+
+    }
+
+    /**
+     * Dellocate a seat within this section for this performance.
+     *
+     * @param seat the seats that need to be deallocated
+     */
+    public void deallocate(Seat seat) {
+        if (!isAllocated(seat)) {
+            throw new SeatAllocationException("Trying to deallocate an unallocated seat!");
+        }
+        this.allocated[seat.getRowNumber()-1][seat.getNumber()-1] = 0;
+        occupiedCount --;
+    }
+
+    /* Boilerplate getters and setters */
+
+    public int getOccupiedCount() {
+        return occupiedCount;
+    }
+
+    public Performance getPerformance() {
+        return performance;
+    }
+
+    public Section getSection() {
+        return section;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    private long getExpirationTimestamp() {
+        return System.currentTimeMillis() + EXPIRATION_TIME;
+    }
+
+}
+---------------------------------------------------------------------------------
+
+Next, we will implement a cart store service for cart CRUD operations. Since users may open as many carts as they want, but not complete the purchase, we will store them as temporary entries, with an expiration time, leaving the job of removing them automatically to the data grid middleware itself. Thus, you don't have to worry about cleaning up your data. 
+
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/service/CartStore.java
+[source,java]
+---------------------------------------------------------------------------------
+public class CartStore {
+
+    public static final String CARTS_CACHE = "TICKETMONSTER_CARTS";
+
+    private final Cache<String, Cart> cartsCache;
+
+    @Inject
+    public CartStore(EmbeddedCacheManager manager) {
+        this.cartsCache = manager.getCache(CARTS_CACHE);
+    }
+
+    public Cart getCart(String cartId) {
+        return this.cartsCache.get(cartId);
+    }
+
+    /**
+     * Saves or updates a cart, setting an expiration time.
+     *
+     * @param cart - the cart to be saved
+     */
+    public void saveCart(Cart cart) {
+        this.cartsCache.put(cart.getId(), cart, 10, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Removes a cart
+     *
+     * @param cart - the cart to be removed
+     */
+    public void delete(Cart cart) {
+        this.cartsCache.remove(cart.getId());
+    }
+}
+---------------------------------------------------------------------------------
+
+Now you can go on and implement the RESTful service for managing carts.
+
+First, you will implement the CRUD operations - adding and reading carts, as a thin layer on top of the `CartStore`. Because cart data is not tied to a web session, users can create as many carts as they want without having to worry about cleaning up the web session. Moreover, the web component of the application has a stateless architecture, which means that it can scale elastically across multiple machines - the responsibility of distributing data across nodes falling to the data grid itself.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/CartService.java
+[source,java]
+---------------------------------------------------------------------------------
+@Path("/carts")
+@Stateless
+public class CartService {
+
+    public static final String CARTS_CACHE = "CARTS";
+
+    @Inject
+    private CartStore cartStore;
+
+    /**
+     * Creates a new cart for a given performance, passed in as a JSON document.
+     *
+     * @param data
+     * @return
+     */
+    @POST
+    public Cart openCart(Map<String, String> data) {
+        Cart cart = Cart.initialize();
+        cart.setPerformance(entityManager.find(Performance.class,
+                Long.parseLong(data.get("performance"))));
+        cartStore.saveCart(cart);
+        return cart;
+    }
+
+    /**
+     * Retrieves a cart by its id.
+     *
+     * @param id
+     * @return
+     */
+    @GET
+    @Path("/{id}")
+    public Cart getCart(String id) {
+        Cart cart = cartStore.getCart(id);
+        if (cart != null) {
+           return cart;
+        } else {
+            throw new RestServiceException(Response.Status.NOT_FOUND);
+        }
+    }
+
+}
+---------------------------------------------------------------------------------
+
+The `openCart` method allows opening a cart by posting a simple JSON document containing the reference to a an existing performance to `http://localhost:8080/ticket-monster/rest/carts`. The `getCart` method allows accessing the cart contents from an URL of the form `http://localhost:8080/ticket-monster/rest/carts/<cartId>`. Thus, the carts themselves become web resources. In true RESTful fashion, if the cart cannot be found, a "Resource Not Found" error will be thrown by the server.
+
+ Next, you will add the ability of adding or removing seats from a cart. This will be done as an additional RESTful endpoint, that allows user to post ticket (or seat) requests to an existing cart, at the URL `http://localhost:8080/ticket-monster/rest/carts/<cartId>`. Whenever such a POST request is received, the `CartService` will delegate to the SeatAllocationService to adjust the current allocation, returning the cart contents (including the temporarily assigned seats) at the end.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/CartService.java
+[source,java]
+---------------------------------------------------------------------------------
+@Path("/carts")
+@Stateless
+public class CartService {
+    
+    // already added code ommitted
+    
+    @Inject
+    private EntityManager entityManager;
+
+    @Inject
+    private SeatAllocationService seatAllocationService;
+
+    // already added code ommitted
+
+    /**
+     * Add or remove tickets to the cart. Also reserves and frees seats as tickets are added
+     * and removed.
+     *
+     * @param id
+     * @param ticketRequests
+     * @return
+     */
+    @POST
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Cart addTicketRequest(@PathParam("id") String id, TicketRequest... ticketRequests){
+        Cart cart = cartStore.getCart(id);
+
+        for (TicketRequest ticketRequest : ticketRequests) {
+            TicketPrice ticketPrice = entityManager.find(TicketPrice.class, ticketRequest.getTicketPrice());
+            Iterator<SeatAllocation> iterator = cart.getSeatAllocations().iterator();
+            while (iterator.hasNext()) {
+                SeatAllocation seatAllocation = iterator.next();
+                if (seatAllocation.getTicketRequest().getTicketPrice() == ticketRequest.getTicketPrice()){
+                    seatAllocationService.deallocateSeats(ticketPrice.getSection(), cart.getPerformance(), seatAllocation.getAllocatedSeats());
+                    ticketRequest.setQuantity(ticketRequest.getQuantity() + seatAllocation.getTicketRequest().getQuantity());
+                    iterator.remove();
+                }
+            }
+            if (ticketRequest.getQuantity() > 0 ) {
+            AllocatedSeats allocatedSeats = seatAllocationService.allocateSeats(ticketPrice.getSection(), cart.getPerformance(), ticketRequest.getQuantity(), true);
+            cart.getSeatAllocations().add(new SeatAllocation(new TicketRequest(ticketPrice.getId(), ticketRequest.getQuantity()), allocatedSeats.getSeats()));
+            }
+        }
+        return cart;
+    }
+
+}
+---------------------------------------------------------------------------------
+
+Finally, when the user has finished reserving seats, they must complete the purchase. To that end, you will add another RESTful endpoint, at the URL `http://localhost:8080/ticket-monster/rest/carts/<cartId>/checkout`. Posting the final purchase data (like e-mail, and in the future, payment information) will trigger the checkout process, ticket allocation and making the seat reservations permanent. 
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/CartService.java
+[source,java]
+---------------------------------------------------------------------------------
+@Path("/carts")
+@Stateless
+public class CartService {
+   /**
+     * <p>
+     * Create a booking.
+     * </p>
+     *
+     * @param cartId
+     * @param data
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    @POST
+    /**
+     * <p> Data is received in JSON format. For easy handling, it will be unmarshalled in the support
+     * {@link BookingRequest} class.
+     */
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/checkout")
+    public Response createBookingFromCart(@PathParam("id") String cartId, Map<String, String> data) {
+        try {
+            // identify the ticket price categories in this request
+
+
+            Cart cart = cartStore.getCart(cartId);
+
+            // load the entities that make up this booking's relationships
+
+            // Now, start to create the booking from the posted data
+            // Set the simple stuff first!
+            Booking booking = new Booking();
+            booking.setContactEmail(data.get("email"));
+            booking.setPerformance(cart.getPerformance());
+            booking.setCancellationCode("abc");
+
+            for (SeatAllocation seatAllocation : cart.getSeatAllocations()) {
+                for (Seat seat : seatAllocation.getAllocatedSeats()) {
+                    TicketPrice ticketPrice = entityManager.find(TicketPrice.class, seatAllocation.getTicketRequest().getTicketPrice());
+                    booking.getTickets().add(new Ticket(seat, ticketPrice.getTicketCategory(), ticketPrice.getPrice()));
+                }
+                seatAllocationService.finalizeAllocation(cart.getPerformance(), seatAllocation.getAllocatedSeats());
+            }
+
+            booking.setCancellationCode("abc");
+            entityManager.persist(booking);
+            cartStore.delete(cart);
+            newBookingEvent.fire(booking);
+            return Response.ok().entity(booking).type(MediaType.APPLICATION_JSON_TYPE).build();
+
+        } catch (ConstraintViolationException e) {
+            // If validation of the data failed using Bean Validation, then send an error
+            Map<String, Object> errors = new HashMap<String, Object>();
+            List<String> errorMessages = new ArrayList<String>();
+            for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
+                errorMessages.add(constraintViolation.getMessage());
+            }
+            errors.put("errors", errorMessages);
+            // A WebApplicationException can wrap a response
+            // Throwing the exception causes an automatic rollback
+            throw new RestServiceException(Response.status(Response.Status.BAD_REQUEST).entity(errors).build());
+        } catch (Exception e) {
+            // Finally, handle unexpected exceptions
+            Map<String, Object> errors = new HashMap<String, Object>();
+            errors.put("errors", Collections.singletonList(e.getMessage()));
+            // A WebApplicationException can wrap a response
+            // Throwing the exception causes an automatic rollback
+            throw new RestServiceException(Response.status(Response.Status.BAD_REQUEST).entity(errors).build());
+        }
+    }
+---------------------------------------------------------------------------------
+
+Now, all that remains is modifying the client side of the application to adapt the changes in the web service structure. During the ticket booking process, as tickets are added and removed to the cart, the `CreateBookingView` will invoke the RESTful endpoints to allocate seats and will display the outcome to the user in the updated `TicketSummaryView`. Here is how the JavaScript code will change.
+
+.src/main/webapp/resources/js/app/views/desktop/create-booking.js
+[source,javascript]
+---------------------------------------------------------------------------------
+define([
+    'utilities',
+    'require',
+    'configuration',
+    'text!../../../../templates/desktop/booking-confirmation.html',
+    'text!../../../../templates/desktop/create-booking.html',
+    'text!../../../../templates/desktop/ticket-categories.html',
+    'text!../../../../templates/desktop/ticket-summary-view.html',
+    'bootstrap'
+],function (
+    utilities,
+    require,
+    config,
+    bookingConfirmationTemplate,
+    createBookingTemplate,
+    ticketEntriesTemplate,
+    ticketSummaryViewTemplate){
+
+
+    var TicketCategoriesView = Backbone.View.extend({
+        id:'categoriesView',
+        events:{
+            "keyup input":"onChange"
+        },
+        render:function () {
+            if (this.model != null) {
+                var ticketPrices = _.map(this.model, function (item) {
+                    return item.ticketPrice;
+                });
+                utilities.applyTemplate($(this.el), ticketEntriesTemplate, {ticketPrices:ticketPrices});
+            } else {
+                $(this.el).empty();
+            }
+            return this;
+        },
+        onChange:function (event) {
+            var value = event.currentTarget.value;
+            var ticketPriceId = $(event.currentTarget).data("tm-id");
+            var modifiedModelEntry = _.find(this.model, function (item) {
+                return item.ticketPrice.id == ticketPriceId
+            });
+            // update model
+            if ($.isNumeric(value) && value > 0) {
+                modifiedModelEntry.quantity = parseInt(value);
+            }
+            else {
+                delete modifiedModelEntry.quantity;
+            }
+            // display error messages
+            if (value.length > 0 &&
+                   (!$.isNumeric(value)  // is a non-number, other than empty string
+                        || value <= 0 // is negative
+                        || parseFloat(value) != parseInt(value))) { // is not an integer
+                $("#error-input-"+ticketPriceId).empty().append("Please enter a positive integer value");
+                $("#ticket-category-fieldset-"+ticketPriceId).addClass("error")
+            } else {
+                $("#error-input-"+ticketPriceId).empty();
+                $("#ticket-category-fieldset-"+ticketPriceId).removeClass("error")
+            }
+            // are there any outstanding errors after this update?
+            // if yes, disable the input button
+            if (
+               $("div[id^='ticket-category-fieldset-']").hasClass("error") ||
+                   _.isUndefined(modifiedModelEntry.quantity) ) {
+              $("input[name='add']").attr("disabled", true)
+            } else {
+              $("input[name='add']").removeAttr("disabled")
+            }
+        }
+    });
+
+    var TicketSummaryView = Backbone.View.extend({
+        tagName:'tr',
+        events:{
+            "click i":"removeEntry"
+        },
+        render:function () {
+            var self = this;
+            utilities.applyTemplate($(this.el), ticketSummaryViewTemplate, this.model.bookingRequest);
+        },
+        removeEntry:function (event) {
+           var index = $(event.currentTarget).data("index");
+           var ticketPriceId = this.model.bookingRequest.seatAllocations[index].ticketRequest.ticketPrice.id;
+           var self = this;
+           $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data: JSON.stringify([{ticketPrice:ticketPriceId, quantity:-1}]),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json",
+                success: function(cart) {
+                    self.owner.refreshSummary(cart, self.owner)
+                }
+           });
+        }
+    });
+
+    var CreateBookingView = Backbone.View.extend({
+
+        events:{
+            "click input[name='submit']":"save",
+            "change select[id='sectionSelect']":"refreshPrices",
+            "keyup #email":"updateEmail",
+            "change #email":"updateEmail",
+            "click input[name='add']":"addQuantities"
+        },
+        render:function () {
+
+            var self = this;
+            $.ajax({url: (config.baseUrl + "rest/carts"),
+                    data:JSON.stringify({performance:this.model.performanceId}),
+                    type:"POST",
+                    dataType:"json",
+                    contentType:"application/json",
+                    success: function (cart) {
+                        self.model.cartId = cart.id;
+                        $.getJSON(config.baseUrl + "rest/shows/" + self.model.showId, function (selectedShow) {
+
+                            self.currentPerformance = _.find(selectedShow.performances, function (item) {
+                                return item.id == self.model.performanceId;
+                            });
+
+                            var id = function (item) {return item.id;};
+                            // prepare a list of sections to populate the dropdown
+                            var sections = _.uniq(_.sortBy(_.pluck(selectedShow.ticketPrices, 'section'), id), true, id);
+                            utilities.applyTemplate($(self.el), createBookingTemplate, {
+                                sections:sections,
+                                show:selectedShow,
+                                performance:self.currentPerformance});
+                            self.ticketCategoriesView = new TicketCategoriesView({model:{}, el:$("#ticketCategoriesViewPlaceholder")});
+                            self.ticketSummaryView = new TicketSummaryView({model:self.model, el:$("#ticketSummaryView")});
+                            self.ticketSummaryView.owner = self;
+                            self.show = selectedShow;
+                            self.ticketCategoriesView.render();
+                            self.ticketSummaryView.render();
+                            $("#sectionSelector").change();
+                        });
+                    }
+                }
+            );
+            return this;
+        },
+        refreshPrices:function (event) {
+            var ticketPrices = _.filter(this.show.ticketPrices, function (item) {
+                return item.section.id == event.currentTarget.value;
+            });
+            var sortedTicketPrices = _.sortBy(ticketPrices, function(ticketPrice) {
+                return ticketPrice.ticketCategory.description;
+            });
+            var ticketPriceInputs = new Array();
+            _.each(sortedTicketPrices, function (ticketPrice) {
+                ticketPriceInputs.push({ticketPrice:ticketPrice});
+            });
+            this.ticketCategoriesView.model = ticketPriceInputs;
+            this.ticketCategoriesView.render();
+        },
+        save:function (event) {
+            var bookingRequest = {ticketRequests:[]};
+            var self = this;
+            bookingRequest.email = this.model.bookingRequest.email;
+            bookingRequest.performance = this.model.performanceId
+            $("input[name='submit']").attr("disabled", true)
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId + "/checkout"),
+                data:JSON.stringify({email:this.model.bookingRequest.email}),
+                type:"POST",
+                dataType:"json",
+                contentType:"application/json",
+                success:function (booking) {
+                    this.model = {}
+                    $.getJSON(config.baseUrl +'rest/shows/performance/' + booking.performance.id, function (retrievedPerformance) {
+                        utilities.applyTemplate($(self.el), bookingConfirmationTemplate, {booking:booking, performance:retrievedPerformance })
+                    });
+                }}).error(function (error) {
+                    if (error.status == 400 || error.status == 409) {
+                        var errors = $.parseJSON(error.responseText).errors;
+                        _.each(errors, function (errorMessage) {
+                            $("#request-summary").append('<div class="alert alert-error"><a class="close" data-dismiss="alert">×</a><strong>Error!</strong> ' + errorMessage + '</div>')
+                        });
+                    } else {
+                        $("#request-summary").append('<div class="alert alert-error"><a class="close" data-dismiss="alert">×</a><strong>Error! </strong>An error has occured</div>')
+                    }
+                    $("input[name='submit']").removeAttr("disabled");
+                })
+
+        },
+        calculateTotals:function () {
+            // make sure that tickets are sorted by section and ticket category
+            this.model.bookingRequest.seatAllocations.sort(function (t1, t2) {
+                if (t1.ticketRequest.ticketPrice.section.id != t2.ticketRequest.ticketPrice.section.id) {
+                    return t1.ticketRequest.ticketPrice.section.id - t2.ticketRequest.ticketPrice.section.id;
+                }
+                else {
+                    return t1.ticketRequest.ticketPrice.ticketCategory.id - t2.ticketRequest.ticketPrice.ticketCategory.id;
+                }
+            });
+
+            this.model.bookingRequest.totals = _.reduce(this.model.bookingRequest.seatAllocations, function (totals, seatAllocation) {
+                var ticketRequest = seatAllocation.ticketRequest;
+                return {
+                    tickets:totals.tickets + ticketRequest.quantity,
+                    price:totals.price + ticketRequest.quantity * ticketRequest.ticketPrice.price
+                };
+            }, {tickets:0, price:0.0});
+        },
+        addQuantities:function () {
+            var self = this;
+            var ticketRequests = [];
+            _.each(this.ticketCategoriesView.model, function (model) {
+                if (model.quantity != undefined) {
+                    ticketRequests.push({ticketPrice:model.ticketPrice.id, quantity:model.quantity})
+                }
+            });
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data:JSON.stringify(ticketRequests),
+                type:"POST",
+                dataType:"json",
+                contentType:"application/json",
+                success: function(cart) {
+                   self.refreshSummary(cart, self)
+                }}
+            );
+        },
+        refreshSummary: function(cart, view) {
+            view.model.bookingRequest.seatAllocations = cart.seatAllocations;
+            view.ticketCategoriesView.model = null;
+            $('option:selected', 'select').removeAttr('selected');
+            view.calculateTotals();
+            view.ticketCategoriesView.render();
+            view.ticketSummaryView.render();
+            view.setCheckoutStatus();
+        },
+        updateEmail:function (event) {
+            if ($(event.currentTarget).is(':valid')) {
+                this.model.bookingRequest.email = event.currentTarget.value;
+                $("#error-email").empty();
+            } else {
+                $("#error-email").empty().append("Please enter a valid e-mail address");
+                delete this.model.bookingRequest.email;
+            }
+            this.setCheckoutStatus();
+        },
+        setCheckoutStatus:function () {
+            if (this.model.bookingRequest.totals != undefined && this.model.bookingRequest.totals.tickets > 0 && this.model.bookingRequest.email != undefined && this.model.bookingRequest.email != '') {
+                $('input[name="submit"]').removeAttr('disabled');
+            }
+            else {
+                $('input[name="submit"]').attr('disabled', true);
+            }
+        }
+    });
+
+    return CreateBookingView;
+});
+---------------------------------------------------------------------------------
+
+Also, we need to update the router code as well.
+
+.src/main/webapp/resources/js/app/router/desktop/router.js
+[source,javascript]
+---------------------------------------------------------------------------------
+/**
+ * A module for the router of the desktop application
+ */
+define("router", [
+    'jquery',
+    'underscore',
+    'configuration',
+    'utilities',
+    'app/models/booking',
+    'app/models/event',
+    'app/models/venue',
+    'app/collections/bookings',
+    'app/collections/events',
+    'app/collections/venues',
+    'app/views/desktop/home',
+    'app/views/desktop/events',
+    'app/views/desktop/venues',
+    'app/views/desktop/create-booking',
+    'app/views/desktop/bookings',
+    'app/views/desktop/event-detail',
+    'app/views/desktop/venue-detail',
+    'app/views/desktop/booking-detail',
+    'text!../templates/desktop/main.html'
+],function ($,
+            _,
+            config,
+            utilities,
+            Booking,
+            Event,
+            Venue,
+            Bookings,
+            Events,
+            Venues,
+            HomeView,
+            EventsView,
+            VenuesView,
+            CreateBookingView,
+            BookingsView,
+            EventDetailView,
+            VenueDetailView,
+            BookingDetailView,
+            MainTemplate) {
+
+    $(document).ready(new function() {
+       utilities.applyTemplate($('body'), MainTemplate)
+    })
+
+    /**
+     * The Router class contains all the routes within the application - 
+     * i.e. URLs and the actions that will be taken as a result.
+     *
+     * @type {Router}
+     */
+
+    var Router = Backbone.Router.extend({
+        routes:{
+            "":"home",
+            "about":"home",
+            "events":"events",
+            "events/:id":"eventDetail",
+            "venues":"venues",
+            "venues/:id":"venueDetail",
+            "book/:showId/:performanceId":"bookTickets",
+            "bookings":"listBookings",
+            "bookings/:id":"bookingDetail",
+            "ignore":"ignore",
+            "*actions":"defaultHandler"
+        },
+        events:function () {
+            var events = new Events();
+            var eventsView = new EventsView({model:events, el:$("#content")});
+            events.bind("reset",
+                function () {
+                    utilities.viewManager.showView(eventsView);
+                }).fetch();
+        },
+        venues:function () {
+            var venues = new Venues;
+            var venuesView = new VenuesView({model:venues, el:$("#content")});
+            venues.bind("reset",
+                function () {
+                    utilities.viewManager.showView(venuesView);
+                }).fetch();
+        },
+        home:function () {
+            utilities.viewManager.showView(new HomeView({el:$("#content")}));
+        },
+        bookTickets:function (showId, performanceId) {
+            var createBookingView = 
+                new CreateBookingView({
+                    model:{ showId:showId, 
+                            performanceId:performanceId, 
+                            bookingRequest:{seatAllocations:[]}},
+                            el:$("#content")
+                           });
+            utilities.viewManager.showView(createBookingView);
+        },
+        listBookings:function () {
+            $.get(
+                config.baseUrl + "rest/bookings/count",
+                function (data) {
+                    var bookings = new Bookings;
+                    var bookingsView = new BookingsView({
+                        model:{bookings: bookings},
+                        el:$("#content"),
+                        pageSize: 10,
+                        page: 1,
+                        count:data.count});
+
+                    bookings.bind("destroy",
+                        function () {
+                            bookingsView.refreshPage();
+                        });
+                    bookings.fetch({data:{first:1, maxResults:10},
+                        processData:true, success:function () {
+                            utilities.viewManager.showView(bookingsView);
+                        }});
+                }
+            );
+
+        },
+        eventDetail:function (id) {
+            var model = new Event({id:id});
+            var eventDetailView = new EventDetailView({model:model, el:$("#content")});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(eventDetailView);
+                }).fetch();
+        },
+        venueDetail:function (id) {
+            var model = new Venue({id:id});
+            var venueDetailView = new VenueDetailView({model:model, el:$("#content")});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(venueDetailView);
+                }).fetch();
+        },
+        bookingDetail:function (id) {
+            var bookingModel = new Booking({id:id});
+            var bookingDetailView = new BookingDetailView({model:bookingModel, el:$("#content")});
+            bookingModel.bind("change",
+                function () {
+                    utilities.viewManager.showView(bookingDetailView);
+                }).fetch();
+
+        }
+    });
+
+    // Create a router instance
+    var router = new Router();
+
+    //Begin routing
+    Backbone.history.start();
+
+    return router;
+});
+---------------------------------------------------------------------------------
+
+Finally, we need to update a few templates to account for the changes in code. First, we will allow for displaying the seats in the ticket summary view as they are allocated.
+
+.src/main/webapp/resources/templates/desktop/ticket-summary-view.html
+[source, html]
+---------------------------------------------------------------------------------
+<div class="span12">
+    <% if (seatAllocations.length>0) { %>
+    <table class="table table-bordered table-condensed row-fluid" style="background-color: #fffffa;">
+        <thead>
+        <tr>
+            <th colspan="7"><strong>Requested tickets</strong></th>
+        </tr>
+        <tr>
+            <th>Section</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Row</th>
+            <th>Seat</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody id="ticketRequestSummary">
+        <% _.each(seatAllocations, function (seatAllocation, index, seatAllocations) { %>
+        <tr>
+            <td><%= seatAllocation.ticketRequest.ticketPrice.section.name %></td>
+            <td><%= seatAllocation.ticketRequest.ticketPrice.ticketCategory.description %></td>
+            <td><%= seatAllocation.ticketRequest.quantity %></td>
+            <td>$<%= seatAllocation.ticketRequest.ticketPrice.price%></td>
+            <td><%= seatAllocation.allocatedSeats[0].rowNumber %></td>
+            <td><% _.each(seatAllocation.allocatedSeats, function (ticketRequest, index, seat) { %>
+                <% if (index > 0) { %><p/><% } %><%= seatAllocation.allocatedSeats[index].number%>
+           <% });%></td>
+            <td><i class="icon-trash" data-index='<%= index %>'/></td>
+        </tr>
+        <% }); %>
+        </tbody>
+    </table>
+    <p/>
+    <div class="row-fluid">
+        <div class="span5"><strong>Total ticket count:</strong> <%= totals.tickets %></div>
+        <div class="span5"><strong>Total price:</strong> $<%=totals.price%></div></div>
+    <% } else { %>
+    No tickets requested.
+    <% } %>
+</div>
+---------------------------------------------------------------------------------
+
+Next, we will update the booking details view template.
+
+.src/main/webapp/resources/templates/desktop/booking-details.html
+[source, html]
+---------------------------------------------------------------------------------
+<div class="row-fluid">
+    <h2 class="page-header light-font special-title">Booking #<%=booking.id%> details</h2>
+</div>
+<div class="row-fluid">
+    <div class="span5 well">
+        <h4 class="page-header">Checkout information</h4>
+
+        <p><strong>Email: </strong><%= booking.contactEmail %></p>
+
+        <p><strong>Event: </strong> <%= performance.event.name %></p>
+
+        <p><strong>Venue: </strong><%= performance.venue.name %></p>
+
+        <p><strong>Date: </strong><%= new Date(booking.performance.date).toPrettyString() %></p>
+
+        <p><strong>Created on: </strong><%= new Date(booking.createdOn).toPrettyString() %></p>
+    </div>
+    <div class="span5 well">
+        <h4 class="page-header">Ticket allocations</h4>
+        <table class="table table-striped table-bordered" style="background-color: #fffffa;">
+            <thead>
+
+            <tr>
+                <th>Ticket #</th>
+                <th>Category</th>
+                <th>Section</th>
+                <th>Row</th>
+                <th>Seat</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% $.each(_.sortBy(booking.tickets, function(ticket) {return ticket.seat.section.id*1000
+                                           + ticket.seat.rowNumber*100
+                                           + ticket.seat.number}), function (i, ticket) { %>
+            <tr>
+                <td><%= ticket.id %></td>
+                <td><%=ticket.ticketCategory.description%></td>
+                <td><%=ticket.seat.section.name%></td>
+                <td><%=ticket.seat.rowNumber%></td>
+                <td><%=ticket.seat.number%></td>
+            </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row-fluid" style="padding-bottom:30px;">
+    <div class="span2"><a href="#bookings">Back</a></div>
+</div>
+---------------------------------------------------------------------------------
+
+Finally, you will need to update the booking confirmation page.
+
+.src/main/webapp/resources/templates/desktop/booking-confirmation.html
+[source, html]
+---------------------------------------------------------------------------------
+<div class="row-fluid">
+    <h2 class="special-title light-font">Booking #<%=booking.id%> confirmed!</h2>
+</div>
+<div class="row-fluid">
+    <div class="span5 well">
+        <h4 class="page-header">Checkout information</h4>
+        <p><strong>Email: </strong><%= booking.contactEmail %></p>
+        <p><strong>Event: </strong> <%= performance.event.name %></p>
+        <p><strong>Venue: </strong><%= performance.venue.name %></p>
+        <p><strong>Date: </strong><%= new Date(booking.performance.date).toPrettyString() %></p>
+        <p><strong>Created on: </strong><%= new Date(booking.createdOn).toPrettyString() %></p>
+    </div>
+    <div class="span5 well">
+        <h4 class="page-header">Ticket allocations</h4>
+        <table class="table table-striped table-bordered" style="background-color: #fffffa;">
+            <thead>
+            <tr>
+                <th>Ticket #</th>
+                <th>Category</th>
+                <th>Section</th>
+                <th>Row</th>
+                <th>Seat</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% $.each(_.sortBy(booking.tickets, function(ticket) {return ticket.seat.section.id*1000
+            + ticket.seat.rowNumber*100
+            + ticket.seat.number}), function (i, ticket) { %>
+            <tr>
+                <td><%= ticket.id %></td>
+                <td><%=ticket.ticketCategory.description%></td>
+                <td><%=ticket.seat.section.name%></td>
+                <td><%=ticket.seat.rowNumber%></td>
+                <td><%=ticket.seat.number%></td>
+            </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row-fluid" style="padding-bottom:30px;">
+    <div class="span2"><a href="#">Home</a></div>
+</div>n2"><a href="#bookings">Back</a></div>
+</div>
+---------------------------------------------------------------------------------
+
+This is it!
+
+Conclusion
+----------
+
+You have successfully converted your application from one that relies exclusively on relational persistence to using a NoSQL (key-value) data store for a part of its data. You have identified the use cases where the switch is mostly likely to result in performance improvements, including the changes in application functionality that can benefit from this conversion. You have learned how to set up the infrastructure, distinguish between the different configuration options, and use the API.   

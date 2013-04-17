@@ -164,7 +164,7 @@ public class BookingServiceTest {
         List<TicketPrice> possibleTicketPrices = new ArrayList<TicketPrice>(show.getTicketPrices());
         int i = 1;
         for (int index : ticketPriceNos) {
-            bookingRequest.addTicketRequest(new TicketReservationRequest(possibleTicketPrices.get(index).getId(), i));
+            bookingRequest.addTicketRequest(new TicketRequest(possibleTicketPrices.get(index).getId(), i));
             i++;
         }
 

@@ -98,7 +98,7 @@ public class Bot {
         for (int index : indicies) {
             int no = random.nextInt(MAX_TICKETS_PER_REQUEST);
             TicketPrice price = possibleTicketPrices.get(index);  
-            bookingRequest.addTicketRequest(new TicketReservationRequest(price.getId(), no));
+            bookingRequest.addTicketRequest(new TicketRequest(price.getId(), no));
             message
                 .append(no)
                 .append(" of ")
