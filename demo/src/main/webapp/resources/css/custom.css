@@ -5,6 +5,7 @@ body {
     background: url(../img/bg.png) repeat 0 0 #CCC;
     font-size:13px;
     min-width:1000px;
+    overflow-y:scroll;
 }
 
 a {
