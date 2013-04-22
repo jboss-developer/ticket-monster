@@ -4,6 +4,7 @@
 body {
     background: url(../img/bg.png) repeat 0 0 #CCC;
     font-size:13px;
+    min-width:1000px;
 }
 
 a {
@@ -53,7 +54,10 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
 .container-fluid {
     width: 940px;
     margin:0 auto;
-    padding:30px 0 10px 30px;
+    padding:30px 0 10px 0;
+}
+.container {
+    width: auto;
 }
 #menu {
     width:auto;
@@ -74,6 +78,11 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
 }
 .well {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.github-fork {
+    position: absolute;
+    right: 0;
 }
 
 
