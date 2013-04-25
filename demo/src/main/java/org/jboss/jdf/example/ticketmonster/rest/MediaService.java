@@ -2,7 +2,6 @@ package org.jboss.jdf.example.ticketmonster.rest;
 
 import java.io.File;
 
-import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.ws.rs.GET;

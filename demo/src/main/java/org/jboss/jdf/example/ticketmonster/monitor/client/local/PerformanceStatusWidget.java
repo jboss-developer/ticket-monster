@@ -16,12 +16,12 @@
 
 package org.jboss.jdf.example.ticketmonster.monitor.client.local;
 
-import com.google.gwt.user.client.ui.HTML;
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 
@@ -36,7 +36,6 @@ public class PerformanceStatusWidget extends Composite {
 
     private HorizontalPanel progressBar = new HorizontalPanel();
     private Label soldPercentLabel;
-    private Label availablePercentLabel;
 
     private Performance performance;
     private long soldTickets;

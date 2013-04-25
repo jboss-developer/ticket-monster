@@ -21,8 +21,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Cancelled;
-import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Created;
 import org.jboss.jdf.example.ticketmonster.model.Booking;
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Seat;
@@ -30,6 +28,8 @@ import org.jboss.jdf.example.ticketmonster.model.Section;
 import org.jboss.jdf.example.ticketmonster.model.Ticket;
 import org.jboss.jdf.example.ticketmonster.model.TicketCategory;
 import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
+import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Cancelled;
+import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Created;
 import org.jboss.jdf.example.ticketmonster.service.AllocatedSeats;
 import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;
 import org.jboss.jdf.example.ticketmonster.util.MultivaluedHashMap;
@@ -115,7 +115,6 @@ public class BookingService extends BaseEntityService<Booking> {
      * @param bookingRequest
      * @return
      */
-    @SuppressWarnings("unchecked")
     @POST
     /**
      * <p> Data is received in JSON format. For easy handling, it will be unmarshalled in the support
@@ -241,6 +240,7 @@ public class BookingService extends BaseEntityService<Booking> {
      * @param priceCategoryIds
      * @return
      */
+    @SuppressWarnings("unchecked")
     private Map<Long, TicketPrice> loadTicketPrices(Set<Long> priceCategoryIds) {
         List<TicketPrice> ticketPrices = (List<TicketPrice>) getEntityManager()
                 .createQuery("select p from TicketPrice p where p.id in :ids")

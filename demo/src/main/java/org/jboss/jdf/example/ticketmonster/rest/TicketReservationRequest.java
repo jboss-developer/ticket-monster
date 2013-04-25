@@ -1,6 +1,5 @@
 package org.jboss.jdf.example.ticketmonster.rest;
 
-import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 
 /**
  * <p>

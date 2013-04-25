@@ -130,7 +130,6 @@ public class CartService {
      * @param data
      * @return
      */
-    @SuppressWarnings("unchecked")
     @POST
     /**
      * <p> Data is received in JSON format. For easy handling, it will be unmarshalled in the support

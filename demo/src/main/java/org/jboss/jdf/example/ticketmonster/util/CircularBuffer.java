@@ -1,7 +1,6 @@
 package org.jboss.jdf.example.ticketmonster.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class CircularBuffer<T> {
@@ -12,6 +11,7 @@ public class CircularBuffer<T> {
 
     private final int capacity;
 
+    @SuppressWarnings("unchecked")
     public CircularBuffer(int capacity) {
         buffer = (T[]) new Object[capacity];
         this.capacity = capacity;

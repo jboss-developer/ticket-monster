@@ -39,7 +39,13 @@ import javax.validation.constraints.NotNull;
  */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "performance_id", "section_id" }))
+/*
+ * We suppress the warning about not specifying a serialVersionUID, as we are still developing this app, and want the JVM to
+ * generate the serialVersionUID for us. When we put this app into production, we'll generate and embed the serialVersionUID
+ */
+@SuppressWarnings("serial")
 public class SectionAllocation implements Serializable {
+    
     public static final int EXPIRATION_TIME = 60 * 1000;
 
     /* Declaration of fields */
