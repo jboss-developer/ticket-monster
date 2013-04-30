@@ -147,7 +147,7 @@ a:hover {
     text-decoration: underline;
 }
 .row {
-    margin-left: -20px;
+    position: relative;
     *zoom: 1;
 }
 .row:before,
@@ -192,7 +192,7 @@ a:hover {
     width: 380px;
 }
 .span4 {
-    width: 300px;
+    width: 280px;
 }
 .span3 {
     width: 220px;
