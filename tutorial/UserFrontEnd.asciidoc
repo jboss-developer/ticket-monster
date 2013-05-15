@@ -230,9 +230,9 @@ define("router", [
 
 Remember, this is a single page application. You can either navigate using urls such as `http://localhost:8080/ticket-monster/desktop-index.html#events` or using relative urls (from within the application, this being exactly what the main menu does). The fragment after the hash sign represents the url within the single page, on which the router will act, according to the mappings set up in the `routes` property.
 
-The main module needs to load it. Because the router depends on all the other components (models, collections and views) of the application, directly or indirectly, it is the only component that is explicitly loaded in the `main-desktop` definition, which we change as follows:
+The main module needs to load it. Because the router depends on all the other components (models, collections and views) of the application, directly or indirectly, it is the only component that is explicitly loaded in the `desktop` definition, which we change as follows:
 
-.src/main/webapp/resources/js/main-desktop.js
+.src/main/webapp/resources/js/configurations/desktop.js
 [source,javascript]
 -------------------------------------------------------------------------------------------------------
 requirejs.config({
