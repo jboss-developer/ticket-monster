@@ -182,7 +182,7 @@ Before we add any functionality, let us create a first landing page. We will beg
 Routing
 ~~~~~~~
 
-The outer allows for navigation in our application via bookmarkable URLs, and we will define it as follows:
+The router allows for navigation in our application via bookmarkable URLs, and we will define it as follows:
 
 .src/main/webapp/resources/js/app/router/desktop/router.js
 [source, javascript]
@@ -230,9 +230,9 @@ define("router", [
 
 Remember, this is a single page application. You can either navigate using urls such as `http://localhost:8080/ticket-monster/desktop-index.html#events` or using relative urls (from within the application, this being exactly what the main menu does). The fragment after the hash sign represents the url within the single page, on which the router will act, according to the mappings set up in the `routes` property.
 
-The main module needs to load it. Because the router depends on all the other components (models, collections and views) of the application, directly or indirectly, it is the only component that is explicitly loaded in the `main-desktop` definition, which we change as follows:
+The main module needs to load it. Because the router depends on all the other components (models, collections and views) of the application, directly or indirectly, it is the only component that is explicitly loaded in the `desktop` definition, which we change as follows:
 
-.src/main/webapp/resources/js/main-desktop.js
+.src/main/webapp/resources/js/configurations/desktop.js
 [source,javascript]
 -------------------------------------------------------------------------------------------------------
 requirejs.config({
@@ -377,7 +377,7 @@ The first use case that we implement is event navigation. The users will be able
 The Event model
 ~~~~~~~~~~~~~~~
 
-We a Backbone model for holding event data. Nearly all domain entities (booking, event, venue) are represented by a corresponding Backbone model:
+We define a Backbone model for holding event data. Nearly all domain entities (booking, event, venue) are represented by a corresponding Backbone model:
 
 .src/main/webapp/resources/js/app/models/event.js
 [source,javascript]
@@ -422,7 +422,7 @@ We define a Backbone collection for handling groups of events (like the events l
  * Module for the Events collection
  */
 define([
-    // BThe collection element type and configuration are dependencies
+    // The collection element type and configuration are dependencies
     'app/models/event',
     'configuration'
 ], function (Event, config) {
@@ -817,7 +817,7 @@ With this in place, all that remains is to implement the final view of this use 
 Creating Bookings
 -----------------
 
-The user has chosen the event, the venue and the performance time, and must now create the booking. Users can select one of the available sections for the show's venue, and then enter the number of tickets requiredfor each category available for this show (Adult, Child, etc.). They then add the tickets to the current order, which causes the summary view to be updated. Users can also remove tickets from the order. When the order is complete, they enter their contact information (e-mail address) and submit the order to the server.
+The user has chosen the event, the venue and the performance time, and must now create the booking. Users can select one of the available sections for the show's venue, and then enter the number of tickets required for each category available for this show (Adult, Child, etc.). They then add the tickets to the current order, which causes the summary view to be updated. Users can also remove tickets from the order. When the order is complete, they enter their contact information (e-mail address) and submit the order to the server.
 
 First, we add the new view:
 
@@ -1270,7 +1270,7 @@ define("router", [
 
 This concludes the implementation of the booking use case. We started by listing the available events, continued by selecting a venue and performance time, and ended by choosing tickets and completing the order.
 
-The other use cases: a booking starting from venues and vi existing bookings are conceptually similar, so you can just copy the remaining files in the `src/main/webapp/resources/js/app/models`, `src/main/webapp/resources/js/app/collections`, 
+The other use cases: a booking starting from venues and view existing bookings are conceptually similar, so you can just copy the remaining files in the `src/main/webapp/resources/js/app/models`, `src/main/webapp/resources/js/app/collections`, 
 `src/main/webapp/resources/js/app/views/desktop` and the remainder of `src/main/webapp/resources/js/app/routers/desktop/router.js`.
 
 

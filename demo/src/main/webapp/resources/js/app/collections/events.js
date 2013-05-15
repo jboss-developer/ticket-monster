@@ -2,7 +2,7 @@
  * Module for the Events collection
  */
 define([
-    // BThe collection element type and configuration are dependencies
+    // The collection element type and configuration are dependencies
     'app/models/event',
     'configuration',
     'backbone'
