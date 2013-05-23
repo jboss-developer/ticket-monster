@@ -14,6 +14,7 @@ import javax.validation.constraints.Size;
 
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.IndexedEmbedded;
 import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
@@ -38,7 +39,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @SuppressWarnings("serial")
 @Entity
 @Portable
-@Indexed
 public class Event implements Serializable {
 
     /* Declaration of fields */
@@ -127,6 +127,7 @@ public class Event implements Serializable {
      */
     @ManyToOne
     @NotNull
+    @IndexedEmbedded
     private EventCategory category;
 
     /* Boilerplate getters and setters */

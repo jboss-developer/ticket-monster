@@ -16,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import org.hibernate.search.annotations.Field;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.jboss.errai.common.client.api.annotations.Portable;
 
@@ -61,6 +62,7 @@ public class Venue implements Serializable {
      */
     @Column(unique = true)
     @NotEmpty
+    @Field
     private String name;
 
     /**

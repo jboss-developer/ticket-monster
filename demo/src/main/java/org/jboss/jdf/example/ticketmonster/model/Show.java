@@ -18,6 +18,8 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.IndexedEmbedded;
 import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
@@ -45,6 +47,7 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "event_id", "venue_id" }))
 @Portable
+@Indexed
 public class Show implements Serializable {
 
     /* Declaration of fields */
@@ -67,6 +70,7 @@ public class Show implements Serializable {
      */
     @ManyToOne
     @NotNull
+    @IndexedEmbedded
     private Event event;
 
     /**
@@ -80,6 +84,7 @@ public class Show implements Serializable {
      */
     @ManyToOne
     @NotNull
+    @IndexedEmbedded
     private Venue venue;
 
     /**
