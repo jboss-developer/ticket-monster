@@ -25,6 +25,10 @@
          <property name="hibernate.hbm2ddl.auto" value="create-drop" />
          <property name="hibernate.show_sql" value="false" />
          <property name="hibernate.search.default.directory_provider" value="ram"/>
+         <!-- 
+         <property name="hibernate.search.default.directory_provider" value="filesystem"/>
+         <property name="hibernate.search.default.indexBase" value="/Users/emmanuel/Code/ticket-monster/indexes"/>
+         -->
       </properties>
    </persistence-unit>
 </persistence>

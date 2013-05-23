@@ -20,7 +20,7 @@ public class Bootstrap {
     @PostConstruct
     public void onStartup() {
         try {
-            ftem.createIndexer().startAndWait();
+        	ftem.createIndexer().purgeAllOnStart(true).startAndWait();
         } catch (InterruptedException e) {
             logger.severe("Unable to index data with Hibernate Search");
         }
