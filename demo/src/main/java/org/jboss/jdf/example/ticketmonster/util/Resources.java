@@ -2,10 +2,14 @@ package org.jboss.jdf.example.ticketmonster.util;
 
 import java.util.logging.Logger;
 
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
 
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans
@@ -21,14 +25,17 @@ import javax.persistence.PersistenceContext;
  */
 public class Resources {
 
-    /**
-     * Alias the persistence context
-     */
-    // use @SuppressWarnings to tell IDE to ignore warnings about field not being referenced directly
-   @SuppressWarnings("unused")
    @Produces
    @PersistenceContext
    private EntityManager em;
+   
+   /**
+    * Produces Hibernate Search EntityManager
+    */
+   @Produces @ForSearch @Dependent
+   public FullTextEntityManager getFullTextEntityManager(EntityManager em) {
+      return Search.getFullTextEntityManager(em); 
+   }
    
    /**
     * Provider injectable loggers based around Java Util Logging.
