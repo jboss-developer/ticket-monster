@@ -1,4 +1,4 @@
-package org.jboss.jdf.example.ticketmonster.rest;
+package org.jboss.jdf.example.ticketmonster.rest.search;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +35,7 @@ public class SearchService {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<Show> search(@QueryParam("query") String searchString) {
+	public ShowResults search(@QueryParam("query") String searchString) {
 		log("Entering search");
 		if (searchString == null || searchString.length() == 0) {
 			log("search string is empty or null");
@@ -52,6 +52,7 @@ public class SearchService {
 			.createQuery();
 		log("Executing lucene query " + luceneQuery.toString());
 		FullTextQuery objectQuery = ftem.createFullTextQuery(luceneQuery, Show.class);
-		return (List<Show>) objectQuery.getResultList();
+		objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+		return new ShowResults(objectQuery.getResultList());
 	}
 }
