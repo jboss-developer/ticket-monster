@@ -9,6 +9,7 @@ define("router", [
     'app/models/booking',
     'app/models/event',
     'app/models/venue',
+    'app/models/results',
     'app/collections/bookings',
     'app/collections/events',
     'app/collections/venues',
@@ -20,6 +21,7 @@ define("router", [
     'app/views/desktop/event-detail',
     'app/views/desktop/venue-detail',
     'app/views/desktop/booking-detail',
+    'app/views/desktop/results',
     'text!../templates/desktop/main.html'
 ],function ($,
             _,
@@ -28,6 +30,7 @@ define("router", [
             Booking,
             Event,
             Venue,
+            Results,
             Bookings,
             Events,
             Venues,
@@ -39,6 +42,7 @@ define("router", [
             EventDetailView,
             VenueDetailView,
             BookingDetailView,
+            ResultsView,
             MainTemplate) {
 
     $(document).ready(new function() {
@@ -63,6 +67,7 @@ define("router", [
             "book/:showId/:performanceId":"bookTickets",
             "bookings":"listBookings",
             "bookings/:id":"bookingDetail",
+            "search/:query":"results",
             "ignore":"ignore",
             "*actions":"defaultHandler"
         },
@@ -143,7 +148,16 @@ define("router", [
                     utilities.viewManager.showView(bookingDetailView);
                 }).fetch();
 
-        }
+        },
+        results:function (query) {
+            var model = new Results();
+            model.set("query", query);
+            var resultsView = new ResultsView({model:model, el:$("#content")});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(resultsView);
+                }).fetch();
+        },
     });
 
     // Create a router instance

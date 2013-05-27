@@ -1,0 +1,21 @@
+<h3 class="page-header light-font special-title">Results for <%=query%></h3>
+<div class="row-fluid">
+    <div class='span12'>
+        <table class='table table-bordered' style="background: #fffffa;">
+            <thead>
+            <tr>
+                <th>Event</th>
+                <th>Venue</th>
+            </tr>
+            </thead>
+            <tbody id='bookingList'>
+            <% _.each(model.get("results"), function (result) { %>
+            <tr>
+                <td><a href="#events/<%=result.eventId%>"><%=result.eventName%></a></td>
+                <td><%=result.venueName%></td>
+            </tr>
+            <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
