@@ -15,8 +15,19 @@
                         <li><a href="#bookings">Bookings</a></li>
                         <li><a href="booking-monitor.html">Monitor</a></li>
                         <li><a href="admin">Administration</a></li>
-                        <li><a href="#search/decade">Search</a></li>
                     </ul>
+                    <script type="text/javascript">
+		              //<![CDATA[
+		                function get_results()
+		                {
+			                location.href = "#search/" + escape(document.searchbox.query.value);
+		                    return false;
+		                }
+		              //]]>
+		            </script>
+                    <form id="searchbox" name="searchbox" class="navbar-search pull-right" onsubmit="return get_results();;">
+                    	<input id="query" name="query" class="search-query" type="text" placeholder="Search"/>
+                    </form>
                 </div>
             </div>
         </div>
