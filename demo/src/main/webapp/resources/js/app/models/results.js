@@ -11,8 +11,12 @@ define([
     var Results = Backbone.Model.extend({
         urlRoot: config.baseUrl + 'rest/search', // the URL for performing CRUD operations
         url: function() {
-            console.log("Undefined var: " + this.get("someundefinedvalfial"));
-            return this.urlRoot + '?query=' + encodeURIComponent(this.get("query"));
+            params = '?query=' + encodeURIComponent(this.get("query"));
+            if (typeof this.get("lat") != 'undefined' && typeof this.get("lng") != 'undefined') {
+                params = params + '&latitude=' + encodeURIComponent(this.get("lat")) + '&longitude=' + encodeURIComponent(this.get("lng"));
+            }
+            console.log("Calling REST endpoint " + this.urlRoot + params);
+            return this.urlRoot + params;
         }
     });
     // export the Results class

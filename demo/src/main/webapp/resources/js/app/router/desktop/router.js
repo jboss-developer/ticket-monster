@@ -67,7 +67,8 @@ define("router", [
             "book/:showId/:performanceId":"bookTickets",
             "bookings":"listBookings",
             "bookings/:id":"bookingDetail",
-            "search/:query":"results",
+            "search/anywhere/:query":"results",
+            "search/around/:lat-:lng/:query":"localResults",
             "ignore":"ignore",
             "*actions":"defaultHandler"
         },
@@ -158,6 +159,17 @@ define("router", [
                     utilities.viewManager.showView(resultsView);
                 }).fetch();
         },
+        localResults:function (lat, lng, query) {
+            var model = new Results();
+            model.set("query", query);
+            model.set("lat", lat);
+            model.set("lng", lng);
+            var resultsView = new ResultsView({model:model, el:$("#content")});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(resultsView);
+                }).fetch();
+        }
     });
 
     // Create a router instance
