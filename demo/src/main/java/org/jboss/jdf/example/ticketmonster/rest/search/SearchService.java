@@ -6,7 +6,9 @@ import java.util.logging.Logger;
 
 import javax.ejb.Stateless;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.New;
 import javax.inject.Inject;
+import javax.persistence.EntityManager;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -18,6 +20,7 @@ import javax.ws.rs.core.Response;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
+import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.jboss.jdf.example.ticketmonster.model.Event;
 import org.jboss.jdf.example.ticketmonster.model.Show;
@@ -26,8 +29,12 @@ import org.jboss.jdf.example.ticketmonster.util.ForSearch;
 @Stateless
 @Path("/search")
 public class SearchService {
-	@Inject @ForSearch FullTextEntityManager ftem;
+	@Inject EntityManager em;
 	@Inject Logger logger;
+	
+	private FullTextEntityManager ftem() {
+		return Search.getFullTextEntityManager(em);
+	}
 	
 	private void log(String message) {
 		logger.info(message);
@@ -42,7 +49,7 @@ public class SearchService {
 			throw new WebApplicationException(new RuntimeException("Query must have a QueryParam 'query'"), Response.Status.BAD_REQUEST);
 		}
 		log("search string is " + searchString);
-		QueryBuilder qb = ftem.getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
+		QueryBuilder qb = ftem().getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
 		Query luceneQuery = qb.keyword()
 			.onField("event.name").boostedTo(10f)
 			.andField("event.description")
@@ -51,7 +58,7 @@ public class SearchService {
 			.matching(searchString)
 			.createQuery();
 		log("Executing lucene query " + luceneQuery.toString());
-		FullTextQuery objectQuery = ftem.createFullTextQuery(luceneQuery, Show.class);
+		FullTextQuery objectQuery = ftem().createFullTextQuery(luceneQuery, Show.class);
 		objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
 		return new ShowResults(objectQuery.getResultList());
 	}
