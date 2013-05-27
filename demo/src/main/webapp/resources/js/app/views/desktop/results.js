@@ -17,11 +17,10 @@ define([
         },
         
         render:function () {
-        	$(this.el).empty();
-        	utilities.applyTemplate($(this.el), resultsTemplate, {model:this.model, query:this.model.get("query")});
-	        return this;	
+            $(this.el).empty();
+            utilities.applyTemplate($(this.el), resultsTemplate, {model:this.model, query:this.model.get("query")});
+            return this;	
         }
     });
-	
-	return ResultsView;
+    return ResultsView;
 });

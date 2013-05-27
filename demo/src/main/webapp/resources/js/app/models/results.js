@@ -11,8 +11,9 @@ define([
     var Results = Backbone.Model.extend({
         urlRoot: config.baseUrl + 'rest/search', // the URL for performing CRUD operations
         url: function() {
-			return this.urlRoot + '?query=' + encodeURIComponent(this.get("query"));
-	    }
+            console.log("Undefined var: " + this.get("someundefinedvalfial"));
+            return this.urlRoot + '?query=' + encodeURIComponent(this.get("query"));
+        }
     });
     // export the Results class
     return Results;
