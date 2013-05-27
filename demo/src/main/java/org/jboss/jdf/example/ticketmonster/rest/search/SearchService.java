@@ -29,37 +29,43 @@ import org.jboss.jdf.example.ticketmonster.util.ForSearch;
 @Stateless
 @Path("/search")
 public class SearchService {
-	@Inject EntityManager em;
-	@Inject Logger logger;
-	
-	private FullTextEntityManager ftem() {
-		return Search.getFullTextEntityManager(em);
-	}
-	
-	private void log(String message) {
-		logger.info(message);
-	}
-	
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public ShowResults search(@QueryParam("query") String searchString) {
-		log("Entering search");
-		if (searchString == null || searchString.length() == 0) {
-			log("search string is empty or null");
-			throw new WebApplicationException(new RuntimeException("Query must have a QueryParam 'query'"), Response.Status.BAD_REQUEST);
-		}
-		log("search string is " + searchString);
-		QueryBuilder qb = ftem().getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
-		Query luceneQuery = qb.keyword()
-			.onField("event.name").boostedTo(10f)
-			.andField("event.description")
-			.andField("event.category.description").boostedTo(3f)
-			.andField("venue.name").boostedTo(5f)
-			.matching(searchString)
-			.createQuery();
-		log("Executing lucene query " + luceneQuery.toString());
-		FullTextQuery objectQuery = ftem().createFullTextQuery(luceneQuery, Show.class);
-		objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
-		return new ShowResults(objectQuery.getResultList());
-	}
+    @Inject
+    EntityManager em;
+    @Inject
+    Logger logger;
+
+    // @Inject @ForSearch FullTextEntityManager ftem;
+
+    private FullTextEntityManager ftem() {
+        return Search.getFullTextEntityManager(em);
+        // return ftem;
+    }
+
+    private void log(String message) {
+        logger.info(message);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString) {
+        log("Entering search");
+        if (searchString == null || searchString.length() == 0) {
+            log("search string is empty or null");
+            throw new WebApplicationException(new RuntimeException("Query must have a QueryParam 'query'"),
+                Response.Status.BAD_REQUEST);
+        }
+        log("search string is " + searchString);
+        QueryBuilder qb = ftem().getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
+        Query luceneQuery = qb.keyword()
+            .onField("event.name").boostedTo(10f)
+            .andField("event.description")
+            .andField("event.category.description").boostedTo(3f)
+            .andField("venue.name").boostedTo(5f)
+            .matching(searchString)
+            .createQuery();
+        log("Executing lucene query " + luceneQuery.toString());
+        FullTextQuery objectQuery = ftem().createFullTextQuery(luceneQuery, Show.class);
+        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+        return new ShowResults(objectQuery.getResultList());
+    }
 }

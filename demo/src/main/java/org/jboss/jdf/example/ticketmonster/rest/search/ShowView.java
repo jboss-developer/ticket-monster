@@ -3,37 +3,37 @@ package org.jboss.jdf.example.ticketmonster.rest.search;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 
 public class ShowView {
-	private Long eventId;
-	private String eventName;
-	private String eventDescription;
-	private String eventCategory;
-	private String venueName;
-	
-	public ShowView(Show show) {
-		this.eventId = show.getEvent().getId();
-		this.eventName = show.getEvent().getName();
-		this.eventDescription = show.getEvent().getDescription();
-		this.eventCategory = show.getEvent().getCategory().getDescription();
-		this.venueName = show.getVenue().getName();
-	}
+    private Long eventId;
+    private String eventName;
+    private String eventDescription;
+    private String eventCategory;
+    private String venueName;
 
-	public Long getEventId() {
-		return eventId;
-	}
+    public ShowView(Show show) {
+        this.eventId = show.getEvent().getId();
+        this.eventName = show.getEvent().getName();
+        this.eventDescription = show.getEvent().getDescription();
+        this.eventCategory = show.getEvent().getCategory().getDescription();
+        this.venueName = show.getVenue().getName();
+    }
 
-	public String getEventName() {
-		return eventName;
-	}
+    public Long getEventId() {
+        return eventId;
+    }
 
-	public String getEventDescription() {
-		return eventDescription;
-	}
+    public String getEventName() {
+        return eventName;
+    }
 
-	public String getEventCategory() {
-		return eventCategory;
-	}
+    public String getEventDescription() {
+        return eventDescription;
+    }
 
-	public String getVenueName() {
-		return venueName;
-	}
+    public String getEventCategory() {
+        return eventCategory;
+    }
+
+    public String getVenueName() {
+        return venueName;
+    }
 }

@@ -34,7 +34,7 @@ public class Resources {
     */
    @Produces @ForSearch @Dependent
    public FullTextEntityManager getFullTextEntityManager(EntityManager em) {
-      return Search.getFullTextEntityManager(em); 
+     return Search.getFullTextEntityManager(em); 
    }
    
    /**

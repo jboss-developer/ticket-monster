@@ -12,11 +12,12 @@ import static java.lang.annotation.ElementType.PARAMETER;
 
 /**
  * Qualifier used to inject a FullTextEntityManager
+ * 
  * @author emmanuel
  */
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE, METHOD, FIELD, PARAMETER})
+@Target({ TYPE, METHOD, FIELD, PARAMETER })
 public @interface ForSearch {
 
 }
