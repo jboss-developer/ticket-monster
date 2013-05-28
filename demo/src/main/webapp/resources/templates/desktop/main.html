@@ -22,7 +22,10 @@
                         {
                             if (document.searchbox.local.checked && navigator.geolocation)
                             {
-                                navigator.geolocation.getCurrentPosition(handlePosition);
+                                options = {
+                                    maximumAge: 6000000 // milliseconds (100 minutes)
+                                }
+                                navigator.geolocation.getCurrentPosition(handlePosition, handleError, options);
                             }
                             else {
                                 return queryAnywhere();
@@ -30,6 +33,10 @@
                             function handlePosition(pos)
                             {
                                 return queryLocal(pos.coords);
+                            }
+                            function handleError(error)
+                            {
+                                return queryAnywhere();
                             }
                         }
                         function queryAnywhere()
