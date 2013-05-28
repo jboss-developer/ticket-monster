@@ -42,6 +42,8 @@ insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com
 insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com/u/8625587/ticketmonster/Giantsofthegame.png')
 -- MediaItem 21
 insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com/u/8625587/ticketmonster/Punch%26Judy.png')
+-- MediaItem 22
+insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Paris_Opera_full_frontal_architecture%2C_May_2009.jpg/800px-Paris_Opera_full_frontal_architecture%2C_May_2009.jpg')
 
 -- Venue 1
 insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'Roy Thomson Hall', 'Toronto', 'Canada', '60 Simcoe Street','Roy Thomson Hall is the home of the Toronto Symphony Orchestra and the Toronto Mendelssohn Choir.',4, 11000, 43.6466150, -79.3864430);
@@ -84,6 +86,19 @@ insert into Section ( name, description, numberofrows, rowcapacity, venue_id) va
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'C', 'Premier silver reserve', 30, 200, 3);
 -- Section 15
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'D', 'General', 80, 200, 3);
+
+-- Venue 4
+
+insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'Opera Garnier', 'Paris', 'France', '8 Rue Scribe','The Palais Garnier is a 1,979-seat opera house, which was built from 1861 to 1875 for the Paris Opera.', 23, 1972, 48.8719444, 2.3316667);
+
+-- Section 16
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'A', 'Center',10, 60, 4);
+-- Section 17
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'B', 'Left', 10, 41, 4);
+-- Section 18
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'C', 'Right', 10, 41, 4);
+-- Section 19
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'D', 'Balcony', 6, 92, 4);
 
 -- EventCategory 1
 insert into EventCategory ( description) values ( 'Concert');
