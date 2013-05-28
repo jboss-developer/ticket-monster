@@ -44,7 +44,7 @@ insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com
 insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com/u/8625587/ticketmonster/Punch%26Judy.png')
 
 -- Venue 1
-insert into Venue ( name, city, country, street, description, mediaitem_id, capacity) values ( 'Roy Thomson Hall', 'Toronto', 'Canada', '60 Simcoe Street','Roy Thomson Hall is the home of the Toronto Symphony Orchestra and the Toronto Mendelssohn Choir.',4, 11000);
+insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'Roy Thomson Hall', 'Toronto', 'Canada', '60 Simcoe Street','Roy Thomson Hall is the home of the Toronto Symphony Orchestra and the Toronto Mendelssohn Choir.',4, 11000, 43.6466150, -79.3864430);
 
 -- Section 1
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'A', 'Premier platinum reserve',20, 100, 1);
@@ -56,7 +56,7 @@ insert into Section ( name, description, numberofrows, rowcapacity, venue_id) va
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'D', 'General', 40, 100, 1);
 
 -- Venue 2
-insert into Venue ( name, city, country, street, description, mediaitem_id, capacity) values ( 'Sydney Opera House', 'Sydney', 'Australia', 'Bennelong point', 'The Sydney Opera House is a multi-venue performing arts centre in Sydney, New South Wales, Australia' ,3, 15030);
+insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'Sydney Opera House', 'Sydney', 'Australia', 'Bennelong point', 'The Sydney Opera House is a multi-venue performing arts centre in Sydney, New South Wales, Australia' ,3, 15030, -33.8592804, 151.2135224);
 
 -- Section 5
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'S1', 'Front left', 50, 50, 2);
@@ -74,7 +74,7 @@ insert into Section ( name, description, numberofrows, rowcapacity, venue_id) va
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'S7', 'Balcony', 1, 30, 2);
 
 -- Venue 3
-insert into Venue ( name, city, country, street, description, mediaitem_id, capacity) values ( 'BMO Field', 'Toronto', 'Canada', '170 Princes Boulevard','BMO Field is a Canadian soccer stadium located in Exhibition Place in the city of Toronto.',5, 30000);
+insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'BMO Field', 'Toronto', 'Canada', '170 Princes Boulevard','BMO Field is a Canadian soccer stadium located in Exhibition Place in the city of Toronto.',5, 30000, 45.9425208, -66.6410445);
 
 -- Section 12
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'A', 'Premier platinum reserve',40, 100, 3);

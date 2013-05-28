@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 import javax.persistence.Embeddable;
 
+import org.hibernate.search.annotations.Latitude;
+import org.hibernate.search.annotations.Longitude;
+import org.hibernate.search.annotations.Spatial;
+import org.hibernate.search.annotations.SpatialMode;
 import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
@@ -22,12 +26,17 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @SuppressWarnings("serial")
 @Embeddable
 @Portable
+@Spatial(name="coordinates", spatialMode=SpatialMode.GRID)
 public class Address implements Serializable {
 
     /* Declaration of fields */
     private String street;
     private String city;
     private String country;
+    @Latitude(of="coordinates")
+    private double latitude;
+    @Longitude(of="coordinates")
+    private double longitude;
     
     /* Declaration of boilerplate getters and setters */
 
@@ -57,6 +66,22 @@ public class Address implements Serializable {
 
     /* toString(), equals() and hashCode() for Address, using the natural identity of the object */
     
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)

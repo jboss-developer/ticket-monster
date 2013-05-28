@@ -25,14 +25,14 @@ public class SearchServiceTest {
     
     @Test
     public void testResults() {
-        ShowResults results = searchService.search("decade");
+        ShowResults results = searchService.search("decade", null, null);
         assertEquals(2, results.getResults().size());
         assertEquals("Rock concert of the decade", results.getResults().iterator().next().getEventName());
     }
     
     @Test
     public void testNoResults() {
-        ShowResults results = searchService.search("notavalidone");
+        ShowResults results = searchService.search("notavalidone", null, null);
         assertEquals(0, results.getResults().size());
     }
 }

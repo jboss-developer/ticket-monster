@@ -305,10 +305,24 @@
 
         <!-- Add Hibernate Search as a dependency -->
         <dependency>
-        	<groupId>org.hibernate</groupId>
-        	<artifactId>hibernate-search-orm</artifactId>
-        	<version>4.3.0.Alpha1</version>
-        	<scope>provided</scope>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-orm</artifactId>
+            <version>4.3.0.Alpha1</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>4.3.0.Alpha1</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-analyzer</artifactId>
+            <version>4.3.0.Alpha1</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
