@@ -28,6 +28,13 @@ public class SearchServiceTest {
         ShowResults results = searchService.search("decade", null, null);
         assertEquals(2, results.getResults().size());
         assertEquals("Rock concert of the decade", results.getResults().iterator().next().getEventName());
+        
+        // some geo tests
+        results = searchService.search("decade", 0d, 0d);
+        assertEquals(0, results.getResults().size());
+        
+        results = searchService.search("decade", 43.7252722d, -79.4236759d);
+        assertEquals(1, results.getResults().size());
     }
     
     @Test
