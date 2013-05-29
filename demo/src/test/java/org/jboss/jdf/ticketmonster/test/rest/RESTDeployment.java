@@ -1,6 +1,7 @@
 package org.jboss.jdf.ticketmonster.test.rest;
 
 import org.jboss.jdf.example.ticketmonster.model.Booking;
+import org.jboss.jdf.example.ticketmonster.model.search.PriceMinBridge;
 import org.jboss.jdf.example.ticketmonster.rest.BaseEntityService;
 import org.jboss.jdf.example.ticketmonster.rest.CartService;
 import org.jboss.jdf.example.ticketmonster.rest.search.SearchService;
@@ -19,6 +20,7 @@ public class RESTDeployment {
                 .addPackage(Booking.class.getPackage())
                 .addPackage(BaseEntityService.class.getPackage())
                 .addPackage(SearchService.class.getPackage())
+                .addPackage(PriceMinBridge.class.getPackage())
                 .addPackage(MultivaluedHashMap.class.getPackage())
                 .addClass(CartStore.class)
                 .addClass(CartService.class)
