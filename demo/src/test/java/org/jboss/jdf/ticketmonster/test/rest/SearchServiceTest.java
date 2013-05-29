@@ -1,11 +1,17 @@
 package org.jboss.jdf.ticketmonster.test.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.inject.Inject;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.jdf.example.ticketmonster.rest.search.FacetGroupView;
+import org.jboss.jdf.example.ticketmonster.rest.search.FacetView;
 import org.jboss.jdf.example.ticketmonster.rest.search.SearchService;
 import org.jboss.jdf.example.ticketmonster.rest.search.ShowResults;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -41,5 +47,31 @@ public class SearchServiceTest {
     public void testNoResults() {
         ShowResults results = searchService.search("notavalidone", null, null);
         assertEquals(0, results.getResults().size());
+    }
+    
+    @Test
+    public void testRangeFaceting() {
+        ShowResults results = searchService.search("decade", null, null);
+        assertEquals(2, results.getResults().size());
+        assertEquals("Rock concert of the decade", results.getResults().iterator().next().getEventName());
+        for (FacetGroupView group : results.getFacetGroups()) {
+            if (group.getName().equals("category")) {
+                assertEquals(3, group.getFacets().size());
+                Set<String> categories = new HashSet<String>();
+                for(FacetView facet : group.getFacets()) {
+                    categories.add(facet.getValue());
+                }
+                assertTrue(categories.contains("concert"));
+                assertTrue(categories.contains("theatre"));
+                assertTrue(categories.contains("sporting"));
+            }
+            else if (group.getName().equals("price")) {
+                assertEquals(4, group.getFacets().size());
+                assertEquals(0, group.getFacets().get(0).getCount());
+                assertEquals(0, group.getFacets().get(1).getCount());
+                assertEquals(2, group.getFacets().get(2).getCount());
+                assertEquals(0, group.getFacets().get(3).getCount());
+            }
+        }
     }
 }

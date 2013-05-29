@@ -23,6 +23,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
+import org.hibernate.search.annotations.NumericField;
 import org.jboss.errai.common.client.api.annotations.Portable;
 import org.jboss.jdf.example.ticketmonster.model.search.PriceMinBridge;
 
@@ -128,6 +129,7 @@ public class Show implements Serializable {
     @OneToMany(mappedBy = "show", cascade = ALL, fetch = EAGER)
     @Field(name="ticketPrices.min", analyze=Analyze.NO,
         bridge=@FieldBridge(impl=PriceMinBridge.class))
+    @NumericField
     private Set<TicketPrice> ticketPrices = new HashSet<TicketPrice>();
 
     /* Boilerplate getters and setters */

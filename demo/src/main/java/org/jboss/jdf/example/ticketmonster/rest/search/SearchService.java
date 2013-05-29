@@ -1,5 +1,6 @@
 package org.jboss.jdf.example.ticketmonster.rest.search;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -23,6 +24,10 @@ import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.dsl.Unit;
+import org.hibernate.search.query.engine.spi.FacetManager;
+import org.hibernate.search.query.facet.Facet;
+import org.hibernate.search.query.facet.FacetSortOrder;
+import org.hibernate.search.query.facet.FacetingRequest;
 import org.jboss.jdf.example.ticketmonster.model.Event;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 import org.jboss.jdf.example.ticketmonster.util.ForSearch;
@@ -59,6 +64,55 @@ public class SearchService {
         log("search string is " + searchString);
         log("search latitude is " + latitude + " and longitude is " + longitude);
         QueryBuilder qb = ftem().getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
+        
+        Query luceneQuery = buildLuceneQuery(searchString, latitude, longitude, qb);
+        
+        FullTextQuery objectQuery = ftem().createFullTextQuery(luceneQuery, Show.class);
+        
+        enableFacets(qb, objectQuery);
+        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+        
+        ShowResults results = buildResultObject(objectQuery);
+        return results;
+    }
+
+    private ShowResults buildResultObject(FullTextQuery objectQuery) {
+        FacetManager fm = objectQuery.getFacetManager();
+        ShowResults results = new ShowResults(objectQuery.getResultList());
+        FacetGroupView facetGroup = new FacetGroupView("category", fm.getFacets("category"));
+        results.addFacetGroup(facetGroup);
+        facetGroup = new FacetGroupView("price", new ArrayList<Facet>());
+        List<Facet> priceFacets = fm.getFacets("price");
+        for(int index = 0 ; index < priceFacets.size() ; index++) {
+            facetGroup.addFacet(new FacetView(PRICE_FACET_VALUES[index], priceFacets.get(index).getCount()));
+        }
+        results.addFacetGroup(facetGroup);
+        return results;
+    }
+
+    private void enableFacets(QueryBuilder qb, FullTextQuery objectQuery) {
+        FacetingRequest categoryFaceting = qb.facet()
+            .name("category")
+            .onField("event.category.description")
+            .discrete()
+            .createFacetingRequest();
+        FacetingRequest priceFaceting = qb.facet()
+            .name("price")
+            .onField("ticketPrices.min")
+            .range() //uncomment once HSEARCH-1338 is fixed
+                .below(50f) //.excludeLimit()
+                .from(50f).to(100f) //.excludeLimit()
+                .from(100f).to(200f) //.excludeLimit()
+                .above(200f)
+                .includeZeroCounts(true)
+                .orderedBy(FacetSortOrder.RANGE_DEFINITION_ODER) //fix typo once HSEARCH-1339 is fixed
+            .createFacetingRequest();
+        FacetManager facetManager = objectQuery.getFacetManager().enableFaceting(categoryFaceting).enableFaceting(priceFaceting);
+    }
+    
+    private static String[] PRICE_FACET_VALUES = new String[] {"below $50", "$50 to $100", "$100 to $200", "above $200"};
+
+    private Query buildLuceneQuery(String searchString, Double latitude, Double longitude, QueryBuilder qb) {
         Query luceneQuery;
         Query termsQuery = qb.keyword()
             .onField("event.name").boostedTo(10f)
@@ -82,8 +136,6 @@ public class SearchService {
             luceneQuery = termsQuery;
         }
         log("Executing lucene query " + luceneQuery.toString());
-        FullTextQuery objectQuery = ftem().createFullTextQuery(luceneQuery, Show.class);
-        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
-        return new ShowResults(objectQuery.getResultList());
+        return luceneQuery;
     }
 }

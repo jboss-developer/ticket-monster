@@ -30,7 +30,7 @@ public class PriceMinBridge extends NumericFieldBridge {
                     min = current;
                 }
             }
-            luceneOptions.addNumericFieldToDocument(name + ".min", min, document);
+            luceneOptions.addNumericFieldToDocument(name, min, document);
         }
     }
 }
