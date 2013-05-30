@@ -69,12 +69,16 @@ public class SeatAllocationService {
         cache.replace(sectionAllocationKey, sectionAllocation);
     }
 
+    /**
+     * Mark the seats as being allocated
+     * @param allocatedSeats
+     */
     public void finalizeAllocation(AllocatedSeats allocatedSeats) {
         allocatedSeats.markOccupied();
     }
 
     /**
-     * Mark the allocat
+     * Mark the seats as being allocated
      * @param performance
      * @param allocatedSeats
      */
