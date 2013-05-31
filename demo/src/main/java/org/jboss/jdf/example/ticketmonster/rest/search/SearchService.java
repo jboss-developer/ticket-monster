@@ -54,7 +54,8 @@ public class SearchService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ShowResults search(@QueryParam("query") String searchString, 
-        @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude) {
+        @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude,
+        @QueryParam("categoryfacet") Integer categoryFacetId, @QueryParam("minpricefacet") Integer minPriceFacetId) {
         log("Entering search");
         if (searchString == null || searchString.length() == 0) {
             log("search string is empty or null");
@@ -70,21 +71,35 @@ public class SearchService {
         FullTextQuery objectQuery = ftem().createFullTextQuery(luceneQuery, Show.class);
         
         enableFacets(qb, objectQuery);
+        enableFacetRestriction(objectQuery, categoryFacetId, minPriceFacetId);
+        
         objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
         
         ShowResults results = buildResultObject(objectQuery);
         return results;
     }
 
+    private void enableFacetRestriction(FullTextQuery objectQuery, Integer categoryFacetId, Integer minPriceFacetId) {
+        FacetManager fm = objectQuery.getFacetManager();
+        if (categoryFacetId != null) {
+            Facet selectedFacet = fm.getFacets("category").get(categoryFacetId);
+            fm.getFacetGroup("category").selectFacets(selectedFacet);
+        }
+        if (minPriceFacetId != null) {
+            Facet selectedFacet = fm.getFacets("price").get(minPriceFacetId);
+            fm.getFacetGroup("price").selectFacets(selectedFacet);
+        }
+    }
+
     private ShowResults buildResultObject(FullTextQuery objectQuery) {
         FacetManager fm = objectQuery.getFacetManager();
         ShowResults results = new ShowResults(objectQuery.getResultList());
-        FacetGroupView facetGroup = new FacetGroupView("Category", fm.getFacets("category"));
+        FacetGroupView facetGroup = new FacetGroupView("Category", fm, "category");
         results.addFacetGroup(facetGroup);
-        facetGroup = new FacetGroupView("Starting price", new ArrayList<Facet>());
-        List<Facet> priceFacets = fm.getFacets("price");
-        for(int index = 0 ; index < priceFacets.size() ; index++) {
-            facetGroup.addFacet(new FacetView(PRICE_FACET_VALUES[index], priceFacets.get(index).getCount()));
+        facetGroup = new FacetGroupView("Starting price", fm, "price");
+        for(int index = 0 ; index < facetGroup.getFacets().size() ; index++) {
+            FacetView facet = facetGroup.getFacets().get(index);
+            facet.overrideValue(PRICE_FACET_VALUES[index]);
         }
         results.addFacetGroup(facetGroup);
         return results;
