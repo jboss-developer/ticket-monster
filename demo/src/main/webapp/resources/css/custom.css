@@ -153,6 +153,45 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
     color:#1e91aa;
 }
 
+/* Search facets copied over from accordion's main style */
+.facets-group {
+    border-radius:0px;
+    border:0px;
+    margin-bottom:0px;
+}
+.facets-heading {
+    background:transparent;
+    border:0px;
+    border-bottom:1px solid #b5b5b5;
+    border-top:1px solid #efefef;
+}
+.facets-heading a {
+    text-shadow: 0 1px 0 #e8e7e7;
+}
+.facets-heading a:hover {
+    color:#0c7085;
+}
+.facets-heading .facets-toggle {
+    padding:8px 15px;
+    font-weight:bold;
+    display: block;
+}
+.facets-body {
+    background:#ECEAE6;
+}
+.facets-body a {
+    color:#444444;
+    text-shadow:0 1px 0 #fff;
+}
+.facets-body a:hover {
+    color:#1e91aa;
+}
+
+.facets-inner {
+    padding:9px 15px;
+    border-top:1px solid #e5e5e5;
+}
+
 
 
 /* Carousel */

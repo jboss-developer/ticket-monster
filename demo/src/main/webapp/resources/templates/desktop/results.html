@@ -1,6 +1,28 @@
 <h3 class="page-header light-font special-title">Results for <%=query%></h3>
 <div class="row-fluid">
-    <div class='span12'>
+    <div class='span3'>
+        <div id="itemMenu">
+            <% _.each(model.get("facetGroups"), function (facetGroup) { %>
+            <div class="facets-group">
+                <div class="facets-heading">
+                    <a class="facets-toggle"><%=facetGroup.name%></a>
+                </div>
+                <div class="facets-body in" style="height: auto;">
+                    <div class="facets-inner">
+                        <% _.each(facetGroup.facets, function (facet) { %>
+                        <% if (facet.selected == 'true') { %>
+                        <p class='muted'><%=facet.value%> <span class='badge'><%=facet.count%></span></p>
+                        <% } else { %>
+                        <p><a href="#"><%=facet.value%> <span class='badge'><%=facet.count%></span></a></p>
+                        <% } %>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <div class='span9'>
         <table class='table table-bordered' style="background: #fffffa;">
             <thead>
             <tr>

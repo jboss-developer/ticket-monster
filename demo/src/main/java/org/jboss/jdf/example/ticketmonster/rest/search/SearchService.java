@@ -79,9 +79,9 @@ public class SearchService {
     private ShowResults buildResultObject(FullTextQuery objectQuery) {
         FacetManager fm = objectQuery.getFacetManager();
         ShowResults results = new ShowResults(objectQuery.getResultList());
-        FacetGroupView facetGroup = new FacetGroupView("category", fm.getFacets("category"));
+        FacetGroupView facetGroup = new FacetGroupView("Category", fm.getFacets("category"));
         results.addFacetGroup(facetGroup);
-        facetGroup = new FacetGroupView("price", new ArrayList<Facet>());
+        facetGroup = new FacetGroupView("Starting price", new ArrayList<Facet>());
         List<Facet> priceFacets = fm.getFacets("price");
         for(int index = 0 ; index < priceFacets.size() ; index++) {
             facetGroup.addFacet(new FacetView(PRICE_FACET_VALUES[index], priceFacets.get(index).getCount()));
