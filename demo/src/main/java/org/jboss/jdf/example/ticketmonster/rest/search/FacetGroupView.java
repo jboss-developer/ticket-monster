@@ -35,4 +35,13 @@ public class FacetGroupView {
     public String getId() {
         return id;
     }
+    
+    public boolean isWithSelectedFacet() {
+        for(FacetView facet : facets) {
+            if (facet.isSelected()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

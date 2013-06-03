@@ -9,6 +9,9 @@
                 </div>
                 <div class="facets-body in" style="height: auto;">
                     <div class="facets-inner">
+                        <%if (facetGroup.withSelectedFacet) { %>
+                        <p><a href="#search" class='faceting' data-id='<%=facetGroup.id%>-all'>(Clear)</a></p>
+                        <% } %>
                         <% _.each(facetGroup.facets, function (facet, index, facets) { %>
                         <% if (facet.selected == true) { %>
                         <p class='muted'><%=facet.value%> <span class='badge'><%=facet.count%></span></p>
