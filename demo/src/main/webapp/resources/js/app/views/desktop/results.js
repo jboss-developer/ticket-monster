@@ -39,6 +39,7 @@ define([
                 this.model.set(faceting, index);
             }
             this.model.fetch();
+            this.options.router.navigate(this.model.appUrl());
             return false;
         }
     });

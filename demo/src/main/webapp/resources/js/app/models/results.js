@@ -12,6 +12,7 @@ define([
         urlRoot: config.baseUrl + 'rest/search', // the URL for performing CRUD operations
         initialize  : function() {
             _.bindAll(this,"fetch");
+            _.bindAll(this,"appUrl");
         },
         url: function() {
             params = '?query=' + encodeURIComponent(this.get("query"));
@@ -26,6 +27,36 @@ define([
             }
             console.log("Calling REST endpoint " + this.urlRoot + params);
             return this.urlRoot + params;
+        },
+        appUrl: function() {
+            result = "search/";
+            var query = this.get("query");
+            var lat = this.get("lat");
+            var lng = this.get("lng");
+            var category = this.get("category");
+            var minprice = this.get("price");
+            if (typeof lat != 'undefined' && typeof lng != 'undefined') {
+                result += "around/" + lat + "-" + lng + "/";
+            }
+            else {
+                result += "anywhere/";
+            }
+            result += encodeURIComponent(query);
+            result += "/category/"
+            if (typeof category != 'undefined') {
+                result += category;
+            }
+            else {
+                result += 'all';
+            }
+            result += "/minprice/"
+            if (typeof minprice != 'undefined') {
+                result += minprice;
+            }
+            else {
+                result += 'all';
+            }
+            return result;
         }
     });
     // export the Results class
