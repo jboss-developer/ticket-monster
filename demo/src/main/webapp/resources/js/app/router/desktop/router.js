@@ -153,7 +153,7 @@ define("router", [
         results:function (query) {
             var model = new Results();
             model.set("query", decodeURIComponent(query));
-            var resultsView = new ResultsView({model:model, el:$("#content")});
+            var resultsView = new ResultsView({model:model, el:$("#content"), router:this});
             model.bind("change",
                 function () {
                     utilities.viewManager.showView(resultsView);
@@ -164,7 +164,7 @@ define("router", [
             model.set("query", decodeURIComponent(query));
             model.set("lat", lat);
             model.set("lng", lng);
-            var resultsView = new ResultsView({model:model, el:$("#content")});
+            var resultsView = new ResultsView({model:model, el:$("#content"), router:this});
             model.bind("change",
                 function () {
                     utilities.viewManager.showView(resultsView);
