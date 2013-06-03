@@ -18,14 +18,16 @@
                     </ul>
                     <script type="text/javascript">
                       //<![CDATA[
-                        function get_results()
+                        function get_results(event)
                         {
+                            event.preventDefault();
                             if (document.searchbox.local.checked && navigator.geolocation)
                             {
                                 options = {
                                     maximumAge: 6000000 // milliseconds (100 minutes)
                                 }
                                 navigator.geolocation.getCurrentPosition(handlePosition, handleError, options);
+                                return false;
                             }
                             else {
                                 return queryAnywhere();
@@ -51,7 +53,7 @@
                         }
                       //]]>
                     </script>
-                    <form id="searchbox" name="searchbox" class="navbar-search pull-right" onsubmit="return get_results();;">
+                    <form id="searchbox" name="searchbox" class="navbar-search pull-right" onsubmit="return get_results(event)">
                         <input id="query" name="query" class="search-query" type="text" placeholder="Search"/>
                         <input name="local" type="checkbox">around me</input>
                     </form>
