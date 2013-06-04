@@ -69,6 +69,7 @@ public class Bot {
         timer.cancel();
     }
     
+    @SuppressWarnings("unchecked")
     @Timeout
     public void book(Timer timer) {
         // Select a show at random

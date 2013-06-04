@@ -11,6 +11,7 @@ public class MultivaluedHashMap<K, V> extends ForwardingMap<K, List<V>> implemen
 
     public static MultivaluedMap<?, ?> EMPTY = new MultivaluedHashMap<Object, Object>();
 
+    @SuppressWarnings("unchecked")
     public static <K, V> MultivaluedHashMap<K, V> empty() {
         return (MultivaluedHashMap<K, V>) EMPTY;
     }

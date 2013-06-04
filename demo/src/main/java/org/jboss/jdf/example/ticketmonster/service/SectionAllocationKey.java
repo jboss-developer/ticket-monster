@@ -1,9 +1,9 @@
 package org.jboss.jdf.example.ticketmonster.service;
 
+import java.io.Serializable;
+
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Section;
-
-import java.io.Serializable;
 
 /**
  * Utility class for storing {@link org.jboss.jdf.example.ticketmonster.model.SectionAllocation}
@@ -11,6 +11,11 @@ import java.io.Serializable;
  *
  * @author Marius Bogoevici
  */
+/*
+ * We suppress the warning about not specifying a serialVersionUID, as we are still developing this app, and want the JVM to
+ * generate the serialVersionUID for us. When we put this app into production, we'll generate and embed the serialVersionUID
+ */
+@SuppressWarnings("serial")
 public class SectionAllocationKey implements Serializable {
 
     private final Section section;
