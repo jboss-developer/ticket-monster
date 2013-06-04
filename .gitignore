@@ -33,3 +33,4 @@ bin
 _site
 _tmp
 classes
+lib/

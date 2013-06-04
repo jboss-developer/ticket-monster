@@ -24,7 +24,6 @@ package org.jboss.jdf.example.ticketmonster.security.rest;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
@@ -32,7 +31,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
 import org.picketlink.credential.DefaultLoginCredentials;
 import org.picketlink.idm.IdentityManagementException;
 import org.picketlink.idm.IdentityManager;
@@ -66,8 +64,11 @@ public class RegistrationService {
             response.put(MESSAGE_RESPONSE_PARAMETER, "Password mismatch.");
         } else {
             try {
+                // if there is no user with the provided e-mail, perform registration
                 if (this.identityManager.getUser(request.getEmail()) == null) {
                     performRegistration(request);
+
+                    // if the registration was successful, we perform a silent authentication.
                     return performSilentAuthentication(request);
                 } else {
                     response.put(MESSAGE_RESPONSE_PARAMETER, "This username is already in use. Try another one.");
@@ -80,6 +81,12 @@ public class RegistrationService {
         return Response.ok().entity(response).type(MediaType.APPLICATION_JSON_TYPE).build();
     }
 
+    /**
+     * <p>Performs a registration using the data provided by {@link RegistrationRequest}.</p>
+     * <p>The roles and groups in this method were previously created by the
+     * {@link org.jboss.jdf.example.ticketmonster.security.IdentityManagementInitializer} during startup.</p>
+     * @param request
+     */
     private void performRegistration(RegistrationRequest request) {
         User newUser = new SimpleUser(request.getEmail());
 

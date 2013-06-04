@@ -26,7 +26,6 @@ import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
-
 import org.picketlink.idm.IdentityManager;
 import org.picketlink.idm.credential.Password;
 import org.picketlink.idm.model.Group;
@@ -90,5 +89,5 @@ public class IdentityManagementInitializer {
         
         this.identityManager.add(usersGroup);
     }
-    
+
 }

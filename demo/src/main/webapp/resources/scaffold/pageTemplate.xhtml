@@ -48,7 +48,7 @@
                                     value="Administration"/></h:outputLink></li>
                             </ui:fragment>
                             <ui:fragment rendered="#{identity.loggedIn}">
-                        		<li><a href="#">| User: <span id="userLoggedInName" style="color:white;">#{identity.user.firstName} #{identity.user.lastName}</span></a></li>
+                        		<li><a href="#">| User: <span id="userLoggedInName" style="color:white;">#{identity.agent.firstName} #{identity.agent.lastName}</span></a></li>
                         		<li><a href="#" onclick="performLogout();">| Logout |</a></li>
                         	</ui:fragment>
                         </ul>

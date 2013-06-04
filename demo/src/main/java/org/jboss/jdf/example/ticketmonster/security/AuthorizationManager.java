@@ -22,28 +22,25 @@
 
 package org.jboss.jdf.example.ticketmonster.security;
 
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-
+import org.apache.deltaspike.security.api.authorization.AccessDeniedException;
+import org.apache.deltaspike.security.api.authorization.annotation.Secures;
 import org.picketlink.Identity;
-import org.picketlink.deltaspike.Secures;
-import org.picketlink.deltaspike.security.api.authorization.AccessDeniedException;
 import org.picketlink.idm.IdentityManager;
 import org.picketlink.idm.model.Role;
 
 /**
  * <p>
- * Provides some authorization services for the application like custom {@link Annotation} to secure proteced resources.
+ *  Provides authorization services for the application.
  * </p>
  * 
  * @author Pedro Silva
@@ -65,6 +62,7 @@ public class AuthorizationManager {
 
     @PostConstruct
     public void init() {
+        // let's configure which URIs should be protected
         this.roleProtectedResources.put("/admin/*", new String[] { "Administrator" });
     }
 
@@ -89,7 +87,7 @@ public class AuthorizationManager {
         if (isUserLoggedIn(identity)) {
             IdentityManager identityManager = getIdentityManager();
 
-            return identityManager.hasRole(identity.getUser(), identityManager.getRole("Administrator"));
+            return identityManager.hasRole(identity.getAgent(), identityManager.getRole("Administrator"));
         }
 
         return false;
@@ -104,7 +102,7 @@ public class AuthorizationManager {
      * @throws UserNotLoggedInException If the request requires authentication and the user is not authenticated
      * @throws AccessDeniedException If the request is not allowed considering the resource permissions.
      */
-    public boolean isAllowed(HttpServletRequest httpRequest) throws UserNotLoggedInException, AccessDeniedException {
+    public boolean isAllowed(HttpServletRequest httpRequest) throws AccessDeniedException {
         final String requestURI = httpRequest.getRequestURI();
 
         Set<Entry<String, String[]>> entrySet = this.roleProtectedResources.entrySet();
@@ -128,7 +126,7 @@ public class AuthorizationManager {
                                     + "]. Check your configuration.");
                         }
 
-                        if (!identityManager.hasRole(identity.getUser(), role)) {
+                        if (!identityManager.hasRole(identity.getAgent(), role)) {
                             return false;
                         }
                     }

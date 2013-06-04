@@ -22,15 +22,13 @@
 
 package org.jboss.jdf.example.ticketmonster.security;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-
-import org.picketlink.deltaspike.SecurityBindingType;
+import org.apache.deltaspike.security.api.authorization.annotation.SecurityBindingType;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 
 /**
  * <p>You can use this {@link Annotation} in types and methods in order to accept invocations from authenticated users, only.</p>

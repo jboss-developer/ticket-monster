@@ -8,7 +8,7 @@
         http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
         
         <interceptors>
-        	<class>org.picketlink.deltaspike.security.impl.extension.SecurityInterceptor</class>
+        	<class>org.apache.deltaspike.security.impl.extension.SecurityInterceptor</class>
         </interceptors>
         
 </beans>

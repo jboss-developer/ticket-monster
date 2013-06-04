@@ -23,7 +23,6 @@
 package org.jboss.jdf.example.ticketmonster.security;
 
 import java.io.IOException;
-
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.servlet.Filter;
@@ -35,9 +34,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import org.apache.deltaspike.security.api.authorization.AccessDeniedException;
 import org.picketlink.Identity;
-import org.picketlink.deltaspike.security.api.authorization.AccessDeniedException;
 import org.picketlink.idm.IdentityManager;
 
 /**
@@ -47,12 +45,7 @@ import org.picketlink.idm.IdentityManager;
  * <p>
  * This filter accepts two params:
  * </p>
- * <ul>
- * <li>protectedResources: A string with a list of url patterns and roles for access contro. Eg.: /admin/*:
- * Administrator!AnotherRole, /someUri:SomeRole</li>
- * <li>loginUri: The login page URI.</li>
- * </ul>
- * 
+ *
  * @author Pedro Silva
  * 
  */
@@ -103,7 +96,7 @@ public class RoleBasedAuthorizationFilter implements Filter {
 
     private void handleUnauthorizedRequest(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
         if (!getIdentity().isLoggedIn()) {
-            httpResponse.sendRedirect(httpRequest.getContextPath() + "#login");        
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
             handleAccessDeniedError(httpResponse);
         }

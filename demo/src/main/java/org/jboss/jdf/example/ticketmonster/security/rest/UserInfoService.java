@@ -55,14 +55,10 @@ public class UserInfoService {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response info() {
-        User user = null;
-        
-        if (this.identity.isLoggedIn()) {
-            user = (User) this.identity.getUser();
-        }
-        
         Map<String, Object> data = new HashMap<String, Object>();
-        
+
+        User user = (User) this.identity.getAgent();
+
         data.put("user", user);
         data.put("administrator", this.authorizationManager.isAdmin());
         

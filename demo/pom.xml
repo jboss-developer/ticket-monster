@@ -32,7 +32,7 @@
             line below to use version 1.0.0.M10-redhat-1 which is a release certified 
             to work with JBoss EAP 6. It requires you have access to the JBoss EAP 6 
             maven repository. -->
-        <jboss.bom.version>1.0.5.CR2</jboss.bom.version>
+        <jboss.bom.version>1.0.7.CR2</jboss.bom.version>
         <buildhelper.plugin.version>1.7</buildhelper.plugin.version>
     </properties>
 
@@ -71,6 +71,22 @@
             <dependency>
                 <groupId>org.jboss.bom</groupId>
                 <artifactId>jboss-javaee-6.0-with-infinispan</artifactId>
+                <version>${jboss.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- JBoss BOM for Java EE 6 APIs and PicketLink -->
+            <dependency>
+                <groupId>org.jboss.bom</groupId>
+                <artifactId>jboss-javaee-6.0-with-security</artifactId>
+                <version>${jboss.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- JBoss BOM for Java EE 6 APIs and Apache Deltaspike -->
+            <dependency>
+                <groupId>org.jboss.bom</groupId>
+                <artifactId>jboss-javaee-6.0-with-deltaspike</artifactId>
                 <version>${jboss.bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -172,21 +188,73 @@
         </dependency>
 		
 		<!-- PicketLink dependencies. They will provide all security capabilities for the application. -->
-		
-		<!-- PicketLink Core provides authentication, authorization and identity management services. -->
-		<dependency>
-			<groupId>org.picketlink</groupId>
-			<artifactId>picketlink-core-impl</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
-		</dependency>
-		
-		<!-- PicketLink IDM Schema provides some built-in JPA entities to be used with the JPA Identity Store. -->
+
+        <!-- PicketLink API provides authentication and authorization services. -->
+        <dependency>
+            <groupId>org.picketlink</groupId>
+            <artifactId>picketlink-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- PicketLink Impl provides the default implementation for the PicketLink API. -->
+        <dependency>
+            <groupId>org.picketlink</groupId>
+            <artifactId>picketlink-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- PicketLink IDM API provides identity management services. -->
+        <dependency>
+            <groupId>org.picketlink</groupId>
+            <artifactId>picketlink-idm-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- PicketLink IDM Impl provides the default implementation
+        for the PicketLink IDM API with some built-in identity stores and management services. -->
+        <dependency>
+            <groupId>org.picketlink</groupId>
+            <artifactId>picketlink-idm-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- PicketLink IDM Schema provides some built-in JPA entities to be used with the JPA Identity Store. -->
 		<dependency>
 			<groupId>org.picketlink</groupId>
 			<artifactId>picketlink-idm-schema</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+            <scope>compile</scope>
 		</dependency>
-		
+
+        <!-- Deltaspike API. We use compile scope as we need compile against its API -->
+        <dependency>
+            <groupId>org.apache.deltaspike.core</groupId>
+            <artifactId>deltaspike-core-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Deltaspike Impl. we use runtime scope as we need its implementation
+            dependencies only on runtime -->
+        <dependency>
+            <groupId>org.apache.deltaspike.core</groupId>
+            <artifactId>deltaspike-core-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Deltaspike Security Module API. We use compile scope as we need
+            to compile against its API -->
+        <dependency>
+            <groupId>org.apache.deltaspike.modules</groupId>
+            <artifactId>deltaspike-security-module-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Deltaspike Security Impl. we use runtime scope as we need its implementation
+            dependencies only on runtime -->
+        <dependency>
+            <groupId>org.apache.deltaspike.modules</groupId>
+            <artifactId>deltaspike-security-module-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- The next set of dependencies are for Errai, which we use for 
             the TicketMonster booking monitor -->
