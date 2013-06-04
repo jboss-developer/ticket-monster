@@ -110,6 +110,7 @@ public class SearchService {
             .name("category")
             .onField("event.category.description")
             .discrete()
+            .orderedBy(FacetSortOrder.FIELD_VALUE)
             .createFacetingRequest();
         FacetingRequest priceFaceting = qb.facet()
             .name("price")

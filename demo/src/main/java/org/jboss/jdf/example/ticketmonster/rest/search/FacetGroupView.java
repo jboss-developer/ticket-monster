@@ -15,7 +15,17 @@ public class FacetGroupView {
         this.name = name;
         this.id = facetingName;
         for(Facet facet : fm.getFacets(facetingName)) {
-            boolean selected = fm.getFacetGroup(facetingName).getSelectedFacets().contains(facet);
+            boolean selected = false;
+            for(Facet selectedFacet : fm.getFacetGroup(facetingName).getSelectedFacets()) {
+                if (facet.getFacetingName().equals(selectedFacet.getFacetingName())
+                    && facet.getFieldName().equals(selectedFacet.getFieldName())
+                    && facet.getValue().equals(selectedFacet.getValue()) ) {
+                    selected = true; 
+                    break;
+                }
+            }
+            //TODO replace for loop when HSEARCH-1346 is fixed
+            //boolean selected = fm.getFacetGroup(facetingName).getSelectedFacets().contains(facet);
             facets.add(new FacetView(facet, selected));
         }
     }
