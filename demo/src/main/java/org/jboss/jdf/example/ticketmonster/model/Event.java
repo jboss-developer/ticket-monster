@@ -88,7 +88,7 @@ public class Event implements Serializable {
      * </ol>
      */
     @NotNull
-    @Size(min = 20, max = 1000, message = "An event's name must contain between 20 and 1000 characters")
+    @Size(min = 20, max = 1000, message = "An event's description must contain between 20 and 1000 characters")
     private String description;
 
     /**

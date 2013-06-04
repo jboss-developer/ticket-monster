@@ -10,10 +10,10 @@ define(function () {
 
     var environment;
 
-    if (navigator.userAgent == "TicktetMonster Cordova Webview iOS") {
+    if (navigator.userAgent.indexOf("TicketMonster Cordova Webview iOS") > -1) {
         environment = "hybrid-ios"
     }
-    else if (navigator.userAgent == "TicketMonster Cordova Webview Android") {
+    else if (navigator.userAgent.indexOf("TicketMonster Cordova Webview Android") > -1) {
         environment = "hybrid-android"
     }
     else if (Modernizr.touch || Modernizr.mq("only all and (max-width: 480px)")) {

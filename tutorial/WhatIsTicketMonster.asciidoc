@@ -140,7 +140,7 @@ Running TicketMonster in OpenShift
 
 First, _create an OpenShift project_.
 
-1. Make sure that you have an OpenShift domain and you have created an application using the `jbossas-7` cartridge (for more details, get started [here](https://openshift.redhat.com/app/getting_started)). If you want to use PostgreSQL, add the `postgresql-8.4` cartridge too.
+1. Make sure that you have an OpenShift domain and you have created an application using the `jbossas-7` cartridge (for more details, get started link:https://openshift.redhat.com/app/getting_started[here]). If you want to use PostgreSQL, add the `postgresql-8.4` cartridge too.
 2. Ensure that the Git repository of the project is checked out.
 
 Then, _build and deploy it_.

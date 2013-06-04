@@ -1,6 +1,6 @@
 <div class="row-fluid">
     <div class="span3">
-        <div id="itemMenu">
+        <div class="accordion" id="itemMenu">
 
             <%
             _.each(categories, function (category) {
@@ -11,7 +11,7 @@
                        data-target="#category-<%=category.id%>-collapsible" data-toggle="collapse"
                        data-parent="#itemMenu"><%= category.description %></a>
                 </div>
-                <div id="category-<%=category.id%>-collapsible" class="collapse in accordion-body">
+                <div id="category-<%=category.id%>-collapsible" class="collapse accordion-body">
                     <div id="category-<%- category.id%>" class="accordion-inner">
 
                         <%
@@ -37,7 +37,9 @@
                 <div id="eventCarousel" class="carousel">
                     <!-- Carousel items -->
                     <div class="carousel-inner">
-                        <%_.each(model.models, function(model) { %>
+                        <%_.each(model.models, function(model) { 
+                        	if( model.get('mediaItem')) {
+                        %>
                         <div class="item">
                             <img src='rest/media/<%=model.attributes.mediaItem.id%>'/>
 
@@ -48,7 +50,10 @@
                                 <a class="btn btn-danger" href="#events/<%=model.id%>">Book tickets</a>
                             </div>
                         </div>
-                        <% }) %>
+                        <%
+                            }
+                         });
+                        %>
                     </div>
                     <!-- Carousel nav -->
                     <a class="carousel-control left" href="#eventCarousel" data-slide="prev">&lsaquo;</a>

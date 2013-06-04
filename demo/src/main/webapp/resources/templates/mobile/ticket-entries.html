@@ -6,7 +6,7 @@
 
       <fieldset data-role="fieldcontain">
          <label for="ticket-<%=ticketPrice.id%>"><%=ticketPrice.ticketCategory.description%>($<%=ticketPrice.price%>)</label>
-        <input id="ticket-<%=ticketPrice.id%>" data-tm-id="<%=ticketPrice.id%>" type="number" placeholder="Enter value"
+         <input id="ticket-<%=ticketPrice.id%>" data-tm-id="<%=ticketPrice.id%>" type="number" min="0" placeholder="Enter value"
                name="tickets"/>
       </fieldset>
    <% }) %>

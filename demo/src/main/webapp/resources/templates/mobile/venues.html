@@ -1,45 +1,25 @@
 <div data-role="header">
     <a data-role="button" data-icon="home" href="#">Home</a>
-    <h3>Cities</h3>
+    <h3>Locations</h3>
 </div>
-<div data-role="content" id='itemMenu'>
-    <div id='cityMenu' data-role='listview' data-filter='true' data-filter-placeholder='City name ...'>
-
+<div data-role="content">
+    <div id="itemMenu" data-role="collapsible-set" data-inset="false">
         <%
         _.each(cities, function (city) {
         %>
-
-
-        <li>
-            <a href="#"><%= city %></a>
-            <ul id="city-<%=city%>">
-                <%
-                _.each(model.models, function (model) {
+        <div data-role="collapsible">
+            <h2><%= city %></h2>
+            <ul id="cityMenu" data-role="listview">
+            <%
+            _.each(model.models, function (model) {
                 if (model.get('address').city == city) {
-                console.log(model.get('address'))
                 %>
-                <li>
-
-
-                    <a href="#venues/<%=model.attributes.id%>"><%=model.attributes.name%></a>
-
-
-                </li>
+                <li><a href="#venues/<%=model.attributes.id%>"><%=model.attributes.name%></a></li>
                 <% }
-                });
-                %>
+            });
+            %>
             </ul>
-        </li>
-
-
-
+        </div>
         <% }); %>
     </div>
-
-
 </div>
-
-
-
-
-

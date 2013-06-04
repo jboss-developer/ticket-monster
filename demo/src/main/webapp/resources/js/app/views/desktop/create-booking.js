@@ -229,13 +229,32 @@ define([
             view.setCheckoutStatus();
         },
         updateEmail:function (event) {
-            if ($(event.currentTarget).is(':valid')) {
-                this.model.bookingRequest.email = event.currentTarget.value;
-                $("#error-email").empty();
-            } else {
-                $("#error-email").empty().append("Please enter a valid e-mail address");
-                delete this.model.bookingRequest.email;
-            }
+        	// jQuery 1.9 does not handle pseudo CSS selectors like :valid :invalid, anymore
+        	var validElements;
+        	try	{
+        		validElements = $(".form-search").get(0).querySelectorAll(":valid");
+        		for (var ctr=0; ctr < validElements.length; ctr++) {
+            		if (event.currentTarget === validElements[ctr]) {
+                        this.model.bookingRequest.email = event.currentTarget.value;
+                        $("#error-email").empty();
+                    } else {
+                        $("#error-email").empty().append("Please enter a valid e-mail address");
+                        delete this.model.bookingRequest.email;
+                    }
+        		}
+        	}
+        	catch(e) {
+        		// For browsers like IE9 that do fail on querySelectorAll for CSS pseudo selectors,
+        		// we use the regex defined in the HTML5 spec.
+        		var emailRegex = new RegExp("[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*");
+        		if(emailRegex.test(event.currentTarget.value)) {
+        			this.model.bookingRequest.email = event.currentTarget.value;
+                    $("#error-email").empty();
+				} else {
+					$("#error-email").empty().append("Please enter a valid e-mail address");
+                    delete this.model.bookingRequest.email;
+				}
+        	}
             this.setCheckoutStatus();
         },
         setCheckoutStatus:function () {

@@ -4,7 +4,7 @@
 <div class="row-fluid">
     <div class="span4 well">
         <div class="row-fluid"><h3 class="page-header span6">Where?</h3>
-            <img width="100" src='rest/media/<%=mediaItem.id%>'/></div>
+            <% if(mediaItem) { %><img width="100" src='rest/media/<%=mediaItem.id%>'/><% } %></div>
         <div class="row-fluid">
             <p>&nbsp;</p>
 
@@ -23,10 +23,10 @@
             <div id="venueEventDescription"></div>
         </div>
     </div>
-    <div id='bookingWhen' style="display: none;" class="span2 well">
+    <div id='bookingWhen' style="display: none;" class="span4 well">
         <h3 class="page-header">When?</h3>
-        <select class="span2" id="dayPicker"/>
-        <select class="span2" id="performanceTimes"/>
+        <select class="span6" id="dayPicker"/>
+        <select class="span6" id="performanceTimes"/>
 
         <div id='bookingOption'><input name="bookButton" class="btn btn-primary" type="button"
                                        value="Order tickets"></div>

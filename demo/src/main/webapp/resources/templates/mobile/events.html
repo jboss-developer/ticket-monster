@@ -2,31 +2,26 @@
     <a data-role="button" data-icon="home" href="#">Home</a>
     <h3>Categories</h3>
 </div>
-<div data-role="content" id='itemMenu'>
-    <div id='categoryMenu' data-role='listview' data-filter='true' data-filter-placeholder='Event category name ...'>
+<div data-role="content">
+    <div id="itemMenu" data-role="collapsible-set" data-inset="false">
         <%
         _.each(categories, function (category) {
         %>
-        <li>
-            <a href="#"><%= category.description %></a>
-            <ul id="category-<%=category.id%>">
-                <%
-                _.each(model.models, function (model) {
+        <div data-role="collapsible">
+            <h2><%= category.description %></h2>
+            <ul id="categoryMenu" data-role="listview" data-inset="true">
+            <%
+            _.each(model.models, function (model) {
                 if (model.get('category').id == category.id) {
                 %>
                 <li>
                     <a href="#events/<%=model.attributes.id%>"><%=model.attributes.name%></a>
                 </li>
                 <% }
-                });
-                %>
+            });
+            %>
             </ul>
-        </li>
+        </div>
         <% }); %>
     </div>
 </div>
-
-
-
-
-

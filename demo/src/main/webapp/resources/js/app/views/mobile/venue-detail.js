@@ -21,7 +21,7 @@ define([
         },
         render:function () {
             $(this.el).empty()
-            utilities.applyTemplate($(this.el), venueDetail, this.model.attributes)
+            utilities.applyTemplate($(this.el), venueDetail, _.extend({}, this.model.attributes, config));
             $(this.el).trigger('create')
             $("#bookButton").addClass("ui-disabled")
             var self = this
@@ -71,7 +71,7 @@ define([
                 }), function (item) {
                     return item
                 }));
-                utilities.applyTemplate($("#venueEventDescription"), venueEventDescription, {event:selectedShow.event});
+                utilities.applyTemplate($("#venueEventDescription"), venueEventDescription, _.extend({}, {event:selectedShow.event}, config));
                 $("#detailsCollapsible").show()
                 $("#dayPicker").removeAttr('disabled')
                 $("#performanceTimes").removeAttr('disabled')

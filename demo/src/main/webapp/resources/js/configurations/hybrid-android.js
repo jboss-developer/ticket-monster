@@ -5,7 +5,7 @@ var TicketMonster = {
     }
 }
 
-require (["resources/js/libs/cordova-android-2.0.0.js","mobile"], function() {
+require (["resources/js/libs/cordova-android-2.7.0.js","mobile"], function() {
 
 });
 

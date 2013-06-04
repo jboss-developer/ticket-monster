@@ -51,9 +51,6 @@ public class CartService {
     private EntityManager entityManager;
 
     @Inject
-    private BookingService bookingService;
-
-    @Inject
     private SeatAllocationService seatAllocationService;
 
     @Inject @Created
@@ -83,8 +80,13 @@ public class CartService {
      */
     @GET
     @Path("/{id}")
-    public Cart getCart(String id) {
-      return cartStore.getCart(id);
+    public Cart getCart(@PathParam("id") String id) {
+        Cart cart = cartStore.getCart(id);
+        if (cart != null) {
+           return cart;
+        } else {
+            throw new RestServiceException(Response.Status.NOT_FOUND);
+        }
     }
 
     /**
@@ -123,7 +125,7 @@ public class CartService {
 
     /**
      * <p>
-     * Create a booking. Data is contained in the bookingRequest object
+     * Create a booking.
      * </p>
      *
      * @param cartId

@@ -294,7 +294,7 @@ The first step is to add a GWT module descriptor (a `.gwt.xml` file) which defin
     <source path="monitor"/>
     
     <!-- Limit the supported browsers for the sake of this demo -->
-    <set-property name="user.agent" value="ie8,safari,gecko1_8"/>
+    <set-property name="user.agent" value="ie8,ie9,safari,gecko1_8"/>
 </module>
 ---------------------------------------------------------------------------------------------------------
 
@@ -314,31 +314,58 @@ In the next step we add a _host HTML page_ which includes the generated JavaScri
     <title>Ticket Monster Administration</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-    <link rel="stylesheet" href="resources/bootstrap/css/bootstrap.css" />
-    <link type="text/css" rel="stylesheet" href="resources/css/screen.css" />
-    
+    <link type="text/css" rel="stylesheet" href="resources/css/screen.css"/>
+    <link rel="stylesheet" href="resources/css/bootstrap.css" type="text/css" media="all"/>
+    <link rel="stylesheet" href="resources/css/custom.css" type="text/css" media="all">
+
+    <link href='http://fonts.googleapis.com/css?family=Rokkitt' rel='stylesheet' type='text/css'>
+
     <script type="text/javascript" src="BookingMonitor/BookingMonitor.nocache.js"></script>
 </head>
 
 <body>
+    <div id="logo"><div class="wrap"><h1>Ticket Monster</h1></div></div>
+
     <div id="container">
         <div id="menu">
             <div class="navbar">
                 <div class="navbar-inner">
                     <div class="container">
-                        <a class="brand">JBoss Ticket Monster Booking Monitor</a>
+                        <ul class="nav">
+                            <li><a href="index.html#about">About</a></li>
+                            <li><a href="index.html#events">Events</a></li>
+                            <li><a href="index.html#venues">Venues</a></li>
+                            <li><a href="index.html#bookings">Bookings</a></li>
+                            <li><a href="#">Monitor</a></li>
+                            <li><a href="admin">Administration</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
-        <h3 class="booking-status-header">Booking status</h3>
-        <div id="content" class="container-fluid"></div>
+
+
+        <div class="container-fluid">
+        
+            <div class="row">
+                <div class="span7">
+
+                <h3 class="page-header light-font special-title">Booking status</h3>
+                <div id="content">
+    
+                </div>
+              </div>
+            <div class="span5">
+                <h3 class="page-header light-font special-title">Bot</h3>
+                <div id="bot-content"></div>
+             </div>   
+
+            </div>
+        </div>
     </div>
 
-    <footer>
-        <div style="text-align: center;">
-            <img src="resources/img/logo.png" alt="Errai" />
-        </div>
+    <footer style="">
+        <div style="text-align: center;"><img src="resources/img/dualbrand_as7eap.png" alt="HTML5"/></div>
     </footer>
 </body>
 </html>

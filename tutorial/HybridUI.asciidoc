@@ -4,7 +4,7 @@ Creating hybrid mobile versions of the application with Apache Cordova
 What will you learn here?
 -------------------------
 
-You finished creating the front-end for your application, and it has mobile support. You would now like to provide native client applications that your users can download from an application store. After reading this tutorial, you will understand how to reuse the existing HTML5 code for create nativing mobile clients for each target platform with Apache Cordova.
+You finished creating the front-end for your application, and it has mobile support. You would now like to provide native client applications that your users can download from an application store. After reading this tutorial, you will understand how to reuse the existing HTML5 code for create native mobile clients for each target platform with Apache Cordova.
 
 You will learn how to:
 
@@ -32,7 +32,7 @@ Before we make the application hybrid, we need to make some changes in the way i
 
 In the web version of the application the client code is deployed together with the server-side code, so the models and collections (and generally any piece of code that will perform REST service invocations) can use URLs relative to the root of the application: all resources are serviced from the same server, so the browser will do the correct invocation. This also respects the same origin policy enforced by default by browsers, to prevent cross-site scripting attacks.
 
-If the client code is deployed separately from the services, the REST invocations must use absolute URLs (we will cover the impact on the same-origin policy later). Futhermore, since we want to be able to deploy the application to different hosts without rebuilding the source, it must be configurable.
+If the client code is deployed separately from the services, the REST invocations must use absolute URLs (we will cover the impact on the same-origin policy later). Furthermore, since we want to be able to deploy the application to different hosts without rebuilding the source, it must be configurable.
 
 You already caught a glimpse of this in the user front end chapter, where we defined the `configuration` module for the mobile version of the application. 
 
@@ -54,7 +54,7 @@ define("configuration", function() {
 ...
 ------------------------------------------------------------------------------------------------------
 
-This module has a `baseURL` property that is either set to an empty string for relative URLs or to a prefix, such as a domain name, depending on whether a global variabile named `TicketMonster` has already been defined, and it has a `baseRESTUrl`
+This module has a `baseURL` property that is either set to an empty string for relative URLs or to a prefix, such as a domain name, depending on whether a global variable named `TicketMonster` has already been defined, and it has a `baseRESTUrl`
 property.
 
 All our code that performs REST services invocations depends on this module, thus the base REST URL can be configured in a single place and injected throughout the code, as in the following code example:
@@ -151,7 +151,7 @@ image::gfx/android-activity-type.png[]
 image::gfx/android-activity-name.png[]
 
 
-A final step involves adding the Apache Cordova library to the project. Copy the `lib/android/cordova-2.0.0.jar` file from the Cordova distribution into the `lib` folder of the project.
+A final step involves adding the Apache Cordova library to the project. Copy the `lib/android/cordova-2.7.0.jar` file from the Cordova distribution into the `libs` folder of the project.
 
 [[add-cordova-jar]]
 .Add the Cordova jar
@@ -160,7 +160,7 @@ image::gfx/add-cordova-jar.png[]
 
 Once you have finished creating the project, navigate to the `assets` directory. Now we need to create a `www` directory, that will contain the HTML5 code of the application. Since we are reusing the TicketMonster code you can simply create a symbolic link to the `webapp` directory of TicketMonster. Alternatively, you can copy the code of TicketMonster and make all necessary changes there (however, in that case you will have to maintain the code of the application).
 
-    $ ln -s www $TICKET_MONSTER_HOME/demo/src/main/webapp
+    $ ln -s $TICKET_MONSTER_HOME/demo/src/main/webapp www
 
 Inside the Android project, modify permissions and additional configurations to `AndroidManifest.xml` to look as follows
 
@@ -173,8 +173,8 @@ Inside the Android project, modify permissions and additional configurations to 
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="10"
-        android:targetSdkVersion="15" />
+        android:minSdkVersion="8"
+        android:targetSdkVersion="17" />
 
     <supports-screens
         android:anyDensity="true"
@@ -218,7 +218,13 @@ Inside the Android project, modify permissions and additional configurations to 
 </manifest>
 -------------------------------------------------------------------------------------------------------
 
-Also, we need to add our REST service URL to the whitelist (you can use `"*"` too, for simplicity, during development) :
+We also need to copy the `xml` directory containing the Cordova project configuration file - `config.xml`, from the Cordova distribution to the `res` directory of the project.
+
+[[add-cordova-config]]
+.Add the Cordova project configuration file
+image::gfx/add-cordova-config.png[]
+
+We will add our REST service URL to the domain whitelist in the config.xml file (you can use `"*"` too, for simplicity, during development) :
 
 .res/xml/config.xml
 [source,xml]
@@ -277,7 +283,7 @@ Note how we customize the user agent information for the wrapped browser. This w
 Adding Apache Cordova to TicketMonster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First, we will copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\android\cordova-2.0.0.js` file to the `src/main/webapp/resources/js/libs' folder, renaming it to `cordova-android-2.1.0.js`, to avoid naming conflicts with other platforms (such as iOS which we will also implement as part of this tutorial).
+First, we will copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\android\cordova-2.7.0.js` file to the `src/main/webapp/resources/js/libs` folder, renaming it to `cordova-android-2.7.0.js`, to avoid naming conflicts with other platforms (such as iOS which we will also implement as part of this tutorial).
 
 Next, we need to load the library in the application. We will create a separate module, that will load the rest of the mobile application, as well as the Apache Cordova JavaScript library for Android. We also need to configure a base URL for the application. For this example, we will use the URL of the cloud deployment of TicketMonster.
 
@@ -291,12 +297,12 @@ var TicketMonster = {
     }
 }
 
-require (["resources/js/libs/cordova-android-2.0.0.js","mobile"], function() {
+require (["resources/js/libs/cordova-android-2.7.0.js","mobile"], function() {
 
 });
 -------------------------------------------------------------------------------------------------------
 
-The final step will involve adjusting `src/main/webapp/index.html` to loead this module when running on Android, using the user agent setting we have already configured in the project.
+The final step will involve adjusting `src/main/webapp/index.html` to load this module when running on Android, using the user agent setting we have already configured in the project.
 
 .src/main/webapp/index.html
 [source,html]
@@ -319,14 +325,17 @@ The final step will involve adjusting `src/main/webapp/index.html` to loead this
     <script type="text/javascript">
         var loader = document.createElement("script")
         loader.setAttribute("src", "resources/js/libs/require.js");
-        if ( navigator.userAgent == "TicketMonster Cordova Webview Android" ) {
-			environment="hybrid-android"
+        if (navigator.userAgent.indexOf("TicketMonster Cordova Webview iOS") > -1) {
+            environment = "hybrid-ios"
+        }
+        else if (navigator.userAgent.indexOf("TicketMonster Cordova Webview Android") > -1) {
+            environment = "hybrid-android"
         }
         else if (Modernizr.touch || Modernizr.mq("only all and (max-width: 480px)")) {
-           environment = "mobile"
+            environment = "mobile"
         } else {
-           environment = "desktop"
-        };
+            environment = "desktop"
+        }
         loader.setAttribute("data-main","resources/js/configurations/" + environment);
         document.head.appendChild(loader)
     </script>
@@ -355,20 +364,31 @@ Mac OS X Lion or later (10.7+), mainly for running Xcode.
 
 Also, we assume that you have installed and extracted Apache Cordova already as described in a previous section.
 
-The last step is to install the `CordovaLib` library using the `.dmg` installer found in the `lib/ios` directory of the Apache Cordova distribution.
-
 Creating an iOS project using Apache Cordova
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, we need to create an iOS project. In order to do so we run the `create` command, to be found in the `lib/ios/bin` of your Apache Cordova distribution. Run the command with the following parameters:
 
-    $ $LIB_IOS_BIN/create $TICKET_MONSTER_HOME/cordova/ios org.jboss.ticketmonster.cordova.ios TicketMonster
+----
+$ $LIB_IOS_BIN/create $TICKET_MONSTER_HOME/cordova/ios org.jboss.ticketmonster.cordova.ios TicketMonster
+----
 
 For the purpose of this tutorial, we assume that the 'cordova' directory which is the parent of the 'ios' directory where the project is created, is at the same level as the directory where the original project exists.
 
-Now we create a symbolic link inside the 'ios' directory to the original TicketMonster project, with the name `www`.
+[NOTE]
+=================================================================================
+The `create` script for Cordova/iOS will create a `www` sub-directory in the 'ios'
+ directory. This 'www' sub-directory will need to be deleted since we're sharing 
+ the sources from the TicketMonster project.
+=================================================================================
 
-    $ ln -s www $TICKET_MONSTER_HOME/demo/src/main/webapp
+Delete the `www` sub-directory under the TicketMonster, since we will not be using the underlying sources
+
+    $ rm -rf $TICKET_MONSTER_HOME/cordova/ios/www
+
+We then create a symbolic link inside the 'ios' directory to the original TicketMonster project, with the name `www`.
+
+    $ ln -s $TICKET_MONSTER_HOME/demo/src/main/webapp www
 
 Now we open the created project in Xcode. 
 
@@ -396,9 +416,16 @@ The Cordova library for iOS is already included in the generated project.
 Adding Apache Cordova for iOS to TicketMonster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First, we copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\ios\cordova-2.0.0.js` file to the `src/main/webapp/resources/js/libs' folder, renaming it to `cordova-ios-2.0.0.js`, to avoid naming conflicts with other platforms (such as Android which we already implemented as part of this tutorial).
+First, we copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\ios\CordovaLib\cordova.ios.js` file to the `src/main/webapp/resources/js/libs` folder, renaming it to `cordova-ios-2.7.0.js`, to avoid naming conflicts with other platforms (such as Android which we already implemented as part of this tutorial.
 
 Next, we need to load the library in the application. We will create a separate module, that will load the rest of the mobile application, as well as the Apache Cordova JavaScript library for iOS. We also need to configure a base URL for the application. For this example, we will use the URL of the cloud deployment of TicketMonster.
+
+[NOTE]
+=======================================================================================
+The `cordova.io.js` is typically present as `cordova-2.7.0.js` in Cordova/iOS projects.
+The aforementioned Cordova `create` script renames the file during project creation to 
+`cordova-2.7.0.js`. This is why we propose renaming it to avoid potential conflicts.
+=======================================================================================
 
 .src/main/webapp/resources/js/libs/hybrid-ios.js
 [source,javascript]
@@ -410,7 +437,7 @@ var TicketMonster = {
     }
 }
 
-require (["resources/js/libs/cordova-ios-2.0.0.js","mobile"], function() {
+require (["resources/js/libs/cordova-ios-2.7.0.js","mobile"], function() {
 
 });
 -------------------------------------------------------------------------------------------------------

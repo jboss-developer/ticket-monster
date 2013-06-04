@@ -75,7 +75,7 @@ public class CacheProducer {
                 .lockingMode(LockingMode.PESSIMISTIC)
                 .locking().isolationLevel(IsolationLevel.REPEATABLE_READ) //Sets the isolation level of locking
                 .eviction().maxEntries(4).strategy(EvictionStrategy.LIRS) //Sets  4 as maximum number of entries in a cache instance and uses the LIRS strategy - an efficient low inter-reference recency set replacement policy to improve buffer cache performance
-                .loaders().passivation(false).addFileCacheStore().location(dataDir + File.pathSeparator + "TicketMonster-CacheStore").purgeOnStartup(true) //Disable passivation and adds a FileCacheStore that is Purged on Startup
+                .loaders().passivation(false).addFileCacheStore().location(dataDir + File.separator + "TicketMonster-CacheStore").purgeOnStartup(true) //Disable passivation and adds a FileCacheStore that is Purged on Startup
                 .build(); //Builds the Configuration object
         return new DefaultCacheManager(glob, loc, true);
 

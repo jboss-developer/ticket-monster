@@ -1,9 +1,10 @@
 <div data-role="header">
+    <a data-role="button" data-icon="home" data-theme="a" href="#">Home</a>
     <h3>Book tickets</h3>
 </div>
 <div data-role="content">
     <h3><%=name%></h3>
-    <img width='100px' src='rest/media/<%=mediaItem.id%>'/>
+    <img width='100px' src='<%=baseUrl%>rest/media/<%=mediaItem.id%>'/>
     <p><%=description%></p>
     <div data-role="fieldcontain">
         <label for="showSelector"><strong>What</strong></label>

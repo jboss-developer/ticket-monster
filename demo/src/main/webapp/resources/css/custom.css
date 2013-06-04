@@ -114,6 +114,13 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
     background-color:#c9c7c7;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
+@media screen and (min-width:0\0) {
+	#itemMenu {
+    	background-color:#c9c7c7;
+    	/* Removes the box-shadow from IE due to glitches involving transitions */
+    	box-shadow : none;
+	}
+}
 .accordion-group {
     border-radius:0px;
     border:0px;
@@ -184,7 +191,7 @@ input[type="file"]:focus, input[type="radio"]:focus, input[type="checkbox"]:focu
 
 /* Buttons */
 .btn:focus, a:focus {
-    border:0;
+	background-position: 0px center;
     outline:none;
 }
 select:focus {
@@ -201,7 +208,6 @@ button::-moz-focus-inner {
     text-align:center;
     color:#961311!important;
     background: #f15755 url(../img/btn-pink.png) top left repeat-x;
-    padding:8px 10px;
     border: 1px solid #b53331;
     text-shadow:  0 1px 0  #ea8c8b;
     border-radius: 4px;
@@ -216,7 +222,6 @@ a.btn-primary:active {
     font-weight:bold;
     color:#fff!important;
     background: #f15755 url(../img/btn-pink.png) top left repeat-x;
-    padding:8px 10px;
     border: 1px solid #b53331;
     text-shadow:  0 1px 0  #f8a5a4;
     border-radius: 4px;

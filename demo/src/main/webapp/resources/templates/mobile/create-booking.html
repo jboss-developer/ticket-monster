@@ -1,4 +1,5 @@
 <div data-role="header">
+    <a data-role="button" data-icon="home" href="#">Home</a>
     <h1>Book tickets</h1>
 </div>
 <div data-role="content">
@@ -16,7 +17,7 @@
         <div data-role="fieldcontain">
             <label for="sectionSelect">Section</label>
             <select id="sectionSelect">
-                <option value="-1" selected="true">Choose a section</option>
+                <option value="-1" selected>Choose a section</option>
                 <% _.each(sections, function(section) { %>
                 <option value="<%=section.id%>"><%=section.name%> - <%=section.description%></option>
                 <% }) %>
@@ -24,11 +25,11 @@
         </div>
 
     </div>
-    <div id="ticketCategoriesViewPlaceholder" style="display:none;"/>
+    <div id="ticketCategoriesViewPlaceholder" style="display:none;"></div>
 
     <div class="fieldcontain">
         <label>Contact email</label>
-        <input type='email' name='email' placeholder="Email"/>
+        <input type='email' name='email' placeholder="Email" value="<%=email%>" />
     </div>
 </div>
 

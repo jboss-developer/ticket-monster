@@ -23,3 +23,5 @@ include::DashboardGWT.asciidoc[]
 
 include::HybridUI.asciidoc[]
 
+include::DataGrid.asciidoc[]
+

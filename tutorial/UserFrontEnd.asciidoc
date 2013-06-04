@@ -137,13 +137,14 @@ As you can see, the page does not contain much. It detects the current client (m
 requirejs.config({
     baseUrl: "resources/js",
     paths: {
-        jquery:'libs/jquery-1.7.1',
+        jquery:'libs/jquery-1.9.1',
         underscore:'libs/underscore',
         text:'libs/text',
         order:'libs/order',
         bootstrap: 'libs/bootstrap',
         backbone: 'libs/backbone',
-        utilities: 'app/utilities'
+        utilities: 'app/utilities',
+        router:'app/router/desktop/router'
     },
     // We shim Backbone since it doesn't declare an AMD module
     shim: {
@@ -165,8 +166,7 @@ define("initializer", ["jquery"],
 // Now we declare all the dependencies
 require([
     'order!initializer',
-    'order!underscore',
-    'order!backbone'
+    'order!router'
 ], function(){
 });
 
@@ -182,7 +182,7 @@ Before we add any functionality, let us create a first landing page. We will beg
 Routing
 ~~~~~~~
 
-The outer allows for navigation in our application via bookmarkable URLs, and we will define it as follows:
+The router allows for navigation in our application via bookmarkable URLs, and we will define it as follows:
 
 .src/main/webapp/resources/js/app/router/desktop/router.js
 [source, javascript]
@@ -230,15 +230,15 @@ define("router", [
 
 Remember, this is a single page application. You can either navigate using urls such as `http://localhost:8080/ticket-monster/desktop-index.html#events` or using relative urls (from within the application, this being exactly what the main menu does). The fragment after the hash sign represents the url within the single page, on which the router will act, according to the mappings set up in the `routes` property.
 
-The main module needs to load it. Because the router depends on all the other components (models, collections and views) of the application, directly or indirectly, it is the only component that is explicitly loaded in the `main-desktop` definition, which we change as follows:
+The main module needs to load it. Because the router depends on all the other components (models, collections and views) of the application, directly or indirectly, it is the only component that is explicitly loaded in the `desktop` definition, which we change as follows:
 
-.src/main/webapp/resources/js/main-desktop.js
+.src/main/webapp/resources/js/configurations/desktop.js
 [source,javascript]
 -------------------------------------------------------------------------------------------------------
 requirejs.config({
     baseUrl: "resources/js",
     paths: {
-        jquery:'libs/jquery-1.7.1',
+        jquery:'libs/jquery-1.9.1',
         underscore:'libs/underscore',
         text:'libs/text',
         order:'libs/order',
@@ -377,7 +377,7 @@ The first use case that we implement is event navigation. The users will be able
 The Event model
 ~~~~~~~~~~~~~~~
 
-We a Backbone model for holding event data. Nearly all domain entities (booking, event, venue) are represented by a corresponding Backbone model:
+We define a Backbone model for holding event data. Nearly all domain entities (booking, event, venue) are represented by a corresponding Backbone model:
 
 .src/main/webapp/resources/js/app/models/event.js
 [source,javascript]
@@ -422,7 +422,7 @@ We define a Backbone collection for handling groups of events (like the events l
  * Module for the Events collection
  */
 define([
-    // BThe collection element type and configuration are dependencies
+    // The collection element type and configuration are dependencies
     'app/models/event',
     'configuration'
 ], function (Event, config) {
@@ -481,9 +481,9 @@ define([
                 });
             utilities.applyTemplate($(this.el), eventsTemplate, {categories:categories, model:this.model})
             $(this.el).find('.item:first').addClass('active');
-            $(".carousel").carousel()
-            $(".collapse").collapse()
-            $("a[rel='popover']").popover({trigger:'hover'});
+            $(".carousel").carousel();
+            $(".collapse").collapse();
+            $("a[rel='popover']").popover({trigger:'hover',container:'body'});
             return this;
         },
         update:function () {
@@ -749,10 +749,10 @@ The corresponding templates for the three fragments rendered above are:
             <div id="eventVenueDescription"/>
         </div>
     </div>
-    <div id='bookingWhen' style="display: none;" class="span2 well">
+    <div id='bookingWhen' style="display: none;" class="span4 well">
         <h3 class="page-header">When?</h3>
-        <select class="span2" id="dayPicker"/>
-        <select class="span2" id="performanceTimes"/>
+        <select class="span6" id="dayPicker"/>
+        <select class="span6" id="performanceTimes"/>
 
 
         <div id='bookingOption'><input name="bookButton" class="btn btn-primary" type="button"
@@ -817,7 +817,7 @@ With this in place, all that remains is to implement the final view of this use 
 Creating Bookings
 -----------------
 
-The user has chosen the event, the venue and the performance time, and must now create the booking. Users can select one of the available sections for the show's venue, and then enter the number of tickets requiredfor each category available for this show (Adult, Child, etc.). They then add the tickets to the current order, which causes the summary view to be updated. Users can also remove tickets from the order. When the order is complete, they enter their contact information (e-mail address) and submit the order to the server.
+The user has chosen the event, the venue and the performance time, and must now create the booking. Users can select one of the available sections for the show's venue, and then enter the number of tickets required for each category available for this show (Adult, Child, etc.). They then add the tickets to the current order, which causes the summary view to be updated. Users can also remove tickets from the order. When the order is complete, they enter their contact information (e-mail address) and submit the order to the server.
 
 First, we add the new view:
 
@@ -904,8 +904,19 @@ define([
             var self = this;
             utilities.applyTemplate($(this.el), ticketSummaryViewTemplate, this.model.bookingRequest);
         },
-        removeEntry:function () {
-            this.model.bookingRequest.tickets.splice(this.model.index, 1);
+        removeEntry:function (event) {
+           var index = $(event.currentTarget).data("index");
+           var ticketPriceId = this.model.bookingRequest.seatAllocations[index].ticketRequest.ticketPrice.id;
+           var self = this;
+           $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data: JSON.stringify([{ticketPrice:ticketPriceId, quantity:-1}]),
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json",
+                success: function(cart) {
+                    self.owner.refreshSummary(cart, self.owner)
+                }
+           });
         }
     });
 
@@ -916,32 +927,42 @@ define([
             "change select[id='sectionSelect']":"refreshPrices",
             "keyup #email":"updateEmail",
             "change #email":"updateEmail",
-            "click input[name='add']":"addQuantities",
-            "click i":"updateQuantities"
+            "click input[name='add']":"addQuantities"
         },
         render:function () {
 
             var self = this;
-            $.getJSON(config.baseUrl + "rest/shows/" + this.model.showId, function (selectedShow) {
+            $.ajax({url: (config.baseUrl + "rest/carts"),
+                    data:JSON.stringify({performance:this.model.performanceId}),
+                    type:"POST",
+                    dataType:"json",
+                    contentType:"application/json",
+                    success: function (cart) {
+                        self.model.cartId = cart.id;
+                        $.getJSON(config.baseUrl + "rest/shows/" + self.model.showId, function (selectedShow) {
 
-                self.currentPerformance = _.find(selectedShow.performances, function (item) {
-                    return item.id == self.model.performanceId;
-                });
+                            self.currentPerformance = _.find(selectedShow.performances, function (item) {
+                                return item.id == self.model.performanceId;
+                            });
 
-                var id = function (item) {return item.id;};
-                // prepare a list of sections to populate the dropdown
-                var sections = _.uniq(_.sortBy(_.pluck(selectedShow.ticketPrices, 'section'), id), true, id);
-                utilities.applyTemplate($(self.el), createBookingTemplate, {
-                    sections:sections,
-                    show:selectedShow,
-                    performance:self.currentPerformance});
-                self.ticketCategoriesView = new TicketCategoriesView({model:{}, el:$("#ticketCategoriesViewPlaceholder") });
-                self.ticketSummaryView = new TicketSummaryView({model:self.model, el:$("#ticketSummaryView")});
-                self.show = selectedShow;
-                self.ticketCategoriesView.render();
-                self.ticketSummaryView.render();
-                $("#sectionSelector").change();
-            });
+                            var id = function (item) {return item.id;};
+                            // prepare a list of sections to populate the dropdown
+                            var sections = _.uniq(_.sortBy(_.pluck(selectedShow.ticketPrices, 'section'), id), true, id);
+                            utilities.applyTemplate($(self.el), createBookingTemplate, {
+                                sections:sections,
+                                show:selectedShow,
+                                performance:self.currentPerformance});
+                            self.ticketCategoriesView = new TicketCategoriesView({model:{}, el:$("#ticketCategoriesViewPlaceholder")});
+                            self.ticketSummaryView = new TicketSummaryView({model:self.model, el:$("#ticketSummaryView")});
+                            self.ticketSummaryView.owner = self;
+                            self.show = selectedShow;
+                            self.ticketCategoriesView.render();
+                            self.ticketSummaryView.render();
+                            $("#sectionSelector").change();
+                        });
+                    }
+                }
+            );
             return this;
         },
         refreshPrices:function (event) {
@@ -961,14 +982,11 @@ define([
         save:function (event) {
             var bookingRequest = {ticketRequests:[]};
             var self = this;
-            bookingRequest.ticketRequests = _.map(this.model.bookingRequest.tickets, function (ticket) {
-                return {ticketPrice:ticket.ticketPrice.id, quantity:ticket.quantity}
-            });
             bookingRequest.email = this.model.bookingRequest.email;
             bookingRequest.performance = this.model.performanceId
             $("input[name='submit']").attr("disabled", true)
-            $.ajax({url: (config.baseUrl + "rest/bookings"),
-                data:JSON.stringify(bookingRequest),
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId + "/checkout"),
+                data:JSON.stringify({email:this.model.bookingRequest.email}),
                 type:"POST",
                 dataType:"json",
                 contentType:"application/json",
@@ -990,55 +1008,78 @@ define([
                 })
 
         },
-        addQuantities:function () {
-            var self = this;
-            _.each(this.ticketCategoriesView.model, function (model) {
-                if (model.quantity != undefined) {
-                    var found = false;
-                    _.each(self.model.bookingRequest.tickets, function (ticket) {
-                        if (ticket.ticketPrice.id == model.ticketPrice.id) {
-                            ticket.quantity += model.quantity;
-                            found = true;
-                        }
-                    });
-                    if (!found) {
-                        self.model.bookingRequest.tickets.push({ticketPrice:model.ticketPrice, quantity:model.quantity});
-                    }
-                }
-            });
-            this.ticketCategoriesView.model = null;
-            $('option:selected', 'select').removeAttr('selected');
-            this.ticketCategoriesView.render();
-            this.updateQuantities();
-        },
-        updateQuantities:function () {
+        calculateTotals:function () {
             // make sure that tickets are sorted by section and ticket category
-            this.model.bookingRequest.tickets.sort(function (t1, t2) {
-                if (t1.ticketPrice.section.id != t2.ticketPrice.section.id) {
-                    return t1.ticketPrice.section.id - t2.ticketPrice.section.id;
+            this.model.bookingRequest.seatAllocations.sort(function (t1, t2) {
+                if (t1.ticketRequest.ticketPrice.section.id != t2.ticketRequest.ticketPrice.section.id) {
+                    return t1.ticketRequest.ticketPrice.section.id - t2.ticketRequest.ticketPrice.section.id;
                 }
                 else {
-                    return t1.ticketPrice.ticketCategory.id - t2.ticketPrice.ticketCategory.id;
+                    return t1.ticketRequest.ticketPrice.ticketCategory.id - t2.ticketRequest.ticketPrice.ticketCategory.id;
                 }
             });
 
-            this.model.bookingRequest.totals = _.reduce(this.model.bookingRequest.tickets, function (totals, ticketRequest) {
+            this.model.bookingRequest.totals = _.reduce(this.model.bookingRequest.seatAllocations, function (totals, seatAllocation) {
+                var ticketRequest = seatAllocation.ticketRequest;
                 return {
                     tickets:totals.tickets + ticketRequest.quantity,
                     price:totals.price + ticketRequest.quantity * ticketRequest.ticketPrice.price
                 };
             }, {tickets:0, price:0.0});
-
-            this.ticketSummaryView.render();
-            this.setCheckoutStatus();
+        },
+        addQuantities:function () {
+            var self = this;
+            var ticketRequests = [];
+            _.each(this.ticketCategoriesView.model, function (model) {
+                if (model.quantity != undefined) {
+                    ticketRequests.push({ticketPrice:model.ticketPrice.id, quantity:model.quantity})
+                }
+            });
+            $.ajax({url: (config.baseUrl + "rest/carts/" + this.model.cartId),
+                data:JSON.stringify(ticketRequests),
+                type:"POST",
+                dataType:"json",
+                contentType:"application/json",
+                success: function(cart) {
+                   self.refreshSummary(cart, self)
+                }}
+            );
+        },
+        refreshSummary: function(cart, view) {
+            view.model.bookingRequest.seatAllocations = cart.seatAllocations;
+            view.ticketCategoriesView.model = null;
+            $('option:selected', 'select').removeAttr('selected');
+            view.calculateTotals();
+            view.ticketCategoriesView.render();
+            view.ticketSummaryView.render();
+            view.setCheckoutStatus();
         },
         updateEmail:function (event) {
-            if ($(event.currentTarget).is(':valid')) {
-                this.model.bookingRequest.email = event.currentTarget.value;
-                $("#error-email").empty();
-            } else {
-                $("#error-email").empty().append("Please enter a valid e-mail address");
-                delete this.model.bookingRequest.email;
+            // jQuery 1.9 does not handle pseudo CSS selectors like :valid :invalid, anymore
+            var validElements;
+            try {
+                validElements = $(".form-search").get(0).querySelectorAll(":valid");
+                for (var ctr=0; ctr < validElements.length; ctr++) {
+                    if (event.currentTarget === validElements[ctr]) {
+                        this.model.bookingRequest.email = event.currentTarget.value;
+                        $("#error-email").empty();
+                    } else {
+                        $("#error-email").empty().append("Please enter a valid e-mail address");
+                        delete this.model.bookingRequest.email;
+                    }
+                }
+            }
+            catch(e) {
+                // For browsers like IE9 that do fail on querySelectorAll for CSS pseudo selectors,
+                // we use the regex defined in the HTML5 spec.
+                var emailRegex = new RegExp("[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*");
+                if(emailRegex.test(event.currentTarget.value)) {
+                    this.model.bookingRequest.email = event.currentTarget.value;
+                    $("#error-email").empty();
+                } else {
+                    $("#error-email").empty().append("Please enter a valid e-mail address");
+                    delete this.model.bookingRequest.email;
+                }
             }
             this.setCheckoutStatus();
         },
@@ -1165,7 +1206,7 @@ The corresponding templates for the views above are shown below:
 
         <div class="controls">
             <div class="input-append">
-                <input class="span2" rel="tooltip" title="Enter value"
+                <input class="span6" rel="tooltip" title="Enter value"
                        data-tm-id="<%=ticketPrice.id%>"
                        placeholder="Number of tickets"
                        name="tickets-<%=ticketPrice.ticketCategory.id%>"/>
@@ -1270,7 +1311,7 @@ define("router", [
 
 This concludes the implementation of the booking use case. We started by listing the available events, continued by selecting a venue and performance time, and ended by choosing tickets and completing the order.
 
-The other use cases: a booking starting from venues and vi existing bookings are conceptually similar, so you can just copy the remaining files in the `src/main/webapp/resources/js/app/models`, `src/main/webapp/resources/js/app/collections`, 
+The other use cases: a booking starting from venues and view existing bookings are conceptually similar, so you can just copy the remaining files in the `src/main/webapp/resources/js/app/models`, `src/main/webapp/resources/js/app/collections`, 
 `src/main/webapp/resources/js/app/views/desktop` and the remainder of `src/main/webapp/resources/js/app/routers/desktop/router.js`.
 
 
@@ -1312,13 +1353,14 @@ For mobile clients, the main page will display the mobile version of the applica
 require.config({
     baseUrl:"resources/js",
     paths: {
-        jquery:'libs/jquery-1.7.1',
-        jquerymobile:'libs/jquery.mobile-1.1.0',
+        jquery:'libs/jquery-1.9.1',
+        jquerymobile:'libs/jquery.mobile-1.3.1',
         text:'libs/text',
         underscore:'libs/underscore',
         backbone: 'libs/backbone',
         order: 'libs/order',
-        utilities: 'app/utilities'
+        utilities: 'app/utilities',
+        router:'app/router/mobile/router'
     },
     // We shim Backbone since it doesn't declare an AMD module
     shim: {
@@ -1339,7 +1381,8 @@ define("configuration", function() {
             baseUrl: ""
         }
     }
-})
+});
+
 define("initializer", [
     'jquery',
     'utilities',
@@ -1347,7 +1390,7 @@ define("initializer", [
 ], function ($,
              utilities,
              MainTemplate) {
-    $('head').append('<link rel="stylesheet" href="resources/css/jquery.mobile-1.1.0.css"/>');
+    $('head').append('<link rel="stylesheet" href="resources/css/jquery.mobile-1.3.1.css"/>');
     $('head').append('<link rel="stylesheet" href="resources/css/m.screen.css"/>');
     $(document).bind("mobileinit", function () {
         utilities.applyTemplate($('body'), MainTemplate)
@@ -1358,13 +1401,14 @@ define("initializer", [
 // Now we declare all the dependencies
 require(['order!initializer',
          'order!underscore',
-         'order!backbone'],
+         'order!backbone',
+         'order!router'],
     function(){
 });
 
 define(["configuration"],function(configuration){
     return {config: configuration };
-})
+});
 -------------------------------------------------------------------------------------------------------
 
 In this application, we combine Backbone and jQuery Mobile. Each framework has its own strengths; jQuery Mobile provides UI components and touch support, whilst Backbone provides MVC support. There is some overlap between the two, as jQuery Mobile provides its own navigation mechanism which we disable. 

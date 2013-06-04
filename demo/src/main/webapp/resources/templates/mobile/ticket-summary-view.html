@@ -1,29 +1,18 @@
-<table>
-    <thead>
-    <tr>
-        <th>Section</th>
-        <th>Category</th>
-        <th>Price</th>
-        <th>Quantity</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% _.each(tickets, function(ticketRequest) { %>
-    <% _.each(ticketRequest, function(model) { %>
-    <% if (model.quantity != undefined) { %>
-    <tr>
-        <td><%= model.ticketPrice.section.name %></td>
-        <td><%= model.ticketPrice.ticketCategory.description %></td>
-        <td>$<%= model.ticketPrice.price %></td>
-        <td><%= model.quantity %></td>
-    </tr>
-    <% } %>
-    <% }) %>
-    <% }) %>
-    </tbody>
-</table>
-<div data-theme="c">
+<ul data-role="listview" data-split-icon="delete" data-split-theme="c" data-inset="true">
+    <% _.each(tickets, function(model) { %>
+    <li>
+        <a class="readonly-listview">
+            <p><strong>Section</strong> <%= model.ticketPrice.section.name %></p>
+            <p><strong>Category</strong> <%= model.ticketPrice.ticketCategory.description %></p>
+            <p><strong>Price</strong> <%= model.ticketPrice.price %></p>
+            <p><strong>Quantity</strong> <%= model.quantity %></p>
+        </a>
+        <a href="#" data-action="delete" data-ticketpriceid="<%= model.ticketPrice.id %>"></a>
+    </li>
+    <% }); %>
+</ul>
+<div>
     <h4>Totals</h4>
     <p><strong>Total tickets: </strong><%= totals.tickets %></p>
-    <p> <strong>Total price: $</strong><%= totals.price %></p>
+    <p><strong>Total price: $ </strong><%= totals.price %></p>
 </div>

@@ -6,8 +6,8 @@
 require.config({
     baseUrl:"resources/js",
     paths: {
-        jquery:'libs/jquery-1.7.1',
-        jquerymobile:'libs/jquery.mobile-1.1.0',
+        jquery:'libs/jquery-1.9.1',
+        jquerymobile:'libs/jquery.mobile-1.3.1',
         text:'libs/text',
         underscore:'libs/underscore',
         backbone: 'libs/backbone',
@@ -43,7 +43,7 @@ define("initializer", [
 ], function ($,
              utilities,
              MainTemplate) {
-    $('head').append('<link rel="stylesheet" href="resources/css/jquery.mobile-1.1.0.css"/>');
+    $('head').append('<link rel="stylesheet" href="resources/css/jquery.mobile-1.3.1.css"/>');
     $('head').append('<link rel="stylesheet" href="resources/css/m.screen.css"/>');
     $(document).bind("mobileinit", function () {
         utilities.applyTemplate($('body'), MainTemplate)
