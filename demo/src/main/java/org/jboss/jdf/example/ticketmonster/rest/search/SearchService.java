@@ -107,13 +107,13 @@ public class SearchService {
         FacetingRequest priceFaceting = qb.facet()
             .name("price")
             .onField("ticketPrices.min")
-            .range() //remove comments once HSEARCH-1338 is fixed
-                .below(50f) //.excludeLimit()
-                .from(50f).to(100f) //.excludeLimit()
-                .from(100f).to(200f) //.excludeLimit()
+            .range()
+                .below(50f).excludeLimit()
+                .from(50f).to(100f).excludeLimit()
+                .from(100f).to(200f).excludeLimit()
                 .above(200f)
                 .includeZeroCounts(true)
-                .orderedBy(FacetSortOrder.RANGE_DEFINITION_ODER) //fix typo once HSEARCH-1339 is fixed
+                .orderedBy(FacetSortOrder.RANGE_DEFINITION_ORDER)
             .createFacetingRequest();
         objectQuery.getFacetManager().enableFaceting(categoryFaceting).enableFaceting(priceFaceting);
     }
