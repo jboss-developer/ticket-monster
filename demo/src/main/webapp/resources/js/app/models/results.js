@@ -36,7 +36,7 @@ define([
             var category = this.get("category");
             var minprice = this.get("price");
             if (typeof lat != 'undefined' && typeof lng != 'undefined') {
-                result += "around/" + lat + "-" + lng + "/";
+                result += "around/" + lat + "/" + lng + "/";
             }
             else {
                 result += "anywhere/";

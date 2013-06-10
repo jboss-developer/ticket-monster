@@ -129,7 +129,6 @@ public class Show implements Serializable {
     @OneToMany(mappedBy = "show", cascade = ALL, fetch = EAGER)
     @Field(name="ticketPrices.min", analyze=Analyze.NO,
         bridge=@FieldBridge(impl=PriceMinBridge.class))
-    @NumericField
     private Set<TicketPrice> ticketPrices = new HashSet<TicketPrice>();
 
     /* Boilerplate getters and setters */
