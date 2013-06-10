@@ -44,6 +44,8 @@ insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com
 insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://dl.dropbox.com/u/8625587/ticketmonster/Punch%26Judy.png')
 -- MediaItem 22
 insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Paris_Opera_full_frontal_architecture%2C_May_2009.jpg/800px-Paris_Opera_full_frontal_architecture%2C_May_2009.jpg')
+-- MediaItem 23
+insert into MediaItem ( mediaType, url) values ( 'IMAGE', 'http://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Boston_Symphony_Hall_from_the_south.jpg/800px-Boston_Symphony_Hall_from_the_south.jpg')
 
 -- Venue 1
 insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'Roy Thomson Hall', 'Toronto', 'Canada', '60 Simcoe Street','Roy Thomson Hall is the home of the Toronto Symphony Orchestra and the Toronto Mendelssohn Choir.',4, 11000, 43.6466150, -79.3864430);
@@ -99,6 +101,19 @@ insert into Section ( name, description, numberofrows, rowcapacity, venue_id) va
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'C', 'Right', 10, 41, 4);
 -- Section 19
 insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'D', 'Balcony', 6, 92, 4);
+
+-- Venue 5
+
+insert into Venue ( name, city, country, street, description, mediaitem_id, capacity, latitude, longitude) values ( 'Boston Symphony Hall', 'Boston', 'USA', '301 Massachusetts Avenue','Designed by McKim, Mead and White, it was built in 1900 for the Boston Symphony Orchestra, which continues to make the hall its home. The hall was designated a U.S. National Historic Landmark in 1999.', 24, 1972, 42.342594, -71.085806);
+
+-- Section 20
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'A', 'Center',10, 60, 5);
+-- Section 21
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'B', 'Left', 10, 41, 5);
+-- Section 22
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'C', 'Right', 10, 41, 5);
+-- Section 23
+insert into Section ( name, description, numberofrows, rowcapacity, venue_id) values ( 'D', 'Balcony', 6, 92, 5);
 
 -- EventCategory 1
 insert into EventCategory ( description) values ( 'Concert');
@@ -247,6 +262,26 @@ insert into SectionAllocation(performance_id, section_id, allocated, occupiedcou
 insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (9, 14, null, 0, 1);
 insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (9, 15, null, 0, 1);
 
+-- Show 6
+insert into Show ( event_id, venue_id) values ( 1, 5);
+
+-- Performance 10
+insert into Performance ( show_id, date) values ( 6, '2013-10-01 19:00:00');
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (10, 20, null, 0, 1);
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (10, 21, null, 0, 1);
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (10, 22, null, 0, 1);
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (10, 23, null, 0, 1);
+
+-- Performance 11
+insert into Performance ( show_id, date) values ( 6, '2013-10-02 19:00:00');
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (11, 20, null, 0, 1);
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (11, 21, null, 0, 1);
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (11, 22, null, 0, 1);
+insert into SectionAllocation(performance_id, section_id, allocated, occupiedcount, version) values (11, 23, null, 0, 1);
+
+
+
+
 insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (1, 1, 1, 219.50);
 insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (1, 2, 1, 199.50);
 insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (1, 3, 1, 179.50);
@@ -285,3 +320,8 @@ insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values 
 insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (5, 13, 1, 199.50);
 insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (5, 14, 1, 179.50);
 insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (5, 15, 1, 149.50);
+
+insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (6, 20, 1, 219.50);
+insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (6, 21, 1, 199.50);
+insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (6, 22, 1, 110);
+insert into TicketPrice ( show_id, section_id, ticketcategory_id, price) values (6, 23, 1, 55);
