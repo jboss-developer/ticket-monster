@@ -27,10 +27,10 @@ public class Resources {
      * Alias the persistence context
      */
     // use @SuppressWarnings to tell IDE to ignore warnings about field not being referenced directly
-    @SuppressWarnings("unused")
-    @Produces
-    @PersistenceContext(unitName = "primary")
-    private EntityManager em;
+   @SuppressWarnings("unused")
+   @Produces
+   @PersistenceContext
+   private EntityManager em;
 
     /**
      * <p>
@@ -41,16 +41,25 @@ public class Resources {
     @PicketLink
     @PersistenceContext(unitName = "primary")
     private EntityManager picketLinkEntityManager;
-
-    /**
-     * Provider injectable loggers based around Java Util Logging.
-     * 
-     * @param injectionPoint
-     * @return
-     */
-    @Produces
-    public Logger produceLog(InjectionPoint injectionPoint) {
-        return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
-    }
+   
+   /**
+    * Provider injectable loggers based around Java Util Logging.
+    * @param injectionPoint
+    * @return
+    */
+   @Produces
+   public Logger produceLog(InjectionPoint injectionPoint) {
+      return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
+   }
+ 
+   @Produces @DataDir
+   public String getDataDir() {
+       String openshiftDataDir = System.getenv("OPENSHIFT_DATA_DIR");
+       if (openshiftDataDir != null) {
+           return openshiftDataDir;
+       } else {
+           return "";
+       }
+   }
 
 }
