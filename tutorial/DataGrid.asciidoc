@@ -1,9 +1,9 @@
-Adding a data grid
-==================
+= Adding a data grid
+
 :Author: Marius Bogoevici
 
-What Will You Learn Here?
--------------------------
+== What Will You Learn Here?
+
 
 You've just finished implementing TicketMonster, and are wondering how can you improve its concurrency and scalability. One possible solution is to reconsider the storage strategy and use a data grid, at least for a part of your application data. In this tutorial, you will learn how to:
 
@@ -12,8 +12,8 @@ You've just finished implementing TicketMonster, and are wondering how can you i
 * Use caches to implement scalable server-side stateful components such as shopping carts;
 * Use caches to implement a highly-concurrent data access mechanism for seat allocations.
 
-The problem at hand
--------------------
+== The problem at hand
+
 
 When it comes to performance, TicketMonster has a few special requirements:
 
@@ -44,8 +44,8 @@ link:http://www.jboss.org/infinispan[Infinispan] is an extremely scalable, highl
 link
 =====================================================================================
 
-Adding Infinispan
------------------
+== Adding Infinispan
+
 
 First, you need to decide how you will use Infinispan in the project. You can opt between two access patterns:
 
@@ -102,8 +102,8 @@ Next, we will include the Infinispan library in the project.
 </project>
 ---------------------------------------------------------------------------------
 
-Configuring the infrastructure
-------------------------------
+== Configuring the infrastructure
+
 
 First, we will create a producer and disposer for the Infinispan cache manager, where we define the global cache configuration and set up default options for the caches used in the application. The cache manager is unique for the application and to the data grid node, so we will create it as an application scoped bean.
 
@@ -149,8 +149,8 @@ public class CacheProducer {
 
 We will inject the cache manager instance in various services that use the data grid, which will use it in turn to get access to application caches.
 
-Using caches for seat reservations
-----------------------------------
+== Using caches for seat reservations
+
 
 First, we are going to change the existing implementation of the `SeatAllocationService` to use the Infinispan datagrid. Rather than storing the seat allocations in a database, we will store them as data grid entries.
 
@@ -307,8 +307,8 @@ public class SeatAllocationService {
 }
 ---------------------------------------------------------------------------------    
 
-Implementing carts
-------------------
+== Implementing carts
+
 
 Once we have stored our allocation status in the data grid, we can move on to implementing a cart system for TicketMonster. Rather than composing the orders on the client and sending the entire order as a single requests, users will be able to add and remove seats to their orders while they're shopping. 
 
@@ -1493,7 +1493,7 @@ Finally, we will need to update the booking confirmation page.
 
 This is it!
 
-Conclusion
-----------
+== Conclusion
+
 
 You have successfully converted your application from one that relies exclusively on relational persistence to using a NoSQL (key-value) data store for a part of its data. You have identified the use cases where the switch is mostly likely to result in performance improvements, including the changes in application functionality that can benefit from this conversion. You have learned how to set up the infrastructure, distinguish between the different configuration options, and use the API.

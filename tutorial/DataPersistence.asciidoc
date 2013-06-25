@@ -1,9 +1,9 @@
-Building the persistence layer with JPA2 and Bean Validation
-============================================================
+= Building the persistence layer with JPA2 and Bean Validation
+
 :Author: Pete Muir
 
-What will you learn here?
--------------------------
+== What will you learn here?
+
 
 You have set up your project successfully. Now it is time to begin working on the TicketMonster
 application, and the first step is adding the persistence layer. After reading this guide,
@@ -26,8 +26,8 @@ In this  tutorial we'll go deeper into domain model design, we'll classify the e
 walk through designing and creating one of each group.
 
 [[YourFirstEntity]]
-Your first entity
------------------
+== Your first entity
+
 
 The simplest kind of entities are often those representing lookup tables. `TicketCategory` is a classic lookup table that defines the ticket types available (e.g. Adult, Child, Pensioner). A ticket category has one property - _description_.
 
@@ -318,8 +318,8 @@ public class TicketCategory {
 
 TicketMonster contains another lookup tables, `EventCategory`. It's pretty much identical to `TicketCategory`, so we leave it as an exercise to the reader to investigate, and understand. If you are building the application whilst following this tutorial, copy the source over from the TicketMonster example.
 
-Database design & relationships
--------------------------------
+== Database design & relationships
+
 
 First, let's understand the the entity design. 
 
@@ -337,8 +337,8 @@ Finally, both events and venues can have "media items", such as images or videos
 .Entity-Relationship Diagram
 image::gfx/database-design.png[scaledwidth="70%"]
 
-Media items
-~~~~~~~~~~~
+=== Media items
+
 
 Storing large binary objects, such as images or videos in the database isn't advisable (as it can lead to performance issues), and playback of videos can also be tricky, as it depends on browser capabilities. For TicketMonster, we decided to make use of existing services to host images and videos, such as YouTube or Flickr. All we store in the database is the URL the application should use to access the media item, and the type of the media item (note that the URL forms a media items natural identifier). We need to know the type of the media item in order to render the media correctly in the view layer.
 
@@ -382,8 +382,8 @@ The choice is yours!
 
 The rest of `MediaItem` shouldn't present a challenge to you. If you are building the application whilst following this tutorial, copy both `MediaItem` and `MediaType` from the TicketMonster project.
 
-Events
-~~~~~~
+=== Events
+
 
 In <<YourFirstEntity>> we saw how to build simple entities with properties, identify and apply constraints using Bean Validation, identify the natural id and add a synthetic id. From now on we'll assume you know how to build simple entities - for each new entity that we build, we will start with it's basic structure and properties filled in.
 
@@ -739,8 +739,8 @@ public class Event {
 }
 -------------------------------------------------------------------------------------------------------
 
-Shows
-~~~~~
+=== Shows
+
 
 A show is an event at a venue. It consists of a set of performances of the show. A show also contains the list of ticket prices available.
 
@@ -1094,8 +1094,8 @@ public class Show implements Serializable {
 
 -------------------------------------------------------------------------------------------------------
 
-Performances
-~~~~~~~~~~~~
+=== Performances
+
 
 Finally, let's create the `Performance` class, which represents an instance of a `Show`. Performance is pretty straightforward. It contains the date and time of the performance, and the show of which it is a performance. Together, the show, and the date and time, make up the natural identity of the performance. Here's the source for `Performance`:
 
@@ -1219,8 +1219,8 @@ A Java `Date` represents "a specific instance in time, with millisecond precisio
 
 As the mapping between Java date and time, and database date and time isn't straightforward, JPA requires us to use the `@Temporal` annotation on any property of type `Date`, and to specify whether the `Date` should be stored as a date, a time or a timestamp (date and time).
 
-Venue
-~~~~~
+=== Venue
+
 
 Now, let's build out the entities to represent the venue.
 
@@ -1489,13 +1489,13 @@ public class Address {
 }
 -------------------------------------------------------------------------------------------------------
 
-Sections
-~~~~~~~~
+=== Sections
+
 
 A venue consists of a number of seating sections. Each seating section has a name, a description, the number of rows in the section, and the number of seats in a row. It's natural identifier is the name of section combined with the venue (a venue can't have two sections with the same name). `Section` doesn't introduce any new concepts, so go ahead and copy the source in, if you are building the application whilst following this tutorial.
 
-Booking, Ticket & Seat
-~~~~~~~~~~~~~~~~~~~~~~
+=== Booking, Ticket & Seat
+
 
 There aren't many new concepts to explore in `Booking`, `Ticket` and `Seat`, so if you are following along with the tutorial, you should copy in the `Booking`, `Ticket` and `Seat` classes.
 
@@ -1537,8 +1537,8 @@ We add the `@JoinColumn` annotation, which sets up a foreign key in `Ticket`, bu
 
 A ticket embeds the seat allocated, and contains a reference to the category under which it was sold. It also contains the price at which it was sold.
 
-Connecting to the database
---------------------------
+== Connecting to the database
+
 
 In this example, we are using the in-memory H2 database, which is very easy to set up on JBoss AS. JBoss AS allows you deploy a datasource inside your application's `WEB-INF` directory. You can locate the source in `src/main/webapp/WEB-INF/ticket-monster-ds.xml`:
 
@@ -1595,8 +1595,8 @@ As our application has only one datasource, and hence one persistence unit, the 
 
 Hibernate includes the ability to generate tables from entities, which here we have configured. We don't recommend using this outside of development. Updates to databases in production should be done manually.
 
-Populating test data
---------------------
+== Populating test data
+
 
 Whilst we develop our application, it's useful to be able to populate the database with test data. Luckily, Hibernate makes this easy. Just add a file called `import.sql` onto the classpath of your application (we keep it in `src/main/resources/import.sql`). In it, we just write standard sql statements suitable for the database we are using. To do this, you need to know the generated column and table names for your entities. The best way to work these out is to look at the h2console.
 
@@ -1614,7 +1614,7 @@ database.
 image::gfx/h2console_settings.png[]
 =====================================================================================
 
-Conclusion
-----------
+== Conclusion
+
 
 You now have a working data model for your TicketMonster application, our next tutorial will show you how to create the business services layer or something like that - it seems to end abruptly.

@@ -1,9 +1,9 @@
-Building The Statistics Dashboard Using GWT And Errai
-=====================================================
+= Building The Statistics Dashboard Using GWT And Errai
+
 :Author: Marius Bogoevici, Christian Sadilek
 
-What Will You Learn Here?
--------------------------
+== What Will You Learn Here?
+
 
 You've just built the administration view, and would like to collect real-time information about ticket sales and attendance. Now it would be good to implement a dashboard that can collect data and receive real-time updates. After reading this tutorial, you will understand our dashboard design and the choices that we made in its implementation. Topics covered include:
 
@@ -15,8 +15,8 @@ The tutorial will show you how to perform all these steps in JBoss Developer Stu
 
 In this tutorial, we will create a booking monitor using Errai and GWT, and add it to the TicketMonster application. It will show live updates on the booking status of all performances and shows. These live updates are powered by CDI events crossing the client-server boundary, a feature provided by the Errai Framework. 
 
-Before we start
-~~~~~~~~~~~~~~~
+=== Before we start
+
 
 Let us quickly review the starting point of this chapter. If you are re-creating TicketMonster as part of reading this tutorial, this is a good time to check that all the prerequisites are in place. If you are not re-creating TicketMonster on your own, then you can skip this section.
 
@@ -264,8 +264,8 @@ contains the following:
 
 If one or more of the above is not true, please make the appropriate changes.
 
-Module definition
------------------
+== Module definition
+
 
 The first step is to add a GWT module descriptor (a `.gwt.xml` file) which defines the GWT module, its dependencies and configures the client source paths. Only classes in these source paths will be compiled to JavaScript by the GWT compiler. Here's the `BookingMonitor.gwt.xml` file:
 
@@ -300,8 +300,8 @@ The first step is to add a GWT module descriptor (a `.gwt.xml` file) which defin
 
 The `rename-to` attribute specifies the output directory and file name of the resulting JavaScript file. In this case we specified that the `BookingMonitor` module will be compiled into `BookingMonitor/BookingMonitor.nocache.js` in the project's output directory. The module further inherits the required Errai modules, and specifies the already existing `model` package as source path, as well as a new package named `monitor`, which will contain all the client source code specific to the booking monitor.
 
-Host page
----------
+== Host page
+
 
 In the next step we add a _host HTML page_ which includes the generated JavaScript and all required CSS files for the booking monitor. It further specifies a `<div>` element with id `content` which will be used as a container for the booking monitor's user interface. 
 
@@ -371,8 +371,8 @@ In the next step we add a _host HTML page_ which includes the generated JavaScri
 </html>
 ---------------------------------------------------------------------------------------------------------
 
-Enabling Errai
---------------
+== Enabling Errai
+
 
 For enabling Errai in our application we will add an `ErraiApp.properties` marker file. When it is detected inside a JAR or at the top of any classpath, the subdirectories are scanned for deployable components. As such, all Errai application modules in a project must contain an `ErraiApp.properties` at the root of all classpaths that you wish to be scanned, in this case `src/main/resources`.
 
@@ -386,8 +386,8 @@ We will also add an `ErraiService.properties` file, which contains basic configu
 errai.dispatcher_implementation=org.jboss.errai.bus.server.SimpleDispatcher
 ---------------------------------------------------------------------------------------------------------
 
-Preparing the wire objects
---------------------------
+== Preparing the wire objects
+
 
 One of the strengths of Errai is the ability to use domain objects for communication across the wire. In order for that to be possible, all model classes that are transferred using Errai RPC or Errai CDI need to be annotated with the Errai-specific annotation `@Portable`. We will begin by annotating the `Booking` class which used as an the event payload.
 
@@ -406,8 +406,8 @@ public class Booking implements Serializable {
 You should do the same for the other model classes.
 
 
-The EntryPoint
---------------
+== The EntryPoint
+
 
 We are set up now and ready to start coding. The first class we need is the EntryPoint into the GWT application. Using Errai, all it takes is to create a POJO and annotate it with `@EntryPoint`.
 
@@ -566,8 +566,8 @@ public class BookingMonitor {
 The newly created methods `onNewBooking` and `onCancelledBooking` are _event listeners_. They are identified as such by the `@Observes` annotation applied to their parameters. By using the `@Created` and `@Cancelled` qualifiers that we have defined in our application, we narrow down the range of events that they listen.
 
 
-The widgets
------------
+== The widgets
+
 
 Next, we will define the widget classes that are responsible for rendering the user interface. First, we will create the widget class for an individual performance.
 

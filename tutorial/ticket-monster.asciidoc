@@ -1,5 +1,5 @@
-Ticket Monster Tutorial
-=======================
+= Ticket Monster Tutorial
+
 Marius Bogoevici, Pete Muir, Burr Sutter
 :doctype: book
 ifdef::asciidoctor[]

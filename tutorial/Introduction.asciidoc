@@ -1,9 +1,9 @@
-Introduction & Getting Started
-==============================
+= Introduction & Getting Started
+
 :Author: Burr Sutter
 
-Purpose and Target Audience
----------------------------
+== Purpose and Target Audience
+
 The target audience for this tutorial are those individuals who do not yet have a great deal of experience with:
 
 * Eclipse + JBoss Tools (JBoss Developer Studio)
@@ -34,8 +34,8 @@ In this tutorial, we will cover the following topics:
 .JBoss Developer Studio 5 with Mobile BrowserSim
 image::gfx/introduction/jbds5_mobile_browsersim.png[]
 
-Installation
-------------
+== Installation
+
 
 The first order of business is to get your development environment setup and JBoss Developer Studio v5 installed. JBoss Developer Studio is Eclipse Indigo (3.7.2) for Java EE Developers plus select JBoss Tools and is available for free. Visit http://www.jboss.org/tools/download/ to download it.  You may also choose to install JBoss Tools 3.3 into your existing Eclipse Indigo for Java EE Developers. This document uses screenshots depicting JBoss Developer Studio.
 
@@ -80,8 +80,8 @@ Please make sure to say *Yes* to the prompt that says "Will you allow JBoss Tool
 
 You can skip the step in the installation wizard that allows you to install JBoss Enterprise Application Platform 6 or JBoss AS 7 as we will do this in the next step.
 
-Creating a new Java EE 6 project with Maven
--------------------------------------------
+== Creating a new Java EE 6 project with Maven
+
 
 [TIP]
 =================================================================
@@ -182,8 +182,8 @@ image::gfx/introduction/prompt_for_readme.png[]
 
 Select *Finish*
 
-Exploring the newly generated project
--------------------------------------
+== Exploring the newly generated project
+
 Using the *Project Explorer*, open up the generated project, and double-click on the `pom.xml`.
 
 The generated project is a Maven-based project with a `pom.xml` in its root directory.
@@ -272,8 +272,8 @@ In `src/main/webapp/WEB-INF`, you will find three key files:
    when deployed, creates a new datasource within the JBoss container
 
 
-Adding a new entity using Forge
--------------------------------
+== Adding a new entity using Forge
+
 
 There are several ways to add a new JPA entity to your project:
 
@@ -396,8 +396,8 @@ The easiest way to see the results of Forge operating on the `Event.java` JPA En
 image::gfx/introduction/outline_of_event.png[]
 
 
-Reviewing persistence.xml & updating import.sql
------------------------------------------------
+== Reviewing persistence.xml & updating import.sql
+
 
 By default, the entity classes generate the database schema, and is controlled by `src/main/resources/persistence.xml`.
 
@@ -412,8 +412,8 @@ The `import.sql` file contains SQL statements that will inject sample data into 
     insert into Event (id, name, description, major, picture, version) values (2, 'Rock concert of the decade', 'Get ready to rock...', true, 'http://dl.dropbox.com/u/65660684/640px-Weir%2C_Bob_(2007)_2.jpg', 1);
 
 
-Adding a new entity using JBoss Developer Studio
-------------------------------------------------
+== Adding a new entity using JBoss Developer Studio
+
 
 Alternatively, we can add an entity with JBoss Developer Studio or JBoss Tools.
 
@@ -477,8 +477,8 @@ Select *Finish*.
 
 Now you may wish to add the Bean Validation constraint annotations, such as `@NotNull` to the fields.
 
-Deployment
-----------
+== Deployment
+
 
 At this point, if you have not already deployed the application, right click on the project name in the Project Explorer and select *Run As -> Run on Server*.  If needed, this will startup the application server instance, compile & build the application and push the application into the `JBOSS_HOME/standalone/deployments` directory.  This directory is scanned for new deployments, so simply placing your war in the directory will cause it to be deployed.
 
@@ -519,8 +519,8 @@ And if you enter the SQL statement: `select * from event` and select the *Run* (
 image::gfx/introduction/h2console_select_from_event.png[]
 
 
-Adding a JAX-RS RESTful web service
------------------------------------
+== Adding a JAX-RS RESTful web service
+
 
 The goal of this section of the tutorial is to walk you through the creation of a POJO with the JAX-RS annotations. 
 
@@ -645,8 +645,8 @@ The `rest` prefix is setup in a file called `JaxRsActivator.java` which contains
 a small bit of code that sets up the application for JAX-RS endpoints.
 =================================================================================
 
-Adding a jQuery Mobile client application
------------------------------------------
+== Adding a jQuery Mobile client application
+
 
 Now, it is time to add a HTML5, jQuery based client application that is optimized for the mobile web experience.
 
@@ -794,12 +794,12 @@ Under the *File* menu, you will find a *View Page Source* option that will open 
 .Mobile BrowserSim View Source
 image::gfx/introduction/mobile_browsersim_bofa_source.png[]
 
-Conclusion
-----------
+== Conclusion
+
 This concludes our introduction to building HTML5 Mobile Web applications using Java EE 6 with Forge and JBoss Developer Studio. At this point, you should feel confident enough to tackle any of the additional exercises to learn how the TicketMonster sample application is constructed.
 
-Cleaning up the generated code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Cleaning up the generated code
+
 
 Before we proceed with the tutorial and implement TicketMonster, we need to clean up some of the archetype-generated code. The Member management code, while useful for illustrating the general setup of a Java EE 6 web application, will not be part of TicketMonster, so we can safely remove some packages, classes, and resources:
 

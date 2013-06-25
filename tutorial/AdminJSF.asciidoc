@@ -1,9 +1,9 @@
-Building the Administration UI using Forge
-==========================================
+= Building the Administration UI using Forge
+
 :Author: Pete Muir
 
-What Will You Learn Here?
--------------------------
+== What Will You Learn Here?
+
 
 You've just defined the domain model of your application, and all the entities managed directly by the end-users. Now it's time to build an administration GUI for the TicketMonster application using JSF and RichFaces. After reading this guide, you'll understand how to use JBoss Forge to create the views from the entities and how to "soup up" the UI using RichFaces.
 
@@ -12,19 +12,19 @@ We'll round out the guide by revealing the required, yet short and sweet, config
 The tutorial will show you how to perform all these steps in JBoss Developer Studio, including screenshots that guide you through. For those of you who prefer to watch and learn, the included video shows you how we performed all the steps.
 
 
-Setting up Forge
-----------------
+== Setting up Forge
 
-JBoss Enterprise Application Platform 6
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+=== JBoss Enterprise Application Platform 6
+
 
 If you are using JBoss Enterprise Application Platform 6, Forge is available in JBoss Developer Studio 5 (Beta1 or newer). 
 
 To show the Forge Console, navigate to _Window -> Show View -> Other_, locate _Forge Console_ and click _OK_. Then click the _Start_ button in top right corner of the view.
 
 
-JBoss AS 7
-~~~~~~~~~~
+=== JBoss AS 7
+
 
 If you are using JBoss AS 7, you should install JBoss Forge version 1.0.2.Final or higher. Follow the instructions at link:https://docs.jboss.org/author/display/FORGE/Installation[Installing Forge].
 
@@ -35,8 +35,8 @@ Launch Forge by typing the following command:
     forge
 
 
-Required Forge Plugins
-~~~~~~~~~~~~~~~~~~~~~~
+=== Required Forge Plugins
+
 
 Forge comes with a number of built in plugins, including the "scaffold" plugin, which is able to generate a full CRUD UI from JPA entities. The generated UI uses JSF as the view layer, backed by CDI beans. Internally, Forge uses http://metawidget.org/[Metawidget] to create the CRUD screens.
 
@@ -51,8 +51,8 @@ In this case, the plugin is just called `richfaces` - easy! We can install it us
 This will download, compile and install the RichFaces plugin.
 
 
-Getting started with Forge
---------------------------
+== Getting started with Forge
+
 
 Forge is a powerful rapid application development (aimed at Java EE 6) and project comprehension tool. It can operate both on projects it creates, and on existing projects, such as TicketMonster. If you want to learn more about Forge ...
 
@@ -69,8 +69,8 @@ image::gfx/forge-project-list-facets.png[]
 As you can see, Forge has detected all the technologies we are using, such as JPA, JAX-RS, CDI and Bean Validation.
 
 
-Generating the CRUD UI
-----------------------
+== Generating the CRUD UI
+
 
 .Forge Scripts
 *************************************************************************************
@@ -82,8 +82,8 @@ you want to regenerate the Admin UI. The script will also prompt you to applyTo 
 *************************************************************************************
 
 
-Update the project
-~~~~~~~~~~~~~~~~~~
+=== Update the project
+
 
 First, we need to add Scaffold to the project. Run:
 
@@ -106,8 +106,8 @@ You'll be prompted for the version of RichFaces to use. Choose version `4.0.0.Fi
 image::gfx/forge-richfaces-setup.png[]
 
 
-Scaffold the view from the JPA entities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Scaffold the view from the JPA entities
+
 
 You can either scaffold the entities one-by-one, which allows to control which UIs are generated, or you can generate a CRUD UI for all the entities. We'll do the latter:
 
@@ -121,16 +121,16 @@ Specifying `--overwrite` allows Forge to overwrite files without prompt - much b
 We now have a CRUD UI for all the entities used in TicketMonster!
 
 
-Test the CRUD UI
-----------------
+== Test the CRUD UI
+
 
 Let's test our UI on our local JBoss AS instance. As usual, we'll build and deploy using Maven:
 
     mvn clean package jboss-as:deploy
 
 
-Make some changes to the UI
----------------------------
+== Make some changes to the UI
+
 
 Let's add support for images to the Admin UI. TicketMonster doesn't provide support for storing images, but allows you to reference images from hosting sites on the internet. TicketMonster caches the images, so you can still use the application when you aren't connected to the internet.
 

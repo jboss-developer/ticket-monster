@@ -1,10 +1,10 @@
 [[BuildingBusinessServices]]
-Building The Business Services With JAX-RS
-==========================================
+= Building The Business Services With JAX-RS
+
 :Author: Marius Bogoevici
 
-What Will You Learn Here?
--------------------------
+== What Will You Learn Here?
+
 
 We've just defined the domain model of the application and created its persistence layer. Now we need to define the services that implement the business logic of the application and expose them to the front-end. After reading this, you'll understand how to design the business layer and what choices to make while developing it. Topics covered include:
 
@@ -15,8 +15,8 @@ We've just defined the domain model of the application and created its persisten
 
 The tutorial will show you how to perform all these steps in JBoss Developer Studio, including screenshots that guide you through.
 
-Business Services And Their Relationships
-------------------------------------------
+== Business Services And Their Relationships
+
 
 TicketMonster's business logic is implemented by a number of classes, with different responsibilities:
 
@@ -45,11 +45,11 @@ between them should take into account whether the newly created services represe
 As you can see, some of the services are intended to be consumed within the business layer of the application, while others provide an external interface as JAX-RS services. We will start by implementing the former, and we'll finish up with the latter. During this process, you will
 discover how CDI, EJB and JAX-RS make it easy to define and wire together our services.
 
-Preparations
-------------
+== Preparations
 
-Adding Jackson Core
-~~~~~~~~~~~~~~~~~~~
+
+=== Adding Jackson Core
+
 
 The first step for setting up our service architecture is to add Jackson Core as a dependency in the project. Adding Jackson Core as a provided dependency will enable you to use the Jackson annotations in the project. This is necessary to obtain a certain degree of control over the content of the JSON responses.
 
@@ -87,8 +87,8 @@ behavior. `@JsonIgnoreProperties` from Jackson will be used to suppress serializ
 and deserialization of one of the fields involved in the cycle.
 =======================================================================================
 
-Enabling CDI
-~~~~~~~~~~~~
+=== Enabling CDI
+
 
 The next step is to enable CDI in the deployment by creating a `beans.xml` file in the `WEB-INF` folder of the web application.
 
@@ -126,8 +126,8 @@ runtime will do the rest for you: instantiating and wiring them together, as wel
 disposing of them as needed.
 =====================================================================================
 
-Adding utility classes
-~~~~~~~~~~~~~~~~~~~~~~
+=== Adding utility classes
+
 
 Next, we add some helper classes providing low-level utilities for the application. We won't get in their implementation details here, but you can study their source code for details.
 
@@ -139,13 +139,13 @@ Copy the following classes from the original example to `src/main/java/org/jboss
 * `Reflections`
 * `Resources`
 
-Internal Services
------------------
+== Internal Services
+
 
 We begin the service implementation by implementing some helper services.
 
-The Media Manager
-~~~~~~~~~~~~~~~~~
+=== The Media Manager
+
 
 First, let's add support for managing media items, such as images. The persistence layer simply stores URLs, referencing media items stored by online services. The URL look like link:http://dl.dropbox.com/u/65660684/640px-Roy_Thomson_Hall_Toronto.jpg[].
 
@@ -395,8 +395,8 @@ public class MediaManager {
 }
 ------------------------------------------------------------------------------------------
 
-The Seat Allocation Service
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== The Seat Allocation Service
+
 
 The seat allocation service finds free seats at booking time, in a given section of the venue. It is a good example of how a service can coordinate infrastructure services (using the injected persistence unit to get access to the `ServiceAllocation` instance) and domain objects (by invoking the `allocateSeats` method on a concrete allocation instance).
 
@@ -471,8 +471,8 @@ public class AllocatedSeats {
 }
 ------------------------------------------------------------------------------------------
 
-Booking Monitor Service
-~~~~~~~~~~~~~~~~~~~~~~~
+=== Booking Monitor Service
+
 
 The last service that we create provides data about the current shows and their ticket availability status. It is accessed remotely by Errai through a dedicated RPC mechanism, which requires us to define and implement a service interface. We begin by adding the interface first, using the `@Remote` annotation from Errai to indicate its purpose.
 
@@ -561,15 +561,15 @@ there are valid reasons for creating an abstraction (such as multiple possible
 implementations), we skipped adding interfaces to our services.
 =====================================================================================
 
-JAX-RS Services
----------------
+== JAX-RS Services
+
 
 The majority of services in the application are JAX-RS web services. They are critical part of the design, as they next service is used for provide communication with the HTML5 view layer. The JAX-RS services range from simple CRUD to processing bookings and media items. 
 
 To pass data across the wire we use JSON as the data marshalling format, as it is less verbose and easier to process than XML by the JavaScript client-side framework.
 
-Initializing JAX-RS
-~~~~~~~~~~~~~~~~~~~
+=== Initializing JAX-RS
+
 
 To activate JAX-RS we add the class below, which instructs the container to look for JAX-RS
 annotated classes and install them as endpoints. This class should exist already in your
@@ -587,8 +587,8 @@ public class JaxRsActivator extends Application {
 
 All the JAX-RS services are mapped relative to the `/rest` path, as defined by the `@ApplicationPath` annotation.
 
-A Base Service For Read Operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== A Base Service For Read Operations
+
 
 Most JAX-RS services must provide both a (filtered) list of entities or individual entity (e.g. events, venues and bookings). Instead of duplicating the implementation into each individual service we create a base service class and wire the helper objects in.
 
@@ -812,8 +812,8 @@ Now, all the JAX-RS endpoints that subclass `BaseEntityService` will get two ope
 `GET /rest/<entityRoot>`:: retrieves all entities of a given type
 `GET /rest/<entityRoot>/<id>`:: retrieves an entity with a given id
 
-Retrieving Venues
-~~~~~~~~~~~~~~~~~
+=== Retrieving Venues
+
 
 Adding support for retrieving venues is now extremely simple. We refactor the class we created during the introduction, and make it extend `BaseEntityService`, passing the entity type to the superclass constructor. We remove the old retrieval code, which is not needed anymore.
 
@@ -848,8 +848,8 @@ We define this service (along with all the other JAX-RS services) as an EJB (see
 
 Now, we can retrieve venues from URLs like `/rest/venues` or `rest/venues/1`.
 
-Retrieving Events
-~~~~~~~~~~~~~~~~~
+=== Retrieving Events
+
 
 Just like `VenueService`, the `EventService` implementation we use for TicketMonster is a direct subclass of `BaseEntityService`. Refactor the existing class, remove the old retrieval code and make it extend `BaseEntityService`.
 
@@ -909,8 +909,8 @@ The `ShowService` and `BookingService` follow the same pattern and we leave the 
 
 Of course, we also want to change data with our services - we want to create and delete bookings as well!
 
-Creating and deleting bookings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Creating and deleting bookings
+
 
 To create a booking, we add a new method, which handles `POST` requests to `/rest/bookings`. This is not a simple CRUD method, as the client does not send a booking, but a booking request. It is the responsibility of the service to process the request, reserve the seats and return the full booking details to the invoker.
 
@@ -1171,8 +1171,8 @@ public @interface Cancelled {
 
 The other services, including the `MediaService` that handles media items follow roughly the same patterns as above, so we leave them as an exercise to the reader.
 
-Testing the services
---------------------
+== Testing the services
+
 
 We've now finished implementing the services and there is a significant amount of functionality in the application. Before taking any step forward, you need to make sure the services work correctly: we need to test them.
 
@@ -1196,8 +1196,8 @@ aggregates (integration testing).
 =====================================================================================
 
 
-A Basic Deployment Class
-~~~~~~~~~~~~~~~~~~~~~~~~
+=== A Basic Deployment Class
+
 
 In order to create Arquillian tests, we need to define the deployment. The code under test, as well as its dependencies is packaged and deployed in the container.
 
@@ -1223,8 +1223,8 @@ public class TicketMonsterDeployment {
 
 Arquillian uses Shrinkwrap to define the contents of the deployment.
 
-Writing RESTful service tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Writing RESTful service tests
+
 
 For testing our JAX-RS RESTful services, we need to add the corresponding application classes to the deployment. Since we need to do that for each test we create, we abide by the DRY principles and create a utility class.
 
@@ -1477,8 +1477,8 @@ are retrieved correctly (`testGetBookings` and `testPagination`). Finally, we te
 
 The other tests in the application follow roughly the same pattern and are left as an exercise to the reader.
 
-Running the tests
-~~~~~~~~~~~~~~~~~
+=== Running the tests
+
 
 If you have followed the instructions in the introduction and used the Maven archetype to generate the project structure, you should have two profiles already defined in your application.
 
@@ -1534,8 +1534,8 @@ Once these profiles are defined, we can execute the tests in two ways:
 * from the command-line build
 * from an IDE
 
-Executing tests from the command line
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Executing tests from the command line
+
 
 You can now execute the test suite from the command line by running the Maven build with the appropriate target and profile, as in one of the following examples.
 
@@ -1549,8 +1549,8 @@ Or, after starting a JBoss AS7 instance, you can run the following command
 
 These tests execute as part of the Maven build and can be easily included in an automated build and test harness.
 
-Running Arquillian tests from within Eclipse
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Running Arquillian tests from within Eclipse
+
 
 Running the entire test suite as part of the build is an important part of the development process - you may want to make sure that everything is working fine before releasing a new milestone, or just before committing new code. However, running the entire test suite all the time
 can be a productivity drain, especially when you're trying to focus on a particular problem. Also, when debugging, you don't want to leave the comfort of your IDE for running the tests.

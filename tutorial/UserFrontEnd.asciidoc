@@ -1,9 +1,9 @@
-Building The User UI Using HTML5
-================================
+= Building The User UI Using HTML5
+
 :Author: Marius Bogoevici
 
-What Will You Learn Here?
--------------------------
+== What Will You Learn Here?
+
 
 We've just implemented the business services of our application, and exposed them through RESTful endpoints. Now we need to implement a flexible user interface that can be easily used with both desktop and mobile clients. After reading this tutorial, you will understand our front-end design and the choices that we made in its implementation. Topics covered include:
 
@@ -14,8 +14,8 @@ We've just implemented the business services of our application, and exposed the
 
 The tutorial will show you how to perform all these steps in JBoss Developer Studio, including screenshots that guide you through.
 
-First, the basics
------------------
+== First, the basics
+
 
 In this tutorial, we will build a single-page application. All the necessary code: HTML, CSS and JavaScript is retrieved within a single page load. Rather than refreshing the page every time the user changes a view, the content of the page will be redrawn by manipulating the DOM in JavaScript. The application uses REST calls to retrieve data from the server.
 
@@ -23,8 +23,8 @@ In this tutorial, we will build a single-page application. All the necessary cod
 .Single page application
 image::gfx/single-page-app.png[]
 
-Client-side MVC Support
-~~~~~~~~~~~~~~~~~~~~~~~
+=== Client-side MVC Support
+
 
 Because this is a moderately complex example, which involves multiple views and different types of data, we will use a client-side MVC framework to structure the application, which provides amongst others:
 
@@ -38,8 +38,8 @@ In this application we use the client-side MVC framework "backbone.js".
 .Backbone architecture
 image::gfx/backbone-usage.png[]
 
-Modularity
-~~~~~~~~~~
+=== Modularity
+
 
 In order to provide good separation of concerns, we split the JavaScript code into modules.  Ensuring that all the modules of the application are loaded properly at runtime becomes a complex task, as the application size increases. To conquer this complexity, we use the Asynchronous Module Definition mechanism as implemented by the "require.js" library.
 
@@ -49,20 +49,20 @@ In order to provide good separation of concerns, we split the JavaScript code in
 The Asynchronous Module Definition (AMD) API specifies a mechanism for defining modules such that the module, and its dependencies, can be asynchronously loaded. This is particularly well suited for the browser where synchronous loading of modules incurs performance, usability, debugging, and cross-domain access problems.
 ========================================================================
 
-Templating
-~~~~~~~~~~
+=== Templating
+
 
 Instead of manipulating the DOM directly, and mixing up HTML with the JavaScript code, we create HTML markup fragments separately as templates which are applied when the application views are rendered.
 
 In this application we use the templating support provided by "underscore.js".
 
-Mobile and desktop versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Mobile and desktop versions
+
 
 The page flow and structure, as well as feature set, are slightly different for mobile and desktop, and therefore we will build two variants of the single-page-application, one for desktop and one for mobile. As the application variants are very similar, we will cover the desktop version of the application first, and then we will explain what is different in the mobile version.
 
-Setting up the structure
-------------------------
+== Setting up the structure
+
 
 Before we start developing the user interface, we need to set up the general application structure and add the JavaScript libraries. First, we create the directory structure:
 
@@ -192,8 +192,8 @@ The module loads all the utility libraries, converting them to AMD modules where
 
 Before we add any functionality, let us create a first landing page. We will begin by setting up a critical piece of the application, the router.
 
-Routing
-~~~~~~~
+=== Routing
+
 
 The router allows for navigation in our application via bookmarkable URLs, and we will define it as follows:
 
@@ -382,13 +382,13 @@ uses a `#about` hash. The method will simply cause the `HomeView` defined above 
 
 Now you can navigate to `http://localhost:8080/ticket-monster/#about` or `http://localhost:8080/ticket-monster` and see the results.
 
-Displaying Events
------------------
+== Displaying Events
+
 
 The first use case that we implement is event navigation. The users will be able to view the list of events and select the one that they want to attend. After doing so, they will select a venue, and will be able to choose a performance date and time.
 
-The Event model
-~~~~~~~~~~~~~~~
+=== The Event model
+
 
 We define a Backbone model for holding event data. Nearly all domain entities (booking, event, venue) are represented by a corresponding Backbone model:
 
@@ -423,8 +423,8 @@ it: conversions, validations, computed properties, and access control.
 They also perform CRUD operations with the REST service. 
 ========================================================================
 
-The Events collection
-~~~~~~~~~~~~~~~~~~~~~
+=== The Events collection
+
 
 We define a Backbone collection for handling groups of events (like the events list):
 
@@ -466,8 +466,7 @@ fired as a result of a change to a individual member, and can perform
 CRUD operations for syncing up contents against RESTful services.
 ========================================================================
 
-The EventsView view
-~~~~~~~~~~~~~~~~~~~
+=== The EventsView view
 
 Now that we have implemented the data components of the example, we need to create the view that displays them.
 
@@ -608,8 +607,8 @@ The `reset` event on the collection is invoked when the data from the server is 
 
 The whole process is event orientated - the models, views and controllers interact through events.
 
-Viewing a single event
-----------------------
+== Viewing a single event
+
 
 With the events list view now in place, we can add a view to display the details of each individual event, allowing the user to select a venue and performance time.
 
@@ -827,8 +826,8 @@ As you can see, this is very similar to the previous view and route, except that
 
 With this in place, all that remains is to implement the final view of this use case, creating the bookings.
 
-Creating Bookings
------------------
+== Creating Bookings
+
 
 The user has chosen the event, the venue and the performance time, and must now create the booking. Users can select one of the available sections for the show's venue, and then enter the number of tickets required for each category available for this show (Adult, Child, etc.). They then add the tickets to the current order, which causes the summary view to be updated. Users can also remove tickets from the order. When the order is complete, they enter their contact information (e-mail address) and submit the order to the server.
 
@@ -1328,13 +1327,13 @@ The other use cases: a booking starting from venues and view existing bookings a
 `src/main/webapp/resources/js/app/views/desktop` and the remainder of `src/main/webapp/resources/js/app/routers/desktop/router.js`.
 
 
-Mobile view
------------
+==Mobile view
+
 
 The mobile version of the application uses approximately the same architecture as the desktop version. Any differences are due to the functional changes in the mobile version and the use of jQuery mobile. 
 
-Setting up the structure
-~~~~~~~~~~~~~~~~~~~~~~~~
+=== Setting up the structure
+
 
 The first step in implementing our solution is to copy the CSS and JavaScript libraries to `resources/css` and `resources/js/libs`:
 
@@ -1555,8 +1554,8 @@ define("router",[
 
 Because jQuery Mobile navigation is disabled, we must tell jQuery Mobile explicitly to enhance the page content in order to create the mobile view. Here, we trigger the jQuery Mobile `pagecreate` event explicitly to ensure that the page gets the appropriate look and feel.
 
-The events view
-~~~~~~~~~~~~~~~
+===The events view
+
 
 First, we display a list of events (just as in the desktop view). Since mobile interfaces are more constrained, we will just show a simple list view:
 
@@ -1670,8 +1669,8 @@ define("router",[
 
 Just as in the case of the desktop application, the list of events will be accessible at `#events` (i.e. `http://localhost:8080/ticket-monster/mobile-index.html#events`).
 
-Displaying an individual event
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Displaying an individual event
+
 
 Now, we create the view to display an event:
 
@@ -1897,8 +1896,8 @@ define("router",[
 
 Just as the desktop version, the mobile event detail view allows users to choose a venue and a performance time. The next step is to allow the user to book some tickets.
 
-Booking tickets
-~~~~~~~~~~~~~~~
+=== Booking tickets
+
 
 The views to book tickets are simpler than the desktop version. Users can select a section and enter the number of tickets for each category however, there is no way to add or remove tickets from an order. Once the form is filled out, the user can only submit it. 
 
@@ -2299,7 +2298,7 @@ define("router", [
 });
 -------------------------------------------------------------------------------------------------------
 
-More Resources
---------------
+== More Resources
+
 
 To learn more about writing HTML5 + REST applications with JBoss, take a look at the link:http://www.jboss.org/aerogear[Aerogear] project.

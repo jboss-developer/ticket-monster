@@ -1,8 +1,8 @@
-Creating hybrid mobile versions of the application with Apache Cordova
-======================================================================
+= Creating hybrid mobile versions of the application with Apache Cordova
 
-What will you learn here?
--------------------------
+
+== What will you learn here?
+
 
 You finished creating the front-end for your application, and it has mobile support. You would now like to provide native client applications that your users can download from an application store. After reading this tutorial, you will understand how to reuse the existing HTML5 code for create native mobile clients for each target platform with Apache Cordova.
 
@@ -12,8 +12,8 @@ You will learn how to:
 * create a native application for Android with Apache Cordova;
 * create a native application for iOS with Apache Cordova;
 
-What are hybrid mobile applications?
-------------------------------------
+== What are hybrid mobile applications?
+
 
 Hybrid mobile applications are developed in HTML5 - unlike native applications that are compiled to platform-specific binaries. The client code - which consists exclusively of HTML, CSS, and JavaScript - is packaged and installed on the client device just as any native application, and executes in a browser process created by a surrounding native shell. 
 
@@ -25,8 +25,8 @@ In this example, we use Apache Cordova to implement a hybrid application using t
 .Architecture of hybrid TicketMonster
 image::gfx/ticket_monster_hybrid.png[]
 
-Tweak your application for remote access
-----------------------------------------
+== Tweak your application for remote access
+
 
 Before we make the application hybrid, we need to make some changes in the way in which it accesses remote services. Note that the changes have already been implemented in the user front end, here we show you the code that we needed to modify.
 
@@ -83,8 +83,8 @@ define([
 
 The prefix is used in a similar fashion by all the other modules that perform REST service invocations. You don't need to do anything right now, because the code we created in the user front end tutorial was written like this originally. Be warned, if you have a mobile web application that uses any relative URLs, you will need to refactor them to include some form of URL configuration. 
 
-Downloading Apache Cordova
---------------------------
+== Downloading Apache Cordova
+
 
 The next step is downloading and installing Apache Cordova. Download the distribution from `http://phonegap.com/download` and unzip it. 
 
@@ -94,8 +94,8 @@ image::gfx/cordova-distro-structure.png[]
 
 While migrating TicketMonster, we will work with the files in the `lib` directory. They contain native libraries for each of the supported platforms, as well JavaScript libraries . We have highlighted the contents of the `android` folder. The folders for the other platforms have similar content.
 
-Creating an Android hybrid mobile application
-----------------------------------------------
+== Creating an Android hybrid mobile application
+
 
 [TIP]
 .What do you need for Android?
@@ -106,8 +106,8 @@ Windows (XP, Vista, 7), Mac OS X (10.5.8 or later), Linux (with GNU C Library - 
 later, 64-bit distributions having installed the libraries for running 32-bit applications).
 =====================================================================================
 
-Creating an Android project using Apache Cordova
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Creating an Android project using Apache Cordova
+
 
 First, we will create an Android project in JBDS. The prerequisites for that are having the Android SDK installed locally , as well as the Android (ADT) plugin for Eclipse installed in JBDS.
 
@@ -280,8 +280,8 @@ public class TicketMonsterActivity extends DroidGap {
 
 Note how we customize the user agent information for the wrapped browser. This will allow us to identify that the application runs in Cordova, on an Android platform, which will be useful later on.
 
-Adding Apache Cordova to TicketMonster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Adding Apache Cordova to TicketMonster
+
 
 First, we will copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\android\cordova-2.7.0.js` file to the `src/main/webapp/resources/js/libs` folder, renaming it to `cordova-android-2.7.0.js`, to avoid naming conflicts with other platforms (such as iOS which we will also implement as part of this tutorial).
 
@@ -400,8 +400,8 @@ Just as in the case of the Android application, we customize the user agent info
 
 The Cordova library for iOS is already included in the generated project. 
 
-Adding Apache Cordova for iOS to TicketMonster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Adding Apache Cordova for iOS to TicketMonster
+
 
 First, we copy the Apache Cordova JavaScript library to the project. From the directory where you unzipped the distribution, copy the `lib\ios\CordovaLib\cordova.ios.js` file to the `src/main/webapp/resources/js/libs` folder, renaming it to `cordova-ios-2.7.0.js`, to avoid naming conflicts with other platforms (such as Android which we already implemented as part of this tutorial.
 
@@ -464,8 +464,8 @@ define(function () {
 
 Now you are ready to run the application. Select a simulator and run (Cmd-R).
 
-Conclusion
------------
+=== Conclusion
+
 
 This concludes our tutorial for building a hybrid application with Apache Cordova. You have seen how we have turned a working HTML5 web application into one that can run natively on Android and iOS.
 
