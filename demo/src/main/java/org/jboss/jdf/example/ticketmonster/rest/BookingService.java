@@ -71,7 +71,7 @@ public class BookingService extends BaseEntityService<Booking> {
     	for (Booking booking : bookings) {
     		deleteBooking(booking.getId());
     	}
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 
     /**
@@ -105,7 +105,7 @@ public class BookingService extends BaseEntityService<Booking> {
                     booking.getPerformance(), sectionListEntry.getValue());
         }
         cancelledBookingEvent.fire(booking);
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 
     /**

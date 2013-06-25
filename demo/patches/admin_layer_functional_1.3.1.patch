@@ -1,0 +1,124 @@
+diff --git ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java
+index 074d53b..9d9fb04 100644
+--- ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java
++++ ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java
+@@ -25,6 +25,8 @@ import javax.persistence.criteria.Predicate;
+ import javax.persistence.criteria.Root;
+ 
+ import org.jboss.jdf.example.ticketmonster.model.Performance;
++import org.jboss.jdf.example.ticketmonster.model.Section;
++import org.jboss.jdf.example.ticketmonster.model.SectionAllocation;
+ import org.jboss.jdf.example.ticketmonster.model.Show;
+ 
+ /**
+@@ -122,8 +124,13 @@ public class PerformanceBean implements Serializable
+       {
+          if (this.id == null)
+          {
+-            this.entityManager.persist(this.performance);
+-            return "search?faces-redirect=true";
++				this.entityManager.persist(this.performance);
++				for (Section s : this.performance.getShow().getVenue()
++						.getSections()) {
++					this.entityManager.persist(new SectionAllocation(
++							this.performance, s));
++				}
++				return "search?faces-redirect=true";
+          }
+          else
+          {
+diff --git ../demo/src/main/webapp/admin/index.html ../demo/src/main/webapp/admin/index.html
+index 7424c8f..4036f32 100644
+--- ../demo/src/main/webapp/admin/index.html
++++ ../demo/src/main/webapp/admin/index.html
+@@ -1 +1 @@
+-<meta http-equiv="refresh" content="0;url=./faces/admin/index.xhtml" /> 
+\ No newline at end of file
++<meta http-equiv="refresh" content="0;url=../faces/admin/index.xhtml" />
+\ No newline at end of file
+diff --git ../demo/src/main/webapp/admin/event/view.xhtml ../demo/src/main/webapp/admin/event/view.xhtml
+index 451479f..6c30e3d 100644
+--- ../demo/src/main/webapp/admin/event/view.xhtml
++++ ../demo/src/main/webapp/admin/event/view.xhtml
+@@ -4,6 +4,7 @@
+ 	xmlns:h="http://java.sun.com/jsf/html"
+ 	xmlns:f="http://java.sun.com/jsf/core"
+ 	xmlns:ui="http://java.sun.com/jsf/facelets"
++    xmlns:tm="http://java.sun.com/jsf/composite/tm"
+ 	template="/resources/scaffold/pageTemplate.xhtml">
+ 
+ 	<f:metadata>
+@@ -31,6 +32,7 @@
+ 			<h:outputLabel for="eventBeanEventMediaItem" value="Media Item:"/>
+ 			<h:link id="eventBeanEventMediaItem" outcome="/admin/mediaItem/view" value="#{eventBean.event.mediaItem}">
+ 				<f:param name="id" value="#{eventBean.event.mediaItem.id}"/>
++                <tm:image media="#{mediaManager.getPath(eventBean.event.mediaItem)}" />
+ 			</h:link>
+ 			<h:outputText/>
+ 			<h:outputLabel for="eventBeanEventCategory" value="Category:"/>
+diff --git ../demo/src/main/webapp/admin/venue/view.xhtml ../demo/src/main/webapp/admin/venue/view.xhtml
+index 06edc33..b3809c4 100644
+--- ../demo/src/main/webapp/admin/venue/view.xhtml
++++ ../demo/src/main/webapp/admin/venue/view.xhtml
+@@ -4,6 +4,7 @@
+ 	xmlns:h="http://java.sun.com/jsf/html"
+ 	xmlns:f="http://java.sun.com/jsf/core"
+ 	xmlns:ui="http://java.sun.com/jsf/facelets"
++    xmlns:tm="http://java.sun.com/jsf/composite/tm"
+ 	xmlns:forgeview="http://jboss.org/forge/view"
+ 	template="/resources/scaffold/pageTemplate.xhtml">
+ 
+@@ -44,7 +45,8 @@
+ 			<h:outputText/>
+ 			<h:outputLabel for="venueBeanVenueMediaItem" value="Media Item:"/>
+ 			<h:link id="venueBeanVenueMediaItem" outcome="/admin/mediaItem/view" value="#{venueBean.venue.mediaItem}">
+-				<f:param name="id" value="#{venueBean.venue.mediaItem.id}"/>
++                <tm:image media="#{mediaManager.getPath(venueBean.venue.mediaItem)}" />
++                <f:param name="id" value="#{venueBean.venue.mediaItem.id}"/>
+ 			</h:link>
+ 			<h:outputText/>
+ 			<h:outputLabel for="venueBeanVenueDescription" value="Description:"/>
+diff --git ../demo/src/main/webapp/resources/tm/image.xhtml ../demo/src/main/webapp/resources/tm/image.xhtml
+new file mode 100644
+index 0000000..ceafffb
+--- /dev/null
++++ ../demo/src/main/webapp/resources/tm/image.xhtml
+@@ -0,0 +1,25 @@
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
++        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
++<html xmlns="http://www.w3.org/1999/xhtml"
++      xmlns:h="http://java.sun.com/jsf/html"
++      xmlns:composite="http://java.sun.com/jsf/composite">
++<head>
++    <title>Cached Image</title>
++</head>
++<body>
++
++<composite:interface>
++    <composite:attribute name="media"
++                         type="org.jboss.jdf.example.ticketmonster.service.MediaPath" />
++    <composite:attribute name="id" type="java.lang.String" />
++</composite:interface>
++
++<composite:implementation>
++    <h:graphicImage value="#{cc.attrs.media.url}"
++                    rendered="#{!cc.attrs.media.cached}" />
++    <h:graphicImage value="/rest/media/cache/#{cc.attrs.media.url}"
++                    rendered="#{cc.attrs.media.cached}" />
++</composite:implementation>
++
++</body>
++</html>
+\ No newline at end of file
+diff --git ../demo/src/main/webapp/WEB-INF/web.xml ../demo/src/main/webapp/WEB-INF/web.xml
+index 2bca387..49e2dc4 100644
+--- ../demo/src/main/webapp/WEB-INF/web.xml
++++ ../demo/src/main/webapp/WEB-INF/web.xml
+@@ -36,7 +36,4 @@
+   <session-config>
+     <session-timeout>30</session-timeout>
+   </session-config>
+-  <welcome-file-list>
+-    <welcome-file>faces/index.xhtml</welcome-file>
+-  </welcome-file-list>
+ </web-app>

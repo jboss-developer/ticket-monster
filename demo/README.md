@@ -11,7 +11,7 @@ _NOTE: failure in following this step will cause the link to `http://localhost:8
 Before building and running TicketMonster, you must generate the administration site with Forge.
 
 1. Ensure that you have [JBoss Forge](http://jboss.org/forge) installed. The current version of
-   TicketMonster supports either version 1.0.6.Final or 1.1.1.Final of JBoss Forge.
+   TicketMonster supports version 1.2.2.Final or 1.3.0.Final of JBoss Forge.
 
 2. Start JBoss Forge
 
