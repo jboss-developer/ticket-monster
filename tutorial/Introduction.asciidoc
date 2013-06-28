@@ -753,7 +753,7 @@ The result is ready for the average mobile phone. Simply refresh your browser to
 .jQuery Mobile REST Results
 image::gfx/introduction/jquery_mobile_results.png[]
 
-JBoss Developer Studio and JBoss Tools includes BrowerSim to help you better understand what your mobile application will look like. Look for a "phone" icon in the toolbar, visible in the JBoss Perspective.
+JBoss Developer Studio and JBoss Tools includes BrowserSim to help you better understand what your mobile application will look like. Look for a "phone" icon in the toolbar, visible in the JBoss Perspective.
 
 [[mobile_browsersim_in_toolbar_image]]
 .Mobile BrowserSim icon in Eclipse Toolbar
