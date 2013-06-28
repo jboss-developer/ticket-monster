@@ -127,7 +127,7 @@ public class TicketPrice implements Serializable {
     public void setTicketCategory(TicketCategory ticketCategory) {
         this.ticketCategory = ticketCategory;
     }
-
+    // TODO - Error prone - Change this to Big Decimal
     public float getPrice() {
         return price;
     }
