@@ -7,7 +7,15 @@ import javax.validation.constraints.Min;
 import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
- * TODO
+ * <p>
+ * Represents a seat within a @Section
+ * </p>
+ * 
+ * <p>
+ * A Seat is annotated as @Embeddable entity, that appears as a related entity in the object model but no relationship
+ * is established in the RDMS level.
+ * </p>
+ * 
  * @author Marius Bogoevici
  * @author Pete Muir
  */

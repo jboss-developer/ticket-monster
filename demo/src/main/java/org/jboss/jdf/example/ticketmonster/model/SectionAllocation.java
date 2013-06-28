@@ -139,6 +139,9 @@ public class SectionAllocation implements Serializable {
     /**
      * Post-load callback method initializes the allocation table if it not populated already
      * for the entity
+     * 
+     * @PostLoad is a JPA annotation which indicates that the annotated method is a callback that is invoked
+     * after JPA finishes loading the entity. 
      */
     @PostLoad
     void initialize() {
