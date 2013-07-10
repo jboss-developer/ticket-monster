@@ -1,0 +1,735 @@
+= Adding a full-text search engine
+:Author: Emmanuel Bernard <emmanuel@hibernate.org>
+
+== What will you learn here?
+
+You have a functional TicketMonster but the ability to find the right ticket is a bit limited. You would like to add a search engine to make show discovery much easier. In this tutorial, you will learn how to:
+
+* Add Hibernate Search to your web application
+* Index your entities and build the search engine to retrieve your data
+* Add faceting i.e. the ability to filter results by price range, categories etc
+* Offer the ability to search around the user's location (geolocation or spatial search)
+
+[NOTE]
+.What is Hibernate Search?
+====
+Hibernate Search indexes objects into Lucene, a full-text search engine and offer an object-oriented API to query those objects using full-text search, spatial queries and more.
+
+It integrates transparently with Hibernate ORM by listening to entity changes and updating the Lucene index accordingly.
+
+Finally Hibernate Search implements several strategies to cluster indexes very easily.
+====
+
+== Setting up the infrastructure
+
+We just need to add Hibernate Search in our classpath and add a few configuration options in `persistence.xml`.
+
+Our first task is to add Hibernate Search as a dependency to our application. There are two ways to do it. For now we will use the JBoss Modules approach where Hibernate Search is installed on JBoss EAP or WildFly.
+
+=== Set up the dependencies
+
+Download the https://downloads.sourceforge.net/project/hibernate/hibernate-search/4.3.0.CR1/hibernate-search-modules-4.3.0.CR1-jbossas-72-dist.zip[Hibernate Search module] and copy its content into JBoss EAP or WildFly's `modules` directory.
+
+Next update `jboss-deployment-structure.xml` to include the ORM module of Hibernate Search. This module is necessary to import the Hibernate Search engine as well as the integration code with Hibernate ORM.
+
+.src/main/webapp/WEB_INF/jboss-deployment-structure.xml
+[source,xml]
+----
+<jboss-deployment-structure>
+    <deployment>
+        <exclusions>
+        </exclusions>
+        <!-- This allows you to define additional dependencies, it is the same
+             as using the Dependencies: manifest attribute -->
+        <dependencies>
+            <module name="org.jboss.as.naming" />
+            <module name="org.jboss.as.server" />
+            <module name="org.jboss.msc" />
+            <module name="org.hibernate.search.orm" services="export" />
+        </dependencies>
+    </deployment>
+</jboss-deployment-structure>
+----
+
+NOTE: `services="export"` lets Hibernate Search use the service locator pattern to integrate with Hibernate ORM
+
+Finally, we need to add Hibernate Search as a `provided` dependency in our `pom.xml`.
+
+.pom.xml
+[source,xml]
+----
+<project ...>
+    ...
+    <dependencies>
+        <!-- Add Hibernate Search as a dependency -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-orm</artifactId>
+            <version>4.3.0.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>4.3.0.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-analyzers</artifactId>
+            <version>4.3.0.Final</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+  ...
+</project>
+----
+
+=== Add some configuration
+
+Hibernate Search needs a few extra settings in `persistence.xml`. You can store the indexes either in RAM or on the file system. We will start with an in-memory storage to keep things simple.
+
+.src/main/resources/META-INF/persistence.xml
+[source,xml]
+----
+<persistence ...>
+     <persistence-unit name="primary">
+         ...
+         <properties>
+             ...
+             <property name="hibernate.search.default.directory_provider" value="ram"/>
+
+             <!-- Alternatively store the index on the file system
+             <property name="hibernate.search.default.directory_provider" value="filesystem"/>
+             <property name="hibernate.search.default.indexBase" value="/var/data/ticket-monster/indexes"/>
+             -->
+         </properties>
+    </persistence-unit>
+</persistence>
+----
+
+
+=== Add some utilities
+
+CAUTION: Need to fix the `@Inject` issue before filling up that section
+
+== Build the core search engine
+
+We are now ready to start our search engine. Let's first see how we decide what to index before building the right queries.
+
+=== Indexing the domain model
+
+Marking entities and properties as indexed is as simple as adding annotations. But we need to properly understand the kind of queries we wish to build. We want our users to be able to search for:
+
+* a given `Event` by name and description
+* at a given `Venue` by name and possibly by location
+* filtering by category, price and date would be nice too
+
+==== Adding the metadata to our domain model
+
+You cannot do joins in a full-text index. Instead, we cheat by denormalizing the information and indexing the associated objects we want to query by in the same entry. For that we need to be able to navigate to all of the entities we are interested in.
+
+Let's look at our domain model.
+
+[[database-design]]
+.Entity-Relationship Diagram
+image::gfx/database-design.png[scaledwidth="70%"]
+
+CAUTION: TODO: fix diagram around TicketPriceCategory
+
+`Show` happens to be the central entity from which we can reach `Event`, `Venue` as well as price and date information for each `Performance`. That will be the entity we will start indexing from.
+
+Let make `Show` indexed by adding an `@Indexed` annotation. We also want to index the associated `Event` and `Venue` when a given `Show` is indexed. For that, we will mark each association as `@IndexedEmbedded`.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/Show.java
+[source,java]
+----
+...
+
+@SuppressWarnings("serial")
+@Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = { "event_id", "venue_id" }))
+@Portable
+@Indexed
+public class Show implements Serializable {
+
+    /* Declaration of fields */
+
+    /**
+     * The synthetic id of the object.
+     */
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    private Long id;
+
+    /**
+     * <p>
+     * The event of which this show is an instance. The <code>@ManyToOne<code> JPA mapping establishes this relationship.
+     * </p>
+     * 
+     * <p>
+     * The <code>@NotNull</code> Bean Validation constraint means that the event must be specified.
+     * </p>
+     */
+    @ManyToOne
+    @NotNull
+    @IndexedEmbedded
+    private Event event;
+
+    /**
+     * <p>
+     * The venue where this show takes place. The <code>@ManyToOne<code> JPA mapping establishes this relationship.
+     * </p>
+     * 
+     * <p>
+     * The <code>@NotNull</code> Bean Validation constraint means that the venue must be specified.
+     * </p>
+     */
+    @ManyToOne
+    @NotNull
+    @IndexedEmbedded
+    private Venue venue;
+
+    ...
+}
+----
+
+Next, we need to index the `Event` name and description. To make a property as indexed, use the `@Field` annotation.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/Event.java
+[source,java]
+----
+...
+
+@SuppressWarnings("serial")
+@Entity
+@Portable
+public class Event implements Serializable {
+
+    ...
+
+    @Column(unique = true)
+    @NotNull
+    @Size(min = 5, max = 50, message = "An event's name must contain between 5 and 50 characters")
+    @Field
+    private String name;
+
+    ...
+
+    @NotNull @Size(min = 20, max = 1000, message = "An event's description must contain between 20 and 1000 characters") @Field private String description;
+
+    ...
+}
+----
+
+[NOTE]
+.What's in a name?
+====
+By default, each entity type is indexed in a dedicated Apache Lucene _index_. An index is made of a set of _documents_. Each document contains _fields_ which are made of a name and a value. You can think of a document as a `Map<String,String>`. Of course the structure of the index is vastly different to make searches fast.
+
+Now you understand where `@Indexed` and `@Field` come from.
+====
+
+Do the same for `Venue` and mark the `name` attribute as `@Field`. Now when a `Show` is created or modified, the index will be updated and will contain the show's event name and description as well as the venue name. But what about existing shows in our database? How can we index them?
+
+==== Indexing existing data
+
+For initial indexing (or reindexing), Hibernate Search offers an API: `MassIndexer`. It reindexes all entities of a given type quickly. We are creating a service that will reindex our data when the application starts. That is convenient during development time.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/service/Bootstrap.java
+[source,java]
+----
+@Singleton
+@Startup
+public class Bootstrap {
+    @Inject private EntityManager em;
+    @Inject private Logger logger; 
+
+    @PostConstruct
+    public void onStartup() {
+        try {
+            logger.info("Indexing entities");
+            FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+            ftem.createIndexer().purgeAllOnStart(true).startAndWait();
+        } catch (InterruptedException e) {
+            logger.severe("Unable to index data with Hibernate Search");
+        }
+    }
+}
+----
+
+The Hibernate Search APIs are accessible via `FullTextEntityManager`, a simpler wrapper around the `EntityManager` you are used to deal with. The `MassIndexer` API is a fluent API letting you refine what entities you want to reindex, with how many threads, synchronously or asynchronously etc. But the simple usage is good enough for most cases.
+
+We now have indexed entities, it is time to write our query engine.
+
+=== Writing the search engine
+
+Since the application makes use of rich clients, we will expose our search service via a REST endpoint. We will retrieve a `FullTextEntityManager` - the entry point for Hibernate Search.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+[source,java]
+----
+@Stateless
+@Path("/search")
+public class SearchService {
+    @Inject
+    EntityManager em;
+    @Inject
+    Logger logger;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString) {
+        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+        return null;
+    }
+}
+----
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/ShowResults.java
+[source,java]
+----
+public class ShowResults {
+    private List<ShowView> results;
+
+    public ShowResults(List<ShowView> results) {
+        this.results = results;
+    }
+    
+
+    public List<ShowView> getResults() {
+        return results;
+    }
+}
+----
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/ShowView.java
+[source,java]
+----
+public class ShowView {
+    private Long eventId;
+    private String eventName;
+    private String eventDescription;
+    private String eventCategory;
+    private String venueName;
+
+    public ShowView(Show show) {
+        this.eventId = show.getEvent().getId();
+        this.eventName = show.getEvent().getName();
+        this.eventDescription = show.getEvent().getDescription();
+        this.eventCategory = show.getEvent().getCategory().getDescription();
+        this.venueName = show.getVenue().getName();
+    }
+
+    public Long getEventId() {
+        return eventId;
+    }
+
+    public String getEventName() {
+        return eventName;
+    }
+
+    public String getEventDescription() {
+        return eventDescription;
+    }
+
+    public String getEventCategory() {
+        return eventCategory;
+    }
+
+    public String getVenueName() {
+        return venueName;
+    }
+}
+----
+
+We could have returned a list of `Show` to our endpoint but since `Show` is linked to many other entities, we will instead return a list of `ShowView` only containing the relevant information. We will save bandwidth, database load and increase responsiveness.
+We could also return a simple list of `ShowView` but preparing for the future extension of our search engine, we will wrap than list in a `ShowResults` object.
+
+Writing a full-text query is composed of a few phases:
+
+* build an Apache Lucene query
+* build an object query wrapping the Lucene query
+* execute the query
+
+==== Build the Apache Lucene query
+
+Our first step is to write the core full-text query. We will use Hibernate Search query DSL for this. Every query starts from a `QueryBuilder` for a given entity type. From a `QueryBuilder` we can define a specific query (keyword, phrase, range etc), on one or several fields and a few options (boost, fuziness etc).
+
+By default, a property annotated `@Field` has a corresponding field named after the property. When embedding associations in the index, you can use the usual dot notation: starting from a `Show`, you can look for the event name via the following path `event.name`.
+
+Here we will focus on keyword queries - queries looking for specific terms - on a few fields of event and venue. Since a matching term on an event name seems more important than on an event description, we use different boost time to give them different weight in the ranking system. And if the query string is empty, we will return all elements.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+[source,java]
+----
+...
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString) {
+        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+
+        QueryBuilder qb = ftem.getSearchFactory()
+                            .buildQueryBuilder()
+                            .forEntity(Show.class)
+                            .get();
+        Query luceneQuery = buildLuceneQuery(searchString, qb);
+
+        ...
+    }
+
+    private Query buildLuceneQuery(String searchString, QueryBuilder qb) {
+        Query luceneQuery;
+        if (searchString.isEmpty()) {
+            // Return all terms
+            luceneQuery = qb.all().createQuery();
+        }
+        else {
+            // Find the terms of searchString with terms in event.name (weight of 10),
+            // event.description (weight of 1) and venue.name (weight of 3)
+            luceneQuery = qb
+                .keyword()
+                .onField("event.name").boostedTo(10f)
+                .andField("event.description")
+                .andField("venue.name").boostedTo(5f)
+                .matching(searchString)
+                .createQuery();
+        }
+        return luceneQuery;
+    }
+
+...
+----
+
+[NOTE]
+.Different ways to write a Lucene query
+====
+There are several ways to express the core of your full-text query:
+
+* native Lucene query APIs
+* Lucene query parser
+* Hibernate Search query DSL
+
+The Hibernate Search query DSL has several advantages:
+
+* it is easy to use, easier to write
+* it offers a great deal of query expressiveness
+* it generates raw Lucene queries that can be combined
+* it is at the domain object level (not the index level) and thus deals with analyzers and property value conversion transparently
+====
+
+Next we need to wrap that query into the Hibernate Search full-text query.
+
+==== Build the object query
+
+Hibernate ORM offers several ways of querying your database (JP-QL, native SQL queries, criteria query). Think of Hibernate Search full-text queries as another approach. Even the API is similar and interchangeable. Objects returned by Hibernate Search queries are managed objects just like object returned by a JP-QL query.
+
+The object query is created from the `FullTextEntityManager.createFullTextQuery()` passing the Lucene query and the (list of) entity type we are interested in. Our query would return a list of `Show` out of the box, but we really want a list of `ShowResult`. To do that, we use an Hibernate ORM `ResultTransformer` and apply it to the query.
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+[source,java]
+----
+...
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString) {
+        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+        QueryBuilder qb = ftem.getSearchFactory()
+                            .buildQueryBuilder()
+                            .forEntity(Show.class)
+                            .get();
+
+        Query luceneQuery = buildLuceneQuery(searchString, qb);
+
+        FullTextQuery objectQuery = ftem.createFullTextQuery(luceneQuery, Show.class);
+        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+
+        List<ShowResult> results = (List<ShowResult>) objectQuery.getResultList();
+        return new ShowResults(results);
+    }
+
+    private Query buildLuceneQuery(String searchString, QueryBuilder qb) {
+        Query luceneQuery;
+        if (searchString.isEmpty()) {
+            // Return all terms
+            luceneQuery = qb.all().createQuery();
+        }
+        else {
+            // Find the terms of searchString with terms in event.name (weight of 10),
+            // event.description (weight of 1) and venue.name (weight of 3)
+            luceneQuery = qb
+                .keyword()
+                .onField("event.name").boostedTo(10f)
+                .andField("event.description")
+                .andField("venue.name").boostedTo(5f)
+                .matching(searchString)
+                .createQuery();
+        }
+        return luceneQuery;
+    }
+----
+
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/ShowViewResultTransformer.java
+[source,java]
+----
+/**
+ * Converts a list of Show into a list of ShowView.
+ * 
+ * @author Emmanuel Bernard
+ */
+public class ShowViewResultTransformer implements ResultTransformer {
+    public static ShowViewResultTransformer INSTANCE = new ShowViewResultTransformer();
+
+    @Override
+    public Object transformTuple(Object[] tuple, String[] aliases) {
+        return tuple;
+    }
+
+    @Override
+    public List transformList(List collection) {
+        List<ShowView> results = new ArrayList<ShowView>(collection.size());
+        for (Show show : (List<Show>) collection) {
+            results.add(new ShowView(show));
+        }
+        return results;
+    }
+}
+----
+
+That's it! We have a fully functional search engine. Now it is time to expose it to our user.
+
+[NOTE]
+.What's in a query?
+====
+A `FullTextQuery` is literally a subclass of the JPA `Query` class. You have access to all of its capability, in particular pagination!
+
+It also offers additional methods. To name a few:
+
+* `getResultSize()`: get the number of matching elements (regardless of pagination) ; this operation is very efficient.
+* `getSort()`: sort results explicitly instead of by relevance.
+* `setProjection()`: return projected fields instead of managed entities ; this does not hit the database at all.
+====
+
+=== Exposing search to the UI
+
+We have seen previously in this tutorial how to write the UI part of a backbone.js application. So this section will go a tiny bit faster and give you the end result.
+
+Let's first define a model for the results we will receive from the search REST endpoint. This model will also be responsible for computing the application URL exposed for bookmarkability.
+
+[source,javascript]
+.src/main/webapp/resources/js/app/models/results.js
+----
+/**
+ * Module for the query results model
+ */
+define([ 
+    'configuration',
+    'backbone'
+], function (config) {
+    /**
+     * The Results model class definition
+     */
+    var Results = Backbone.Model.extend({
+        urlRoot: config.baseUrl + 'rest/search', // the URL for performing CRUD operations
+        initialize  : function() {
+            _.bindAll(this,"fetch");
+            _.bindAll(this,"appUrl");
+        },
+
+        // the URL with params to reach the REST endpoint
+        url: function() {
+            params = '?query=' + encodeURIComponent(this.get("query"));
+            return this.urlRoot + params;
+        },
+
+        // the application URL as exposed by the application for bookmarkability
+        appUrl: function() {
+            result = "search/anywhere/";
+            var query = this.get("query");
+            result += encodeURIComponent(query);
+            return result;
+        }
+    });
+
+    // export the Results class
+    return Results;
+});
+----
+
+Now that we have a model bound to our backend, we need a view to expose the results to the user.
+== Add local queries *_(27:50)_*
+
+[source, javascript]
+.src/main/webapp/resources/js/app/views/results.js
+----
+define([
+    'utilities',
+    'require',
+    'text!../../../../templates/desktop/results.html',
+    'configuration',
+    'bootstrap'
+], function (
+    utilities,
+    require,
+    resultsTemplate,
+    config,
+    Bootstrap) {
+    
+    var ResultsView  = Backbone.View.extend({
+
+        events:{
+        },
+        
+        initialize:function () {
+            this.model.bind('change', this.render, this);
+        },
+        
+        render:function () {
+            $(this.el).empty();
+            this.delegateEvents();
+            utilities.applyTemplate($(this.el), resultsTemplate, {model:this.model, query:this.model.get("query")});
+            return this;
+        }
+    });
+    return ResultsView;
+});
+----
+
+[source, html]
+.src/main/webapp/resources/templates/desktop/results.html
+----
+<h3 class="page-header light-font special-title">Results for <%=query%></h3>
+<div class="row-fluid">
+    <div class='span12'>
+        <table class='table table-bordered' style="background: #fffffa;">
+            <thead>
+            <tr>
+                <th>Event</th>
+                <th>Venue</th>
+            </tr>
+            </thead>
+            <tbody id='bookingList'>
+            <% _.each(model.get("results"), function (result) { %>
+            <tr>
+                <td><a href="#events/<%=result.eventId%>"><%=result.eventName%></a></td>
+                <td><%=result.venueName%></td>
+            </tr>
+            <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+----
+
+Note that we do retrieve the actual query from the model (`query` parameter) and pass it to the template for display. We will need to fill `query` from the router. Speaking of the devil, let's add the necessary routes to trigger a query.
+
+[source, javascript]
+.src/main/webapp/resources/js/app/router/desktop/router.js
+----
+...
+define("router", [
+    ...,
+    'app/models/results',
+    ...,
+    'app/views/desktop/results',
+    'text!../templates/desktop/main.html'
+],function ($,
+            ...,
+            Results,
+            ...,
+            ResultsView,
+            MainTemplate) {
+
+    ...
+
+    var Router = Backbone.Router.extend({
+        routes:{
+            ...,
+            "search/anywhere/:query":"results",
+            ...
+        },
+        ...,
+        results:function (query) {
+            var model = new Results();
+            model.set("query", decodeURIComponent(query));
+            var resultsView = new ResultsView({model:model, el:$("#content"), router:this});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(resultsView);
+                }).fetch();
+        }
+    });
+
+    ...
+
+    return router;
+});
+----
+
+We need to do one that thing. Somehow the query URL (e.g. `#search/anywhere/morrison`) needs to be called. Let's add a search box in the top menu and have it call that URL.
+
+[source, html]
+.src/main/webapp/resources/templates/desktop/main.html
+----
+...
+                    <ul class="nav">
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#events">Events</a></li>
+                        <li><a href="#venues">Venues</a></li>
+                        <li><a href="#bookings">Bookings</a></li>
+                        <li><a href="booking-monitor.html">Monitor</a></li>
+                        <li><a href="admin">Administration</a></li>
+                    </ul>
+                    <script type="text/javascript">
+                      //<![CDATA[
+                        function get_results(event)
+                        {
+                            event.preventDefault();
+                            location.href = "#search/anywhere/" + escape(document.searchbox.query.value);
+                            return false;
+                        }
+                      //]]>
+                    </script>
+                    <form id="searchbox" name="searchbox" class="navbar-search pull-right" onsubmit="return get_results(event)">
+                        <input id="query" name="query" class="search-query" type="text" placeholder="Search"/>
+                    </form>
+...
+----
+
+This concludes our work to get the core search engine built and exposed via the UI.
+
+Our next step is to improve the search results by offering the ability to filter results by the user's location.
+
+
+
+* Show local code in client side
+* Add `latitude` and `longitude` as `Double` in REST endpoint
+* Add spatial indexing on `Address`
+** Explain GRID vs range
+** add `@IndexedEmbedded` from `Venue`
+* Build spatial query *_(34:12)_*
+* Deploy and show the application
+
+== Add faceting *_(38:56)_*
+
+* Index category
+** not analyzed
+* Index min ticket price
+** Show `PriceMinBridge`
+** not analyzed
+* Code `enableFaceting()`
+** Add category as discrete, ordered by `FacetSortOrder.FIELD_VALUE`, including 0
+** Add ticketPrice.min as range (0, 50, 100, 200) with exclude limit, ordered by `FacetSortOrder.RANGE_DEFINITION_ORDER`, including 0
+** enable them
+* Deploy and show the application
+
+== Show faceting filtering *_(49:38)_*
+
+Usually by that time you are short and need to wrap up.
+
+A good way is to `git stash`, get the running version and show how you can select faceting. If time permits, show the code.
