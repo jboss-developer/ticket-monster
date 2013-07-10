@@ -60,13 +60,21 @@ public class SearchService {
 
     private Query buildLuceneQuery(String searchString, Double latitude, Double longitude, QueryBuilder qb) {
         Query luceneQuery;
-        Query termsQuery = qb.keyword()
-            .onField("event.name").boostedTo(10f)
-            .andField("event.description")
-            .andField("event.category.description").boostedTo(3f)
-            .andField("venue.name").boostedTo(5f)
-            .matching(searchString)
-            .createQuery();
+        Query termsQuery;
+        if (searchString.isEmpty()) {
+            // Return all terms
+            termsQuery = qb.all().createQuery();
+        }
+        else {
+            // Find the terms of searchString with terms in event.name (weight of 10),
+            // event.description (weight of 1) and venue.name (weight of 3)
+             termsQuery = qb.keyword()
+                .onField("event.name").boostedTo(10f)
+                .andField("event.description")
+                .andField("venue.name").boostedTo(5f)
+                .matching(searchString)
+                .createQuery();
+        }
         if (latitude != null && longitude != null) {
             Query localQuery = qb.spatial()
                 .onCoordinates("venue.address.coordinates")
