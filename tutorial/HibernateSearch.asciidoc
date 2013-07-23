@@ -562,7 +562,6 @@ define([
 ----
 
 Now that we have a model bound to our backend, we need a view to expose the results to the user.
-== Add local queries *_(27:50)_*
 
 [source, javascript]
 .src/main/webapp/resources/js/app/views/results.js
@@ -705,15 +704,263 @@ This concludes our work to get the core search engine built and exposed via the 
 
 Our next step is to improve the search results by offering the ability to filter results by the user's location.
 
+== Filter results by location
 
+Let's face it, driving more than 50 kilometers to go to an event is quite uncommon. We will offer the ability to filter results to venues within a given radius and luckily for us, Hibernate Search offer such functionality very easily. Let's first work on the backend from the REST endpoint down to the actual Hibernate Search query. But first, let's make sure we index the geographical position of a venue.
 
-* Show local code in client side
-* Add `latitude` and `longitude` as `Double` in REST endpoint
-* Add spatial indexing on `Address`
-** Explain GRID vs range
-** add `@IndexedEmbedded` from `Venue`
-* Build spatial query *_(34:12)_*
-* Deploy and show the application
+Coordinates are provided as doubles representing the latitude and longitude hosted on the `Address` object associated with a venue. To make sure it is indexed, we need to add a spatial index field, link it to the coordinate properties and make sure `Address` is indexed when `Venue` is. `@Spatial` is the annotation describing a spatial field while `@Latitude` and `@Longitude` link properties to a spatial field.
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/Venue.java
+----
+@SuppressWarnings("serial")
+@Entity
+@Portable
+public class Venue implements Serializable {
+    ...
+
+    /**
+     * The address of the venue
+     */
+    @IndexedEmbedded
+    private Address address = new Address();
+
+    ...
+}
+----
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/Address.java
+----
+@SuppressWarnings("serial")
+@Embeddable
+@Portable
+@Spatial(name="coordinates", spatialMode=SpatialMode.GRID)
+public class Address implements Serializable {
+
+    /* Declaration of fields */
+    private String street;
+    private String city;
+    private String country;
+    @Latitude(of="coordinates")
+    private double latitude;
+    @Longitude(of="coordinates")
+    private double longitude;
+    
+    ...
+}
+----
+
+The `@Spatial` field is named `coordinates` and the name is used to match the corresponding `@Latitude` and `@Longitude`.
+
+[NOTE]
+.Types of spatial indexes
+====
+You can index and query spatial data in two fashions:
+
+* by indexing latitude and longitude and do two range queries - `SpatialMode.RANGE`
+* by using a grid index which translates latitude and longitude into a grid number and use a simple term query - `SpatialMode.GRID`
+
+The former is fine as long as you have less than 100k point of interests. The latter will scale better but take a bit more space in your index. You can get more information from the Hibernate Search documentation.
+====
+
+Now that the location is indexed, let's receive the user location from the REST endpoint and adjust our Hibernate Search query to restrict results to a specific area. The Hibernate Search query DSL offers the tools to write the gelocalize queries as well as the ability to compose bits of queries together.
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+----
+@Stateless
+@Path("/search")
+public class SearchService {
+
+    ...
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString, 
+        @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude) {
+
+        ...
+        
+        Query luceneQuery = buildLuceneQuery(searchString, latitude, longitude, qb);
+
+        ...
+
+    }
+
+    private Query buildLuceneQuery(String searchString, Double latitude, Double longitude, QueryBuilder qb) {
+        Query luceneQuery;
+        Query termsQuery;
+        if (searchString.isEmpty()) {
+            // Return all terms
+            termsQuery = qb.all().createQuery();
+        }
+        else {
+            // Find the terms of searchString with terms in event.name (weight of 10),
+            // event.description (weight of 1) and venue.name (weight of 3)
+             termsQuery = qb.keyword()
+                .onField("event.name").boostedTo(10f)
+                .andField("event.description")
+                .andField("venue.name").boostedTo(5f)
+                .matching(searchString)
+                .createQuery();
+        }
+        if (latitude != null && longitude != null) {
+            Query localQuery = qb.spatial()
+                .onCoordinates("venue.address.coordinates")
+                .within(50, Unit.KM)
+                .ofLatitude(latitude).andLongitude(longitude)
+                .createQuery();
+            luceneQuery = qb.bool()
+                .must(termsQuery)
+                .must(localQuery)
+                .createQuery();
+        }
+        else {
+            luceneQuery = termsQuery;
+        }
+        return luceneQuery;
+    }
+
+}
+----
+
+Only the lucene query has changed, the rest of the code remains as it is. If `latitude` and `longitude` are provided, we create a `localQuery` which restricts results to 50 kilometers of the provided coordinates and we use the field hosted on the venue address. The next step is to combine this local query with the term query previously build thanks to a boolean query.
+
+Let's retrieve the latitude and longitude from the user's browser and pass it along to our REST service.
+
+[source,javascript]
+.src/main/webapp/resources/js/app/models/results.js
+----
+        ...
+
+        // the URL with params to reach the REST endpoint
+        url: function() {
+            params = '?query=' + encodeURIComponent(this.get("query"));
+            if (typeof this.get("lat") != 'undefined' && typeof this.get("lng") != 'undefined') {
+                params = params + '&latitude=' + encodeURIComponent(this.get("lat")) + '&longitude=' + encodeURIComponent(this.get("lng"));
+            }
+            return this.urlRoot + params;
+        },
+
+        // the application URL as exposed by the application for bookmarkability
+        appUrl: function() {
+            result = "search/";
+            var query = this.get("query");
+            var lat = this.get("lat");
+            var lng = this.get("lng");
+            if (typeof lat != 'undefined' && typeof lng != 'undefined') {
+                result += "around/" + lat + "/" + lng + "/";
+            }
+            else {
+                result += "anywhere/";
+            }
+            result += encodeURIComponent(query);
+            return result;
+        }
+
+        ...
+----
+
+The `url` function is the URL that calls the REST endpoint while the `appUrl` function is the bookmarkable URL as displayed by the application for a search:
+
+* `search/anywhere/morisson` looks for events all around the world mentioning morisson
+* `search/around/48.8534100/2.3488000/morisson` looks for events around Paris mentioning morisson
+
+Let's add the necessary route corresponding to the local search. The router also needs to set in the model the `lat` and `lng` attributes used by the URL builder methods above.
+
+[source, javascript]
+.src/main/webapp/resources/js/app/router/desktop/router.js
+----
+    ...
+
+    var Router = Backbone.Router.extend({
+        routes:{
+            ...,
+            "search/anywhere/:query":"results",
+            "search/around/:lat/:lng/:query":"localResults",
+            ...
+        },
+        ...,
+        results:function (query, categoryId, minPriceId) {
+            this.localResults(null, null, query);
+        },
+        localResults:function (lat, lng, query) {
+            var model = new Results();
+            model.set("query", decodeURIComponent(query));
+            if (lat != null) {
+                model.set("lat", lat);
+            }
+            if (lng != null) {
+                model.set("lng", lng);
+            }
+            var resultsView = new ResultsView({model:model, el:$("#content"), router:this});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(resultsView);
+                }).fetch();
+        }
+
+    ...
+----
+
+Finally let's retrieve the user coordinates from the user's browser and use it in our queries if the user ticks the "around me" checkbox. This is fairly easy and standard to do in JavaScript. The example here is a bit verbose as we made sure to have proper fallback to a generic query if the browser does not give us the coordinates (inability to find them, user does not accept to be geolocalized, etc.).
+
+[source, html]
+.src/main/webapp/resources/templates/desktop/main.html
+----
+...
+                    <ul class="nav">
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#events">Events</a></li>
+                        <li><a href="#venues">Venues</a></li>
+                        <li><a href="#bookings">Bookings</a></li>
+                        <li><a href="booking-monitor.html">Monitor</a></li>
+                        <li><a href="admin">Administration</a></li>
+                    </ul>
+                    <script type="text/javascript">
+                      //<![CDATA[
+                        function get_results(event)
+                        {
+                            event.preventDefault();
+                            if (document.searchbox.local.checked && navigator.geolocation)
+                            {
+                                options = {
+                                    maximumAge: 6000000 // milliseconds (100 minutes)
+                                }
+                                navigator.geolocation.getCurrentPosition(handlePosition, handleError, options);
+                                return false;
+                            }
+                            else {
+                                return queryAnywhere();
+                            }
+                            function handlePosition(pos)
+                            {
+                                return queryLocal(pos.coords);
+                            }
+                            function handleError(error)
+                            {
+                                return queryAnywhere();
+                            }
+                        }
+                        function queryAnywhere()
+                        {
+                            location.href = "#search/anywhere/" + escape(document.searchbox.query.value);
+                            return false;
+                        }
+                        function queryLocal(coords)
+                        {
+                            location.href = "#search/around/" + coords.latitude + '/' + coords.longitude + '/' + escape(document.searchbox.query.value);
+                            return false;
+                        }
+                      //]]>
+                    </script>
+                    <form id="searchbox" name="searchbox" class="navbar-search pull-right" onsubmit="return get_results(event)">
+                        <input id="query" name="query" class="search-query" type="text" placeholder="Search"/>
+                        <input name="local" type="checkbox">around me</input>
+                    </form>
+...
+----
 
 == Add faceting *_(38:56)_*
 
