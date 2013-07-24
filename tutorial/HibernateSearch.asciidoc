@@ -962,21 +962,689 @@ Finally let's retrieve the user coordinates from the user's browser and use it i
 ...
 ----
 
-== Add faceting *_(38:56)_*
+== Enable and expose navigation by facets
 
-* Index category
-** not analyzed
-* Index min ticket price
-** Show `PriceMinBridge`
-** not analyzed
-* Code `enableFaceting()`
-** Add category as discrete, ordered by `FacetSortOrder.FIELD_VALUE`, including 0
-** Add ticketPrice.min as range (0, 50, 100, 200) with exclude limit, ordered by `FacetSortOrder.RANGE_DEFINITION_ORDER`, including 0
-** enable them
-* Deploy and show the application
+This feature is by far the most complex to add but brings a significant boost to usability. The user will be able to refine a query with facets automatically computed and suggested. In practice, it helps a user to refine a query to find what he was looking for.
 
-== Show faceting filtering *_(49:38)_*
+[NOTE]
+.What is a facet
+====
+Faceting offers a way to categorize the results of a query based on selected dimensions:
 
-Usually by that time you are short and need to wrap up.
+* by price range
+* by average comment notes
+* by brand
+* ...
 
-A good way is to `git stash`, get the running version and show how you can select faceting. If time permits, show the code.
+A facet is a given brand, a given price range and each facet can display the number of matching results.
+====
+
+In our case, we want to see our results:
+
+* by category (concert, etc)
+* by minimum price range
+
+Let's split our work in a few steps:
+
+* indexing the necessary data
+* create the faceting requests
+* return the list of facets for the UI to expose them
+* upon user selection further filter results by a given facet
+
+=== Indexing data for faceting
+
+A facet is aggregated by its exact value so no string tokenization should take place. By default, strings are _analyzed_ and split into tokens often corresponding to individual words. For a field used in faceting, we need to disable the analyzing phase. Let's do that for the category description.
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/EventCategory.java
+----
+...
+@SuppressWarnings("serial")
+@Entity
+@Portable
+public class EventCategory implements Serializable {
+
+    ...
+
+    @Column(unique=true)
+    @NotEmpty
+    @Field(analyze=Analyze.NO)
+    private String description;
+
+    ....
+}
+----
+
+Also add `@IndexedEmbedded` on `Event.category`.
+
+Next, we want to index the minimum price for a given `Show`. Since shows only contain a set of `TicketPrice`, we need to apply some transformation before indexing the information. Hibernate Search's field bridges are exactly that. They take a property and let you freely decide how the data in ultimately indexed. In our case, we will take the set of prices, find the minimum price and index it. A field bridge is declared with a `@FieldBridge` annotation. Since our field is not represented bu the object model, we will give it an artificial name: `ticketPrices.min`. We will use this to later query it.
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/Show.java
+----
+    ...
+
+    @OneToMany(mappedBy = "show", cascade = ALL, fetch = EAGER)
+    @Field(name="ticketPrices.min", analyze=Analyze.NO,
+        bridge=@FieldBridge(impl=PriceMinBridge.class))
+    private Set<TicketPrice> ticketPrices = new HashSet<TicketPrice>();
+
+    ...
+----
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/model/search/PriceMinBridge.java
+----
+/**
+ * Find the minimum price for a give show and index it.
+ * 
+ * @author Emmanuel Bernard <emmanuel@hibernate.org>
+ */
+public class PriceMinBridge extends NumericFieldBridge {
+
+    @Override
+    public Object get(String name, Document document) {
+        return Float.valueOf( document.getFieldable( name ).stringValue() );
+    }
+    
+    @Override
+    public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
+        if (value != null) {
+            float min = Float.MAX_VALUE;
+            for (TicketPrice price : (Set<TicketPrice>) value) {
+                float current = price.getPrice();
+                if (current < min) {
+                    min = current;
+                }
+            }
+            luceneOptions.addNumericFieldToDocument(name, min, document);
+        }
+    }
+}
+----
+
+Since we want to store a numerical value, we did extend `NumericFieldBridge`. Check out the Hibernate Search documentation for more details on field bridges.
+
+Now is the time to look at our query.
+
+=== Create the faceting requests
+
+Expressing the faceting requests is easy. We will use the query DSL to create a faceting request for each facet group, and then associate each faceting request to the Hibernate Search query.
+
+Faceting groups can be of two types:
+
+* discrete: each value found for a given field are considered a facet value
+* range: a pre-defined set of ranges are created and results are broken down by them
+
+You can refine facet groups a bit, for example:
+
+* should facets with no results be returned nevertheless
+* how facets should be ordered by facet group (by field value, by range definition etc)
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+----
+    ...
+
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString, 
+        @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude) {
+
+        ...
+        
+        Query luceneQuery = buildLuceneQuery(searchString, latitude, longitude, qb);
+        FullTextQuery objectQuery = ftem.createFullTextQuery(luceneQuery, Show.class);
+        
+        enableFaceting(qb, objectQuery);
+        
+        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+        
+        ShowResults results = buildResultObject(objectQuery);
+        return results;
+    }
+
+    private void enableFaceting(QueryBuilder qb, FullTextQuery objectQuery) {
+        FacetingRequest categoryFaceting = qb.facet()
+            .name("category")
+            .onField("event.category.description")
+            .discrete()
+                .includeZeroCounts(true)
+                .orderedBy(FacetSortOrder.FIELD_VALUE)
+            .createFacetingRequest();
+        FacetingRequest priceFaceting = qb.facet()
+            .name("price")
+            .onField("ticketPrices.min")
+            .range()
+                .below(50f).excludeLimit()
+                .from(50f).to(100f).excludeLimit()
+                .from(100f).to(200f).excludeLimit()
+                .above(200f)
+                .includeZeroCounts(true)
+                .orderedBy(FacetSortOrder.RANGE_DEFINITION_ORDER)
+            .createFacetingRequest();
+        objectQuery.getFacetManager().enableFaceting(categoryFaceting).enableFaceting(priceFaceting);
+    }
+
+    ...
+----
+
+=== Return the faceting information
+
+Our next step is to expose the facets to the UI by adding `FacetGroupView` and `FacetView` representations to the returned `ShowResults` and fill these structures with the faceting information provided by Hibernate Search. From an Hibernate Search query, we can access `FacetManager` containing all faceting related information. In particular:
+
+* `FacetManager.getFacets(String)` provides the list of `Facet` for a given group
+* `FacetManager.getFacetGroup(String)` offers ways to select / unselect and query selected facets
+
+Our `FacetView` knows whether or not it has been selected. We do compute that state from the `FacetManager`.
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/FacetGroupView.java
+----
+/** 
+ * Represent a facet group exposing its facial name, its identifier
+ * and the list of associated facet values.
+ * 
+ * @author Emmanuel Bernard
+ */
+public class FacetGroupView {
+    private String name;
+    private String id;
+    private List<FacetView> facets = new ArrayList<FacetView>();
+    
+    public FacetGroupView(String name, FacetManager fm, String facetingName) {
+        this.name = name;
+        this.id = facetingName;
+        for(Facet facet : fm.getFacets(facetingName)) {
+            boolean selected = fm.getFacetGroup(facetingName).getSelectedFacets().contains(facet);
+            facets.add(new FacetView(facet, selected));
+        }
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public List<FacetView> getFacets() {
+        return facets;
+    }
+    
+    public void addFacet(FacetView facet) {
+        facets.add(facet);
+    }
+    
+    public String getId() {
+        return id;
+    }
+    
+    public boolean isWithSelectedFacet() {
+        for(FacetView facet : facets) {
+            if (facet.isSelected()) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+----
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/FacetView.java
+----
+/**
+ * Represent a facet with its value, the number of matching results and
+ * whether or not the user has selected it.
+ * 
+ * @author Emmanuel Bernard
+ */
+public class FacetView {
+    private String value;
+    private int count;
+    private boolean selected;
+    
+    public FacetView(Facet facet, boolean selected) {
+        this.value = facet.getValue();
+        this.count = facet.getCount();
+        this.selected = selected;
+    }
+    
+    public String getValue() {
+        return value;
+    }
+    
+    public void overrideValue(String value) {
+        this.value = value;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+}
+----
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+----
+    ...
+
+    private ShowResults buildResultObject(FullTextQuery objectQuery) {
+        ShowResults results = new ShowResults(objectQuery.getResultList());
+        FacetManager fm = objectQuery.getFacetManager();
+        FacetGroupView facetGroup = new FacetGroupView("Category", fm, "category");
+        results.addFacetGroup(facetGroup);
+        facetGroup = new FacetGroupView("Starting price", fm, "price");
+        for(int index = 0 ; index < facetGroup.getFacets().size() ; index++) {
+            FacetView facet = facetGroup.getFacets().get(index);
+            facet.overrideValue(PRICE_FACET_VALUES[index]);
+        }
+        results.addFacetGroup(facetGroup);
+        return results;
+    }
+
+    private static String[] PRICE_FACET_VALUES = new String[] {"below $50", "$50 to $100", "$100 to $200", "above $200"};
+
+    ...
+----
+
+Since we want to control how price range is displayed in the UI, we have created an array representing the target text (`PRICE_FACET_VALUES`). Expect something integrated in Hibernate Search in the near future.
+
+=== Selecting a facet
+
+To make faceting fully functional, the user needs to be able to select one or several facets. Let's add the ability do pass the selected facets to our REST endpoint and act upon them.
+
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+----
+    ...
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString, 
+        @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude,
+        @QueryParam("categoryfacet") Integer categoryFacetId, @QueryParam("minpricefacet") Integer minPriceFacetId) {
+        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+        QueryBuilder qb = ftem.getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
+        
+        Query luceneQuery = buildLuceneQuery(searchString, latitude, longitude, qb);
+        
+        FullTextQuery objectQuery = ftem.createFullTextQuery(luceneQuery, Show.class);
+        
+        enableFaceting(qb, objectQuery);
+        enableFacetRestriction(objectQuery, categoryFacetId, minPriceFacetId);
+        
+        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+        
+        ShowResults results = buildResultObject(objectQuery);
+        return results;
+    }
+
+    ...
+
+    private void enableFacetRestriction(FullTextQuery objectQuery, Integer categoryFacetId, Integer minPriceFacetId) {
+        FacetManager fm = objectQuery.getFacetManager();
+        if (categoryFacetId != null) {
+            Facet selectedFacet = fm.getFacets("category").get(categoryFacetId);
+            fm.getFacetGroup("category").selectFacets(selectedFacet);
+        }
+        if (minPriceFacetId != null) {
+            Facet selectedFacet = fm.getFacets("price").get(minPriceFacetId);
+            fm.getFacetGroup("price").selectFacets(selectedFacet);
+        }
+    }
+
+    ...
+----
+
+We are done on the backend side. Let's look at `SearchService` in its entirety and move to the UI side.
+
+
+[source, java]
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
+----
+/**
+ * Service exposed as a REST endpoint and offering full-text search, geolocalized search
+ * as well as faceting using Hibernate Search.
+ * 
+ * @author Emmanuel Bernard
+ */
+@Stateless
+@Path("/search")
+public class SearchService {
+    @Inject
+    EntityManager em;
+    @Inject
+    Logger logger;
+
+    /**
+     * REST endpoint for the search engine
+     * 
+     * @param searchString contains the words to search
+     * @param latitude (optional) search restricted around latitude
+     * @param longitude (optional) search restricted around longitude
+     * @param categoryFacetId (optional) selected category facet
+     * @param minPriceFacetId (optional) selected price facet
+     * @return ShowResults containing the results and the faceting data
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ShowResults search(@QueryParam("query") String searchString, 
+        @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude,
+        @QueryParam("categoryfacet") Integer categoryFacetId, @QueryParam("minpricefacet") Integer minPriceFacetId) {
+        FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
+        QueryBuilder qb = ftem.getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
+        
+        Query luceneQuery = buildLuceneQuery(searchString, latitude, longitude, qb);
+        
+        FullTextQuery objectQuery = ftem.createFullTextQuery(luceneQuery, Show.class);
+        
+        enableFaceting(qb, objectQuery);
+        enableFacetRestriction(objectQuery, categoryFacetId, minPriceFacetId);
+        
+        objectQuery.setResultTransformer(ShowViewResultTransformer.INSTANCE);
+        
+        ShowResults results = buildResultObject(objectQuery);
+        return results;
+    }
+
+    private Query buildLuceneQuery(String searchString, Double latitude, Double longitude, QueryBuilder qb) {
+        Query luceneQuery;
+        Query termsQuery;
+        if (searchString.isEmpty()) {
+            // Return all terms
+            termsQuery = qb.all().createQuery();
+        }
+        else {
+            // Find the terms of searchString with terms in event.name (weight of 10),
+            // event.description (weight of 1) and venue.name (weight of 3)
+             termsQuery = qb.keyword()
+                .onField("event.name").boostedTo(10f)
+                .andField("event.description")
+                .andField("venue.name").boostedTo(5f)
+                .matching(searchString)
+                .createQuery();
+        }
+        if (latitude != null && longitude != null) {
+            Query localQuery = qb.spatial()
+                .onCoordinates("venue.address.coordinates")
+                .within(50, Unit.KM)
+                .ofLatitude(latitude).andLongitude(longitude)
+                .createQuery();
+            luceneQuery = qb.bool()
+                .must(termsQuery)
+                .must(localQuery)
+                .createQuery();
+        }
+        else {
+            luceneQuery = termsQuery;
+        }
+        return luceneQuery;
+    }
+    private ShowResults buildResultObject(FullTextQuery objectQuery) {
+        ShowResults results = new ShowResults(objectQuery.getResultList());
+        FacetManager fm = objectQuery.getFacetManager();
+        FacetGroupView facetGroup = new FacetGroupView("Category", fm, "category");
+        results.addFacetGroup(facetGroup);
+        facetGroup = new FacetGroupView("Starting price", fm, "price");
+        for(int index = 0 ; index < facetGroup.getFacets().size() ; index++) {
+            FacetView facet = facetGroup.getFacets().get(index);
+            facet.overrideValue(PRICE_FACET_VALUES[index]);
+        }
+        results.addFacetGroup(facetGroup);
+        return results;
+    }
+
+    private void enableFaceting(QueryBuilder qb, FullTextQuery objectQuery) {
+        FacetingRequest categoryFaceting = qb.facet()
+            .name("category")
+            .onField("event.category.description")
+            .discrete()
+                .includeZeroCounts(true)
+                .orderedBy(FacetSortOrder.FIELD_VALUE)
+            .createFacetingRequest();
+        FacetingRequest priceFaceting = qb.facet()
+            .name("price")
+            .onField("ticketPrices.min")
+            .range()
+                .below(50f).excludeLimit()
+                .from(50f).to(100f).excludeLimit()
+                .from(100f).to(200f).excludeLimit()
+                .above(200f)
+                .includeZeroCounts(true)
+                .orderedBy(FacetSortOrder.RANGE_DEFINITION_ORDER)
+            .createFacetingRequest();
+        objectQuery.getFacetManager().enableFaceting(categoryFaceting).enableFaceting(priceFaceting);
+    }
+    
+    private static String[] PRICE_FACET_VALUES = new String[] {"below $50", "$50 to $100", "$100 to $200", "above $200"};
+
+    private void enableFacetRestriction(FullTextQuery objectQuery, Integer categoryFacetId, Integer minPriceFacetId) {
+        FacetManager fm = objectQuery.getFacetManager();
+        if (categoryFacetId != null) {
+            Facet selectedFacet = fm.getFacets("category").get(categoryFacetId);
+            fm.getFacetGroup("category").selectFacets(selectedFacet);
+        }
+        if (minPriceFacetId != null) {
+            Facet selectedFacet = fm.getFacets("price").get(minPriceFacetId);
+            fm.getFacetGroup("price").selectFacets(selectedFacet);
+        }
+    }
+
+}
+----
+
+=== Exposing faceting to the UI
+
+Integrating faceting and the UI is two-fold:
+
+* display the facets on the query result screen
+* re-execute the query if the user has select one or more facets and offer some bookmarkable URL for queries with facet selection
+
+[source,javascript]
+.src/main/webapp/resources/js/app/models/results.js
+----
+        ...
+
+        // the URL with params to reach the REST endpoint
+        url: function() {
+            params = '?query=' + encodeURIComponent(this.get("query"));
+            if (typeof this.get("lat") != 'undefined' && typeof this.get("lng") != 'undefined') {
+                params = params + '&latitude=' + encodeURIComponent(this.get("lat")) + '&longitude=' + encodeURIComponent(this.get("lng"));
+            }
+            if (typeof this.get("category") != 'undefined') {
+                params = params + '&categoryfacet=' + this.get("category");
+            }
+            if (typeof this.get("price") != 'undefined') {
+                params = params + '&minpricefacet=' + this.get("price");
+            }
+            return this.urlRoot + params;
+        },
+
+        // the application URL as exposed by the application for bookmarkability
+        appUrl: function() {
+            result = "search/";
+            var query = this.get("query");
+            var lat = this.get("lat");
+            var lng = this.get("lng");
+            var category = this.get("category");
+            var minprice = this.get("price");
+            if (typeof lat != 'undefined' && typeof lng != 'undefined') {
+                result += "around/" + lat + "/" + lng + "/";
+            }
+            else {
+                result += "anywhere/";
+            }
+            result += encodeURIComponent(query);
+            result += "/category/"
+            if (typeof category != 'undefined') {
+                result += category;
+            }
+            else {
+                result += 'all';
+            }
+            result += "/minprice/"
+            if (typeof minprice != 'undefined') {
+                result += minprice;
+            }
+            else {
+                result += 'all';
+            }
+            return result;
+        }
+
+        ...
+----
+
+The optionally selected `category` and `price` facet are stored in the model and influence both the REST endpoint URL and the bookmarkable application URL (e.g. `#search/anywhere/morisson/category/all/minprice/1`.
+
+The view needs to react to clicks on the faceting links and properly update the model before navigating to the appropriate URL
+
+[source, javascript]
+.src/main/webapp/resources/js/app/views/results.js
+----
+    ...
+
+    var ResultsView  = Backbone.View.extend({
+
+        events:{
+            "click .faceting": "enableFaceting"
+        },
+        
+        initialize:function () {
+            this.model.bind('change', this.render, this);
+        },
+        
+        render:function () {
+            $(this.el).empty();
+            this.delegateEvents();
+            utilities.applyTemplate($(this.el), resultsTemplate, {model:this.model, query:this.model.get("query")});
+            return this;
+        },
+
+        //called when the user clicks on a faceting link and refresh the model and application URL
+        enableFaceting:function (e) {
+            var id = $(e.currentTarget).data("id");
+            var faceting = id.substring(0, id.lastIndexOf('-'));
+            var index = id.substring(id.lastIndexOf('-') + 1);
+            if (index == 'all') {
+                this.model.unset(faceting);
+            }
+            else {
+                this.model.set(faceting, index);
+            }
+            this.model.fetch();
+            this.options.router.navigate(this.model.appUrl());
+            return false;
+        }
+
+        ...
+----
+
+Let's now display the faceting information as a left sidebar. For each facet group we expose the list of facets, their count and add a link triggering the result refresh when a facet is selected (or cleared).
+
+[source, html]
+.src/main/webapp/resources/templates/desktop/results.html
+----
+<h3 class="page-header light-font special-title">Results for <%=query%></h3>
+<div class="row-fluid">
+    <div class='span3'>
+        <div id="itemMenu">
+            <% _.each(model.get("facetGroups"), function (facetGroup) { %>
+            <div class="facets-group">
+                <div class="facets-heading">
+                    <a class="facets-toggle"><%=facetGroup.name%></a>
+                </div>
+                <div class="facets-body in" style="height: auto;">
+                    <div class="facets-inner">
+                        <%if (facetGroup.withSelectedFacet) { %>
+                        <p><a href="#search" class='faceting' data-id='<%=facetGroup.id%>-all'>(Clear)</a></p>
+                        <% } %>
+                        <% _.each(facetGroup.facets, function (facet, index, facets) { %>
+                        <% if (facet.selected == true) { %>
+                        <p class='muted'><%=facet.value%> <span class='badge'><%=facet.count%></span></p>
+                        <% } else { %>
+                        <p><a href="#search" class='faceting' data-id='<%=facetGroup.id%>-<%=index%>'><%=facet.value%> <span class='badge'><%=facet.count%></span></a></p>
+                        <% } %>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <div class='span9'>
+        <table class='table table-bordered' style="background: #fffffa;">
+            <thead>
+            <tr>
+                <th>Event</th>
+                <th>Venue</th>
+            </tr>
+            </thead>
+            <tbody id='bookingList'>
+            <% _.each(model.get("results"), function (result) { %>
+            <tr>
+                <td><a href="#events/<%=result.eventId%>"><%=result.eventName%></a></td>
+                <td><%=result.venueName%></td>
+            </tr>
+            <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+----
+
+Let's finally add the necessary routes corresponding to the facet filtering and update the action methods to update the model with the facets selected.
+
+[source, javascript]
+.src/main/webapp/resources/js/app/router/desktop/router.js
+----
+    ...
+
+    var Router = Backbone.Router.extend({
+        routes:{
+            ...,
+            "search/anywhere/:query":"results",
+            "search/anywhere/:query/category/:categoryId/minprice/:priceId":"results",
+            "search/around/:lat/:lng/:query":"localResults",
+            "search/around/:lat/:lng/:query/category/:categoryId/minprice/:priceId":"localResults",
+            ...
+        },
+
+        ...,
+
+        results:function (query, categoryId, minPriceId) {
+            this.localResults(null, null, query, categoryId, minPriceId);
+        },
+        localResults:function (lat, lng, query, categoryId, minPriceId) {
+            var model = new Results();
+            model.set("query", decodeURIComponent(query));
+            if (lat != null) {
+                model.set("lat", lat);
+            }
+            if (lng != null) {
+                model.set("lng", lng);
+            }
+            if (typeof(categoryId) != 'undefined' && categoryId != 'all') {
+                model.set("category", categoryId);
+            }
+            if (typeof(minPriceId) != 'undefined' && minPriceId != 'all') {
+                model.set("price", minPriceId);
+            }
+            var resultsView = new ResultsView({model:model, el:$("#content"), router:this});
+            model.bind("change",
+                function () {
+                    utilities.viewManager.showView(resultsView);
+                }).fetch();
+        }
+        
+        ...
+----
+
+With minimal work, we have added a powerful search engine with geolocalized queries and faceting improve further customer's navigation.
+
+== More resources
+
+To learn more about search and Hibernate Search in particular, take a look at the link:http://search.hibernate.org[Hibernate Search] project and its documentation.
