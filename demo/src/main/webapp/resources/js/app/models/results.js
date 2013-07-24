@@ -14,6 +14,8 @@ define([
             _.bindAll(this,"fetch");
             _.bindAll(this,"appUrl");
         },
+
+        // the URL with params to reach the REST endpoint
         url: function() {
             params = '?query=' + encodeURIComponent(this.get("query"));
             if (typeof this.get("lat") != 'undefined' && typeof this.get("lng") != 'undefined') {
@@ -28,6 +30,8 @@ define([
             console.log("Calling REST endpoint " + this.urlRoot + params);
             return this.urlRoot + params;
         },
+
+        // the application URL as exposed by the application for bookmarkability
         appUrl: function() {
             result = "search/";
             var query = this.get("query");
@@ -59,6 +63,7 @@ define([
             return result;
         }
     });
+
     // export the Results class
     return Results;
 });

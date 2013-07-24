@@ -25,9 +25,10 @@ define([
             $(this.el).empty();
             this.delegateEvents();
             utilities.applyTemplate($(this.el), resultsTemplate, {model:this.model, query:this.model.get("query")});
-            return this;	
+            return this;
         },
         
+        //called when the user clicks on a faceting link and refresh the model and application URL
         enableFaceting:function (e) {
             var id = $(e.currentTarget).data("id");
             var faceting = id.substring(0, id.lastIndexOf('-'));
