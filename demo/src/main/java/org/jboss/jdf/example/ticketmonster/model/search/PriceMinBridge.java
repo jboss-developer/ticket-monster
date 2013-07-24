@@ -11,7 +11,6 @@ import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
  * Find the minimum price for a give show and index it.
  * 
  * @author Emmanuel Bernard <emmanuel@hibernate.org>
- *
  */
 public class PriceMinBridge extends NumericFieldBridge {
 

@@ -25,6 +25,12 @@ import org.hibernate.search.query.facet.FacetSortOrder;
 import org.hibernate.search.query.facet.FacetingRequest;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 
+/**
+ * Service exposed as a REST endpoint and offering full-text search, geolocalized search
+ * as well as faceting using Hibernate Search.
+ * 
+ * @author Emmanuel Bernard
+ */
 @Stateless
 @Path("/search")
 public class SearchService {
@@ -33,16 +39,22 @@ public class SearchService {
     @Inject
     Logger logger;
 
+    /**
+     * REST endpoint for the search engine
+     * 
+     * @param searchString contains the words to search
+     * @param latitude (optional) search restricted around latitude
+     * @param longitude (optional) search restricted around longitude
+     * @param categoryFacetId (optional) selected category facet
+     * @param minPriceFacetId (optional) selected price facet
+     * @return ShowResults containing the results and the faceting data
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ShowResults search(@QueryParam("query") String searchString, 
         @QueryParam("latitude") Double latitude, @QueryParam("longitude") Double longitude,
         @QueryParam("categoryfacet") Integer categoryFacetId, @QueryParam("minpricefacet") Integer minPriceFacetId) {
         FullTextEntityManager ftem = Search.getFullTextEntityManager(em);
-        if (searchString == null || searchString.length() == 0) {
-            throw new WebApplicationException(new RuntimeException("Query must have a QueryParam 'query'"),
-                Response.Status.BAD_REQUEST);
-        }
         QueryBuilder qb = ftem.getSearchFactory().buildQueryBuilder().forEntity(Show.class).get();
         
         Query luceneQuery = buildLuceneQuery(searchString, latitude, longitude, qb);
@@ -105,13 +117,15 @@ public class SearchService {
         return results;
     }
 
+    private static String[] PRICE_FACET_VALUES = new String[] {"below $50", "$50 to $100", "$100 to $200", "above $200"};
+
     private void enableFaceting(QueryBuilder qb, FullTextQuery objectQuery) {
         FacetingRequest categoryFaceting = qb.facet()
             .name("category")
             .onField("event.category.description")
             .discrete()
-            .includeZeroCounts(true)
-            .orderedBy(FacetSortOrder.FIELD_VALUE)
+                .includeZeroCounts(true)
+                .orderedBy(FacetSortOrder.FIELD_VALUE)
             .createFacetingRequest();
         FacetingRequest priceFaceting = qb.facet()
             .name("price")
@@ -127,8 +141,6 @@ public class SearchService {
         objectQuery.getFacetManager().enableFaceting(categoryFaceting).enableFaceting(priceFaceting);
     }
     
-    private static String[] PRICE_FACET_VALUES = new String[] {"below $50", "$50 to $100", "$100 to $200", "above $200"};
-
     private void enableFacetRestriction(FullTextQuery objectQuery, Integer categoryFacetId, Integer minPriceFacetId) {
         FacetManager fm = objectQuery.getFacetManager();
         if (categoryFacetId != null) {

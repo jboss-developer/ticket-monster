@@ -5,7 +5,12 @@ import java.util.List;
 
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.facet.Facet;
-
+/** 
+ * Represent a facet group exposing its facial name, its identifier
+ * and the list of associated facet values.
+ * 
+ * @author Emmanuel Bernard
+ */
 public class FacetGroupView {
     private String name;
     private String id;

@@ -7,6 +7,11 @@ import java.util.List;
 import org.hibernate.transform.ResultTransformer;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 
+/**
+ * Converts a list of Show into a list of ShowView.
+ * 
+ * @author Emmanuel Bernard
+ */
 public class ShowViewResultTransformer implements ResultTransformer {
     public static ShowViewResultTransformer INSTANCE = new ShowViewResultTransformer();
 
@@ -23,5 +28,4 @@ public class ShowViewResultTransformer implements ResultTransformer {
         }
         return results;
     }
-
 }

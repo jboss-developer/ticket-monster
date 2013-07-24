@@ -2,6 +2,12 @@ package org.jboss.jdf.example.ticketmonster.rest.search;
 
 import org.hibernate.search.query.facet.Facet;
 
+/**
+ * Represent a facet with its value, the number of matching results and
+ * whether or not the user has selected it.
+ * 
+ * @author Emmanuel Bernard
+ */
 public class FacetView {
     private String value;
     private int count;

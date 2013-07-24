@@ -22,6 +22,7 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  * 
  * @author Marius Bogoevici
  * @author Pete Muir
+ * @author Emmanuel Bernard
  */
 @SuppressWarnings("serial")
 @Embeddable
