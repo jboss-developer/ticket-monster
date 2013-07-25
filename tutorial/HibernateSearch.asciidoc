@@ -24,11 +24,11 @@ Finally Hibernate Search implements several strategies to cluster indexes very e
 
 We just need to add Hibernate Search in our classpath and add a few configuration options in `persistence.xml`.
 
-Our first task is to add Hibernate Search as a dependency to our application. There are two ways to do it. For now we will use the JBoss Modules approach where Hibernate Search is installed on JBoss EAP or WildFly.
+Our first task is to add Hibernate Search as a dependency to our application. There are two ways to do it. For now we will use the JBoss Modules approach where Hibernate Search is installed on JBoss EAP or JBoss AS.
 
 === Set up the dependencies
 
-Download the https://downloads.sourceforge.net/project/hibernate/hibernate-search/4.3.0.CR1/hibernate-search-modules-4.3.0.CR1-jbossas-72-dist.zip[Hibernate Search module] and copy its content into JBoss EAP or WildFly's `modules` directory.
+Download the https://downloads.sourceforge.net/project/hibernate/hibernate-search/4.3.0.CR1/hibernate-search-modules-4.3.0.CR1-jbossas-72-dist.zip[Hibernate Search module] and copy its content into JBoss EAP or JBoss AS's `modules` directory.
 
 Next update `jboss-deployment-structure.xml` to include the ORM module of Hibernate Search. This module is necessary to import the Hibernate Search engine as well as the integration code with Hibernate ORM.
 
@@ -110,11 +110,6 @@ Hibernate Search needs a few extra settings in `persistence.xml`. You can store 
 </persistence>
 ----
 
-
-=== Add some utilities
-
-CAUTION: Need to fix the `@Inject` issue before filling up that section
-
 == Build the core search engine
 
 We are now ready to start our search engine. Let's first see how we decide what to index before building the right queries.
@@ -129,7 +124,7 @@ Marking entities and properties as indexed is as simple as adding annotations. B
 
 ==== Adding the metadata to our domain model
 
-You cannot do joins in a full-text index. Instead, we cheat by denormalizing the information and indexing the associated objects we want to query by in the same entry. For that we need to be able to navigate to all of the entities we are interested in.
+You cannot do joins in a full-text index. Instead, we cheat by denormalizing the information and indexing the associated objects we want to query by in the same entry. For that, we need to be able to navigate to all of the entities we are interested in.
 
 Let's look at our domain model.
 
@@ -141,7 +136,7 @@ CAUTION: TODO: fix diagram around TicketPriceCategory
 
 `Show` happens to be the central entity from which we can reach `Event`, `Venue` as well as price and date information for each `Performance`. That will be the entity we will start indexing from.
 
-Let make `Show` indexed by adding an `@Indexed` annotation. We also want to index the associated `Event` and `Venue` when a given `Show` is indexed. For that, we will mark each association as `@IndexedEmbedded`.
+Let's make `Show` indexed by adding an `@Indexed` annotation. We also want to index the associated `Event` and `Venue` when a given `Show` is indexed. For that, we will mark each association as `@IndexedEmbedded`.
 
 .src/main/java/org/jboss/jdf/example/ticketmonster/model/Show.java
 [source,java]
@@ -218,7 +213,10 @@ public class Event implements Serializable {
 
     ...
 
-    @NotNull @Size(min = 20, max = 1000, message = "An event's description must contain between 20 and 1000 characters") @Field private String description;
+    @NotNull
+    @Size(min = 20, max = 1000, message = "An event's description must contain between 20 and 1000 characters")
+    @Field
+    private String description;
 
     ...
 }
@@ -232,11 +230,13 @@ By default, each entity type is indexed in a dedicated Apache Lucene _index_. An
 Now you understand where `@Indexed` and `@Field` come from.
 ====
 
-Do the same for `Venue` and mark the `name` attribute as `@Field`. Now when a `Show` is created or modified, the index will be updated and will contain the show's event name and description as well as the venue name. But what about existing shows in our database? How can we index them?
+Do the same for `Venue` and mark the `name` attribute as `@Field`. Now when a `Show` is created or modified, the index will be updated and will contain the show's event name and description as well as the venue name.
+
+But what about existing shows in our database? How can we index them?
 
 ==== Indexing existing data
 
-For initial indexing (or reindexing), Hibernate Search offers an API: `MassIndexer`. It reindexes all entities of a given type quickly. We are creating a service that will reindex our data when the application starts. That is convenient during development time.
+For initial indexing (or reindexing), Hibernate Search offers an API: `MassIndexer`. It reindexes all entities of a given type quickly. Let's create a service that will call `MassIndexer` to reindex our data when the application starts. That is convenient during development time.
 
 .src/main/java/org/jboss/jdf/example/ticketmonster/service/Bootstrap.java
 [source,java]
@@ -266,7 +266,7 @@ We now have indexed entities, it is time to write our query engine.
 
 === Writing the search engine
 
-Since the application makes use of rich clients, we will expose our search service via a REST endpoint. We will retrieve a `FullTextEntityManager` - the entry point for Hibernate Search.
+Since the application makes use of rich clients, we will expose our search service via a REST endpoint. In it, we will retrieve a `FullTextEntityManager` - the entry point for Hibernate Search and our way to write the search engine.
 
 .src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
 [source,java]
@@ -356,11 +356,11 @@ Writing a full-text query is composed of a few phases:
 
 ==== Build the Apache Lucene query
 
-Our first step is to write the core full-text query. We will use Hibernate Search query DSL for this. Every query starts from a `QueryBuilder` for a given entity type. From a `QueryBuilder` we can define a specific query (keyword, phrase, range etc), on one or several fields and a few options (boost, fuziness etc).
+Our first step is to write the core full-text query. We will use Hibernate Search query DSL for this. Every query starts from a `QueryBuilder` for a given entity type. From a `QueryBuilder` we can define a specific query (keyword, phrase, range etc) on one or several fields and a few options (boost, fuziness etc).
 
 By default, a property annotated `@Field` has a corresponding field named after the property. When embedding associations in the index, you can use the usual dot notation: starting from a `Show`, you can look for the event name via the following path `event.name`.
 
-Here we will focus on keyword queries - queries looking for specific terms - on a few fields of event and venue. Since a matching term on an event name seems more important than on an event description, we use different boost time to give them different weight in the ranking system. And if the query string is empty, we will return all elements.
+Here we will focus on keyword queries - queries looking for specific terms - on a few fields of event and venue. Since a matching term on an event name seems more important than on an event description, we use different boost values to give them different weight in the ranking system. And if the query string provided by the user is empty, we will return all elements.
 
 .src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
 [source,java]
@@ -452,25 +452,7 @@ The object query is created from the `FullTextEntityManager.createFullTextQuery(
         return new ShowResults(results);
     }
 
-    private Query buildLuceneQuery(String searchString, QueryBuilder qb) {
-        Query luceneQuery;
-        if (searchString.isEmpty()) {
-            // Return all terms
-            luceneQuery = qb.all().createQuery();
-        }
-        else {
-            // Find the terms of searchString with terms in event.name (weight of 10),
-            // event.description (weight of 1) and venue.name (weight of 3)
-            luceneQuery = qb
-                .keyword()
-                .onField("event.name").boostedTo(10f)
-                .andField("event.description")
-                .andField("venue.name").boostedTo(5f)
-                .matching(searchString)
-                .createQuery();
-        }
-        return luceneQuery;
-    }
+...
 ----
 
 
@@ -503,7 +485,7 @@ public class ShowViewResultTransformer implements ResultTransformer {
 
 That's it! We have a fully functional search engine. Now it is time to expose it to our user.
 
-[NOTE]
+[TIP]
 .What's in a query?
 ====
 A `FullTextQuery` is literally a subclass of the JPA `Query` class. You have access to all of its capability, in particular pagination!
@@ -670,7 +652,7 @@ define("router", [
 });
 ----
 
-We need to do one that thing. Somehow the query URL (e.g. `#search/anywhere/morrison`) needs to be called. Let's add a search box in the top menu and have it call that URL.
+We need to do one more thing. Somehow the query URL (e.g. `#search/anywhere/morrison`) needs to be called. Let's add a search box in the top menu and have it call that URL.
 
 [source, html]
 .src/main/webapp/resources/templates/desktop/main.html
@@ -706,7 +688,7 @@ Our next step is to improve the search results by offering the ability to filter
 
 == Filter results by location
 
-Let's face it, driving more than 50 kilometers to go to an event is quite uncommon. We will offer the ability to filter results to venues within a given radius and luckily for us, Hibernate Search offer such functionality very easily. Let's first work on the backend from the REST endpoint down to the actual Hibernate Search query. But first, let's make sure we index the geographical position of a venue.
+Let's face it, driving more than 50 kilometers - or 30 miles for our imperial friends - to go to an event is quite uncommon. We will offer the ability to filter results to venues within a given radius and luckily for us, Hibernate Search offer such functionality very easily. Let's first work on the backend from the REST endpoint down to the actual Hibernate Search query. But first, let's make sure we index the geographical position of a venue.
 
 Coordinates are provided as doubles representing the latitude and longitude hosted on the `Address` object associated with a venue. To make sure it is indexed, we need to add a spatial index field, link it to the coordinate properties and make sure `Address` is indexed when `Venue` is. `@Spatial` is the annotation describing a spatial field while `@Latitude` and `@Longitude` link properties to a spatial field.
 
@@ -753,18 +735,19 @@ public class Address implements Serializable {
 
 The `@Spatial` field is named `coordinates` and the name is used to match the corresponding `@Latitude` and `@Longitude`.
 
-[NOTE]
+[TIP]
 .Types of spatial indexes
 ====
 You can index and query spatial data in two fashions:
 
-* by indexing latitude and longitude and do two range queries - `SpatialMode.RANGE`
-* by using a grid index which translates latitude and longitude into a grid number and use a simple term query - `SpatialMode.GRID`
+[horizontal]
+`SpatialMode.RANGE`:: index latitude and longitude and use two combined range queries
+`SpatialMode.GRID`:: use a grid index which translates latitude and longitude into a grid number and use a simple term query
 
 The former is fine as long as you have less than 100k point of interests. The latter will scale better but take a bit more space in your index. You can get more information from the Hibernate Search documentation.
 ====
 
-Now that the location is indexed, let's receive the user location from the REST endpoint and adjust our Hibernate Search query to restrict results to a specific area. The Hibernate Search query DSL offers the tools to write the gelocalize queries as well as the ability to compose bits of queries together.
+Now that the location is indexed, let's receive the user location from the REST endpoint and adjust our Hibernate Search query to restrict results to a specific area. The Hibernate Search query DSL offers the tools to write the geolocalized - or spatial - queries as well as the ability to compose bits of queries together.
 
 [source, java]
 .src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
@@ -864,8 +847,8 @@ Let's retrieve the latitude and longitude from the user's browser and pass it al
 
 The `url` function is the URL that calls the REST endpoint while the `appUrl` function is the bookmarkable URL as displayed by the application for a search:
 
-* `search/anywhere/morisson` looks for events all around the world mentioning morisson
-* `search/around/48.8534100/2.3488000/morisson` looks for events around Paris mentioning morisson
+* `search/anywhere/morisson` looks for events all around the world mentioning "morisson"
+* `search/around/48.8534100/2.3488000/morisson` looks for events around Paris mentioning "morisson"
 
 Let's add the necessary route corresponding to the local search. The router also needs to set in the model the `lat` and `lng` attributes used by the URL builder methods above.
 
@@ -904,7 +887,7 @@ Let's add the necessary route corresponding to the local search. The router also
     ...
 ----
 
-Finally let's retrieve the user coordinates from the user's browser and use it in our queries if the user ticks the "around me" checkbox. This is fairly easy and standard to do in JavaScript. The example here is a bit verbose as we made sure to have proper fallback to a generic query if the browser does not give us the coordinates (inability to find them, user does not accept to be geolocalized, etc.).
+Finally let's retrieve the user coordinates from the user's browser and use it in our queries if the user ticks the _around me_ checkbox. This is fairly easy and standard to do in JavaScript. The example here is a bit verbose as we made sure to have proper fallback to a generic query if the browser does not give us the coordinates (inability to find them, user does not accept to be geolocalized, etc.).
 
 [source, html]
 .src/main/webapp/resources/templates/desktop/main.html
@@ -964,10 +947,10 @@ Finally let's retrieve the user coordinates from the user's browser and use it i
 
 == Enable and expose navigation by facets
 
-This feature is by far the most complex to add but brings a significant boost to usability. The user will be able to refine a query with facets automatically computed and suggested. In practice, it helps a user to refine a query to find what he was looking for.
+This feature is by far the most complex to add but brings a significant boost to usability. The user will be able to refine a query with facets automatically computed and suggested. In practice, it helps a user to refine a query to find what he is looking for.
 
 [NOTE]
-.What is a facet
+.What is a facet?
 ====
 Faceting offers a way to categorize the results of a query based on selected dimensions:
 
@@ -1017,7 +1000,7 @@ public class EventCategory implements Serializable {
 
 Also add `@IndexedEmbedded` on `Event.category`.
 
-Next, we want to index the minimum price for a given `Show`. Since shows only contain a set of `TicketPrice`, we need to apply some transformation before indexing the information. Hibernate Search's field bridges are exactly that. They take a property and let you freely decide how the data in ultimately indexed. In our case, we will take the set of prices, find the minimum price and index it. A field bridge is declared with a `@FieldBridge` annotation. Since our field is not represented bu the object model, we will give it an artificial name: `ticketPrices.min`. We will use this to later query it.
+Next, we want to index the minimum price for a given `Show`. Since shows only contain a set of `TicketPrice`, we need to apply some transformation before indexing the information. Hibernate Search's field bridges are a way to massage your data before indexing. They take a property value and describe how the data is ultimately indexed. In our case, we will take the set of prices, find the minimum price and index it. A field bridge is declared with a `@FieldBridge` annotation. Since our field is not represented by the object model, we will give it an artificial name: `ticketPrices.min`. We will use this later in our query.
 
 [source, java]
 .src/main/java/org/jboss/jdf/example/ticketmonster/model/Show.java
@@ -1065,7 +1048,7 @@ public class PriceMinBridge extends NumericFieldBridge {
 
 Since we want to store a numerical value, we did extend `NumericFieldBridge`. Check out the Hibernate Search documentation for more details on field bridges.
 
-Now is the time to look at our query.
+Now is the time to look at our faceting query.
 
 === Create the faceting requests
 
@@ -1073,13 +1056,14 @@ Expressing the faceting requests is easy. We will use the query DSL to create a 
 
 Faceting groups can be of two types:
 
-* discrete: each value found for a given field are considered a facet value
-* range: a pre-defined set of ranges are created and results are broken down by them
+[horizontal]
+discrete:: each value found for a given field are considered a facet value
+range:: a pre-defined set of ranges are created and results are broken down by them
 
 You can refine facet groups a bit, for example:
 
-* should facets with no results be returned nevertheless
-* how facets should be ordered by facet group (by field value, by range definition etc)
+* should facets with zero results be returned
+* how facets should be ordered for a given facet group (by field value, by range definition etc)
 
 [source, java]
 .src/main/java/org/jboss/jdf/example/ticketmonster/rest/search/SearchService.java
@@ -1133,7 +1117,7 @@ You can refine facet groups a bit, for example:
 Our next step is to expose the facets to the UI by adding `FacetGroupView` and `FacetView` representations to the returned `ShowResults` and fill these structures with the faceting information provided by Hibernate Search. From an Hibernate Search query, we can access `FacetManager` containing all faceting related information. In particular:
 
 * `FacetManager.getFacets(String)` provides the list of `Facet` for a given group
-* `FacetManager.getFacetGroup(String)` offers ways to select / unselect and query selected facets
+* `FacetManager.getFacetGroup(String)` offers ways to select / unselect and query selected facets for a given group
 
 Our `FacetView` knows whether or not it has been selected. We do compute that state from the `FacetManager`.
 
@@ -1253,7 +1237,7 @@ Since we want to control how price range is displayed in the UI, we have created
 
 === Selecting a facet
 
-To make faceting fully functional, the user needs to be able to select one or several facets. Let's add the ability do pass the selected facets to our REST endpoint and act upon them.
+To make faceting fully functional, the user needs to be able to select one or several facets. Let's add the ability do pass the selected facets to our REST endpoint and act upon it.
 
 
 [source, java]
@@ -1299,7 +1283,7 @@ To make faceting fully functional, the user needs to be able to select one or se
     ...
 ----
 
-We are done on the backend side. Let's look at `SearchService` in its entirety and move to the UI side.
+We are done on the backend side. Let's look at `SearchService` in its entirety as it is the core of our search engine.
 
 
 [source, java]
@@ -1436,12 +1420,16 @@ public class SearchService {
 }
 ----
 
+We are now ready to expose facets in the UI.
+
 === Exposing faceting to the UI
 
 Integrating faceting and the UI is two-fold:
 
 * display the facets on the query result screen
 * re-execute the query if the user has select one or more facets and offer some bookmarkable URL for queries with facet selection
+
+The optionally selected `category` and `price` facet are stored in the model and influence both the REST endpoint URL and the bookmarkable application URL (e.g. `#search/anywhere/morisson/category/all/minprice/1`.
 
 [source,javascript]
 .src/main/webapp/resources/js/app/models/results.js
@@ -1498,16 +1486,12 @@ Integrating faceting and the UI is two-fold:
         ...
 ----
 
-The optionally selected `category` and `price` facet are stored in the model and influence both the REST endpoint URL and the bookmarkable application URL (e.g. `#search/anywhere/morisson/category/all/minprice/1`.
-
 The view needs to react to clicks on the faceting links and properly update the model before navigating to the appropriate URL
 
 [source, javascript]
 .src/main/webapp/resources/js/app/views/results.js
 ----
     ...
-
-    var ResultsView  = Backbone.View.extend({
 
         events:{
             "click .faceting": "enableFaceting"
@@ -1603,7 +1587,6 @@ Let's finally add the necessary routes corresponding to the facet filtering and 
 ----
     ...
 
-    var Router = Backbone.Router.extend({
         routes:{
             ...,
             "search/anywhere/:query":"results",
