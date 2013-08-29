@@ -4,8 +4,6 @@ import java.io.Serializable;
 
 import javax.persistence.Embeddable;
 
-import org.jboss.errai.common.client.api.annotations.Portable;
-
 /**
  * <p>
  * A reusable representation of an address.
@@ -21,7 +19,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  */
 @SuppressWarnings("serial")
 @Embeddable
-@Portable
 public class Address implements Serializable {
 
     /* Declaration of fields */

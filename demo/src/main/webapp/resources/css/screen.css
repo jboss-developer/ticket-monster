@@ -408,6 +408,7 @@ footer a {
     margin-top: 10px;
     margin-right: 5px;
     margin-left: 5px;
+    padding: 10px;
     background-color: #ffffff;
     -webkit-border-radius: 8px;
     -moz-border-radius: 8px;
@@ -428,6 +429,8 @@ footer a {
 .performance-status {
      margin-top: 5px;
      margin-right: 5px;
+     padding: 10px;
+     clear: both;
 }
 
 .performance-status td {

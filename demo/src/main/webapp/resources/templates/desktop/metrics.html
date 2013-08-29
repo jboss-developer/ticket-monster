@@ -1,0 +1,21 @@
+<div class="span7">
+  <h3 class="page-header light-font special-title">Booking status</h3>
+  <div id="status-content">
+      <%
+      _.each(collection.models, function (show) {
+      %>
+      <div class="show-status">
+        <div class="show-status-header"><%=show.get('event')%> @ <%=show.get('venue')%></div>
+        <%_.each(show.get('performances'), function (performance) {%>
+        <div class="performance-status">
+          <div class="pull-left"><%=new Date(performance.date).toLocaleString()%></div>
+          <div class="pull-left performance-status-progress progress progress-success">
+            <div style="width: <%=(performance.occupiedCount)/(show.get('capacity'))*100%>%;" class="bar"></div>
+          </div>
+          <div><%=performance.occupiedCount%> of <%=show.get('capacity')%> tickets booked</div>
+        </div>
+        <% }); %>
+      </div>
+      <% }); %>
+  </div>
+</div>

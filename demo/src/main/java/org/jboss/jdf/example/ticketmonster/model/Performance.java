@@ -16,7 +16,6 @@ import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
  * <p>
@@ -40,7 +39,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "date", "show_id" }))
 // TODO Document use of @JsonIgnoreProperties
 @JsonIgnoreProperties("show")
-@Portable
 public class Performance implements Serializable {
 
     /* Declaration of fields */

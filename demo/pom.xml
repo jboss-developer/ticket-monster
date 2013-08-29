@@ -63,13 +63,6 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss.bom</groupId>
-                <artifactId>jboss-javaee-6.0-with-errai</artifactId>
-                <version>${jboss.bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.bom</groupId>
                 <artifactId>jboss-javaee-6.0-with-infinispan</artifactId>
                 <version>${jboss.bom.version}</version>
                 <type>pom</type>
@@ -167,86 +160,6 @@
         </dependency>
 
 
-        <!-- The next set of dependencies are for Errai, which we use for 
-            the TicketMonster booking monitor -->
-        <dependency>
-            <groupId>org.jboss.errai</groupId>
-            <artifactId>errai-bus</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.inject</groupId>
-                    <artifactId>javax.inject</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>jsr250-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.errai</groupId>
-            <artifactId>errai-ioc</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.inject</groupId>
-                    <artifactId>javax.inject</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>jsr250-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.errai</groupId>
-            <artifactId>errai-tools</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mvel</groupId>
-            <artifactId>mvel2</artifactId>
-        </dependency>
-
-        <!-- CDI/ Errai Integration Modules -->
-        <dependency>
-            <groupId>org.jboss.errai</groupId>
-            <artifactId>errai-cdi-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.errai</groupId>
-            <artifactId>errai-javax-enterprise</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.errai</groupId>
-            <artifactId>errai-weld-integration</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>
-                        org.jboss.weld.servlet
-                    </groupId>
-                    <artifactId>weld-servlet-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.jboss.errai</groupId>
-                    <artifactId>errai-cdi-jetty</artifactId>
-                </exclusion>               
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-dev</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- This is the dependency for Infinispan, which we use for carts and
              seat reservation
         -->
@@ -326,10 +239,7 @@
                     <artifactId>maven-war-plugin</artifactId>
                     <version>2.1.1</version>
                     <configuration>
-                        <!-- We must exclude GWT client local classes from the
-                   deployment, or classpath scanners such as Hibernate and Weld get confused
-                   when the webapp is bootstrapping. -->
-                        <packagingExcludes>**/javax/**/*.*,**/client/local/**/*.class</packagingExcludes>
+                    	<failOnMissingWebXml>false</failOnMissingWebXml>
                         <archive>
                             <manifestEntries>
                                 <Dependencies>org.jboss.as.naming,org.jboss.as.server,org.jboss.msc</Dependencies>
@@ -346,84 +256,8 @@
                     <version>7.3.Final</version>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>2.4.1</version>
-                    <configuration>
-                        <filesets>
-                            <fileset>
-                                <directory>.errai</directory>
-                                <includes>
-                                    <include>**</include>
-                                </includes>
-                            </fileset>
-                        </filesets>
-                    </configuration>
-                </plugin>
-                <!-- m2e (Maven integration for Eclipse) requires the following
-                    configuration -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.codehaus.mojo</groupId>
-                                        <artifactId>gwt-maven-plugin</artifactId>
-                                        <versionRange>[2.3.0,)</versionRange>
-                                        <goals>
-                                            <goal>resources</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <execute/>
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
-        <plugins>
-            <!-- GWT plugin to compile client-side java code to javascript
-            and to run GWT development mode -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.4.0</version>
-                <configuration>
-                    <inplace>true</inplace>
-                    <logLevel>INFO</logLevel>
-                    <extraJvmArgs>-Xmx512m</extraJvmArgs>
-                    <draftCompile>true</draftCompile>
-                    <!-- Configure GWT's development mode (formerly known
-                    as hosted mode) to not start the default server (embedded jetty), but to
-                    download the HTML host page from the configured runTarget. -->
-                    <noServer>true</noServer>
-                    <runTarget>http://localhost:8080/ticket-monster/booking-monitor.html</runTarget>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>resources</goal>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>gwt-clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 
     <profiles>

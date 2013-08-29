@@ -20,7 +20,6 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
  * <p>
@@ -36,7 +35,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  */
 @SuppressWarnings("serial")
 @Entity
-@Portable
 public class Booking implements Serializable {
 
     /* Declaration of fields */

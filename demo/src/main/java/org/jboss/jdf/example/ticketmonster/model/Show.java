@@ -18,8 +18,6 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
-import org.jboss.errai.common.client.api.annotations.Portable;
-
 /**
  * <p>
  * A show is an instance of an event taking place at a particular venue. A show can have multiple performances.
@@ -44,7 +42,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
 @SuppressWarnings("serial")
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = { "event_id", "venue_id" }))
-@Portable
 public class Show implements Serializable {
 
     /* Declaration of fields */

@@ -12,8 +12,6 @@ import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import org.jboss.errai.common.client.api.annotations.Portable;
-
 /**
  * <p>
  * Represents an event, which may have multiple performances with different dates and venues.
@@ -35,7 +33,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  */
 @SuppressWarnings("serial")
 @Entity
-@Portable
 public class Event implements Serializable {
 
     /* Declaration of fields */

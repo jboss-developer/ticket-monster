@@ -46,7 +46,7 @@ public class Resources {
        if (openshiftDataDir != null) {
            return openshiftDataDir;
        } else {
-           return "";
+           return ".";
        }
    }
    

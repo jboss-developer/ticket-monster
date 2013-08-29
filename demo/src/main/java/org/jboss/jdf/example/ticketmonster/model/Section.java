@@ -14,7 +14,6 @@ import javax.validation.constraints.NotNull;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
  * <p>
@@ -40,7 +39,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  * We indicate that some properties of the class shouldn't be marshalled in JSON format
  */
 @JsonIgnoreProperties({ "venue", "sectionRows" })
-@Portable
 public class Section implements Serializable {
 
     /* Declaration of fields */

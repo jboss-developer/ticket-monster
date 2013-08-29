@@ -62,10 +62,10 @@ public class Bot {
     }
     
     public void stop(Timer timer) {
-        String startMessage = new StringBuilder("==========================\n")
+        String stopMessage = new StringBuilder("==========================\n")
                 .append("Bot stopped at ").append(new Date().toString()).append("\n")
                 .toString();
-        event.fire(startMessage);
+        event.fire(stopMessage);
         timer.cancel();
     }
     
@@ -112,7 +112,7 @@ public class Bot {
                     .append("~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         }
         else {
-                message.append("FAILED:\n")
+            message.append("FAILED:\n")
                         .append(((Map<String, Object>) response.getEntity()).get("errors"))
                         .append("~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         }

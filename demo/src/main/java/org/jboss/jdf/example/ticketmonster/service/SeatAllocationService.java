@@ -1,5 +1,6 @@
 package org.jboss.jdf.example.ticketmonster.service;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import org.jboss.jdf.example.ticketmonster.model.Seat;
 import org.jboss.jdf.example.ticketmonster.model.SeatAllocationException;
 import org.jboss.jdf.example.ticketmonster.model.Section;
 import org.jboss.jdf.example.ticketmonster.model.SectionAllocation;
+import org.jboss.jdf.example.ticketmonster.util.DataDir;
 
 /**
  *
@@ -37,12 +39,12 @@ public class SeatAllocationService {
      * @param manager
      */
     @Inject
-    public SeatAllocationService(EmbeddedCacheManager manager) {
+    public SeatAllocationService(EmbeddedCacheManager manager, @DataDir String dataDir) {
         Configuration allocation = new ConfigurationBuilder()
                 .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
                 .transactionManagerLookup(new JBossTransactionManagerLookup())
                 .lockingMode(LockingMode.PESSIMISTIC)
-                .loaders().addFileCacheStore().purgeOnStartup(true)
+                .loaders().addFileCacheStore().location(dataDir + File.separator + "TicketMonster-CacheStore").purgeOnStartup(true)
                 .build();
         manager.defineConfiguration(ALLOCATIONS, allocation);
         this.cache = manager.getCache(ALLOCATIONS);

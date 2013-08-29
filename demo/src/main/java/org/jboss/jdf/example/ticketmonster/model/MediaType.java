@@ -1,6 +1,5 @@
 package org.jboss.jdf.example.ticketmonster.model;
 
-import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
  * <p>
@@ -22,7 +21,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  * @author Pete Muir
  * 
  */
-@Portable
 public enum MediaType {
 
     /**

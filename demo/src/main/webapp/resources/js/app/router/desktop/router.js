@@ -20,6 +20,7 @@ define("router", [
     'app/views/desktop/event-detail',
     'app/views/desktop/venue-detail',
     'app/views/desktop/booking-detail',
+    'app/views/desktop/monitor',
     'text!../templates/desktop/main.html'
 ],function ($,
             _,
@@ -39,6 +40,7 @@ define("router", [
             EventDetailView,
             VenueDetailView,
             BookingDetailView,
+            MonitorView,
             MainTemplate) {
 
     $(document).ready(new function() {
@@ -67,6 +69,7 @@ define("router", [
             "book/:showId/:performanceId":"bookTickets",
             "bookings":"listBookings",
             "bookings/:id":"bookingDetail",
+            "monitor":"displayMonitor",
             "ignore":"ignore",
             "*actions":"defaultHandler"
         },
@@ -123,6 +126,10 @@ define("router", [
                 }
             );
 
+        },
+        displayMonitor:function() {
+            var monitorView = new MonitorView({el:$("#content")});
+            utilities.viewManager.showView(monitorView);
         },
         eventDetail:function (id) {
             var model = new Event({id:id});

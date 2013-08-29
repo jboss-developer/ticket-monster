@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -17,7 +16,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import org.hibernate.validator.constraints.NotEmpty;
-import org.jboss.errai.common.client.api.annotations.Portable;
 
 /**
  * <p>
@@ -33,7 +31,6 @@ import org.jboss.errai.common.client.api.annotations.Portable;
  */
 @SuppressWarnings("serial")
 @Entity
-@Portable
 public class Venue implements Serializable {
 
     /* Declaration of fields */
