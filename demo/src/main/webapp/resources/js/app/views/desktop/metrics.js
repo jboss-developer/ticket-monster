@@ -10,7 +10,7 @@ define([
     metricsTemplate) {
 
     var MetricsView = Backbone.View.extend({
-        intervalDuration : 1000,
+        intervalDuration : 3000,
         initialize : function() {
             _.bind(this.render, this);
             _.bind(this.liveUpdate, this);

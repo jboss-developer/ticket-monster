@@ -7,5 +7,5 @@ package org.jboss.jdf.example.ticketmonster.rest;
  * 
  */
 public enum BotState {
-	RUNNING, NOT_RUNNING, RESET
+    RUNNING, NOT_RUNNING, RESET
 }

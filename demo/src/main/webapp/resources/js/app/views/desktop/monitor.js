@@ -23,7 +23,7 @@ define([
             var metrics = new Metrics();
             this.metricsView = new MetricsView({collection:metrics, el:$("#metrics-view")});
             var bot = new Bot();
-            this.botView = new BotView({model:bot, el:$("#bot-view")});
+            this.botView = new BotView({model:bot,el:$("#bot-view")});
             return this;
         },
         onClose : function() {

@@ -4,7 +4,6 @@ define([
     'backbone',
 	'configuration',
     'utilities',
-    'app/models/bot',
     'text!../../../../templates/desktop/bot.html'
 ], function (
     $,
@@ -12,24 +11,17 @@ define([
     Backbone,
 	config,
     utilities,
-    Bot,
     botTemplate) {
 
     var BotView = Backbone.View.extend({
-        intervalDuration : 1000,
+        intervalDuration : 3000,
         initialize : function() {
-            _.bind(this.render, this);
             _.bind(this.liveUpdate, this);
             _.bind(this.startBot, this);
             _.bind(this.stopBot, this);
             _.bind(this.resetBot, this);
-            this.model.on("change", this.render, this);
-            utilities.applyTemplate($(this.el), botTemplate, {model:this.model});
-            var self = this;
-            $.when(this.model.fetch())
-                .done(function(){
-                    self.liveUpdate();
-                });
+            utilities.applyTemplate($(this.el), botTemplate, {});
+            this.liveUpdate();
         },
         events: {
             "click #start-bot" : "startBot",
@@ -37,16 +29,19 @@ define([
             "click #reset" : "resetBot"
         },
         liveUpdate : function() {
-            this.model.fetch();
+            this.model.fetchMessages(this.renderMessages);
             var self = this;
-            this.timerObject = setTimeout(function(){
+            this.timerObject = setTimeout(function() {
                 self.liveUpdate();
             }, this.intervalDuration);
         },
-        render : function () {
-            var displayMessages = this.model.get("messages").reverse();
-            $("textarea").get(0).value = displayMessages.join("");
-            return this;
+        renderMessages : function(data) {
+            var displayMessages = data.reverse();
+            var botLog = $("textarea").get(0);
+            // The botLog textarea element may have been removed if the user navigated to a different view
+            if(botLog) {
+                botLog.value = displayMessages.join("");
+            }
         },
         onClose : function() {
             if(this.timerObject) {
@@ -55,16 +50,19 @@ define([
             }
         },
         startBot : function() {
-            var updatedBot = new Bot();
-            updatedBot.save({botState:"RUNNING"});
+            this.model.start();
+            // Refresh the log immediately without waiting for the live update to trigger.
+            this.model.fetchMessages(this.renderMessages);
         },
         stopBot : function() {
-            var updatedBot = new Bot();
-            updatedBot.save({botState:"NOT_RUNNING"});
+            this.model.stop();
+            // Refresh the log immediately without waiting for the live update to trigger.
+            this.model.fetchMessages(this.renderMessages);
         },
         resetBot : function() {
-            var updatedBot = new Bot();
-            updatedBot.save({botState:"RESET"});
+            this.model.reset();
+            // Refresh the log immediately without waiting for the live update to trigger.
+            this.model.fetchMessages(this.renderMessages);
         }
     });
 

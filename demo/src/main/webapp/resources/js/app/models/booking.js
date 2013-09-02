@@ -5,7 +5,7 @@ define([
     // Configuration is a dependency
     'configuration',
     'backbone'
-], function (config) {
+], function (config, Backbone) {
 
     /**
      * The Booking model class definition
