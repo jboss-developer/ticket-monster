@@ -1,0 +1,22 @@
+<header ng-switch on="$location.path().indexOf('/EventCategorys/new') > -1">
+    <h3 ng-switch-when="true">Create EventCategory</h3>
+    <h3 ng-switch-when="false">View or edit EventCategory</h3>
+</header>
+<form id="EventCategoryForm" name="EventCategoryForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: EventCategoryForm.description.$invalid}">
+        <label for="description" class="control-label">Description</label>
+        <div id="descriptionControls" class="controls">
+            <input id="description" name="description" type="text" ng-model="eventCategory.description" placeholder="Enter the EventCategory Description"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveEventCategory" name="saveEventCategory" class="btn btn-primary" ng-disabled="isClean() || EventCategoryForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteEventCategory" name="deleteEventCategory" class="btn btn-danger" ng-show="eventCategory.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

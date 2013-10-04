@@ -1,0 +1,58 @@
+<header ng-switch on="$location.path().indexOf('/Sections/new') > -1">
+    <h3 ng-switch-when="true">Create Section</h3>
+    <h3 ng-switch-when="false">View or edit Section</h3>
+</header>
+<form id="SectionForm" name="SectionForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: SectionForm.name.$invalid}">
+        <label for="name" class="control-label">Name</label>
+        <div id="nameControls" class="controls">
+            <input id="name" name="name" type="text" ng-model="section.name" placeholder="Enter the Section Name"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: SectionForm.description.$invalid}">
+        <label for="description" class="control-label">Description</label>
+        <div id="descriptionControls" class="controls">
+            <input id="description" name="description" type="text" ng-model="section.description" placeholder="Enter the Section Description"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: SectionForm.numberOfRows.$invalid}">
+        <label for="numberOfRows" class="control-label">Number Of Rows</label>
+        <div id="numberOfRowsControls" class="controls">
+            <input id="numberOfRows" name="numberOfRows" type="number" ng-model="section.numberOfRows" placeholder="Enter the Section Number Of Rows"></input>
+            <span class="help-inline" ng-show="SectionForm.numberOfRows.$error.number">not a number</span>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: SectionForm.rowCapacity.$invalid}">
+        <label for="rowCapacity" class="control-label">Row Capacity</label>
+        <div id="rowCapacityControls" class="controls">
+            <input id="rowCapacity" name="rowCapacity" type="number" ng-model="section.rowCapacity" placeholder="Enter the Section Row Capacity"></input>
+            <span class="help-inline" ng-show="SectionForm.rowCapacity.$error.number">not a number</span>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: SectionForm.capacity.$invalid}">
+        <label for="capacity" class="control-label">Capacity</label>
+        <div id="capacityControls" class="controls">
+            <input id="capacity" name="capacity" type="number" ng-model="section.capacity" placeholder="Enter the Section Capacity"></input>
+            <span class="help-inline" ng-show="SectionForm.capacity.$error.number">not a number</span>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: SectionForm.venue.$invalid}">
+        <label for="venue" class="control-label">Venue</label>
+        <div id="venueControls" class="controls">
+        <select id="venue" name="venue" ng-model="venueSelection" ng-options="v.text for v in venueSelectionList" required >
+            <option value="">Choose a Venue</option>
+        </select>
+        <span class="help-inline" ng-show="SectionForm.venue.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveSection" name="saveSection" class="btn btn-primary" ng-disabled="isClean() || SectionForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteSection" name="deleteSection" class="btn btn-danger" ng-show="section.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

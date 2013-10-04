@@ -1,0 +1,71 @@
+<header ng-switch on="$location.path().indexOf('/Venues/new') > -1">
+    <h3 ng-switch-when="true">Create Venue</h3>
+    <h3 ng-switch-when="false">View or edit Venue</h3>
+</header>
+<form id="VenueForm" name="VenueForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.name.$invalid}">
+        <label for="name" class="control-label">Name</label>
+        <div id="nameControls" class="controls">
+            <input id="name" name="name" type="text" ng-model="venue.name" placeholder="Enter the Venue Name"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.mediaItem.$invalid}">
+        <label for="mediaItem" class="control-label">Media Item</label>
+        <div id="mediaItemControls" class="controls">
+        <select id="mediaItem" name="mediaItem" ng-model="mediaItemSelection" ng-options="m.text for m in mediaItemSelectionList"  >
+            <option value="">Choose a Media Item</option>
+        </select>
+        <br/>
+        <img class="img-polaroid span4" ng-hide="!mediaItemSelection.text" ng-src="{{mediaItemSelection.text}}" />
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.description.$invalid}">
+        <label for="description" class="control-label">Description</label>
+        <div id="descriptionControls" class="controls">
+            <input id="description" name="description" type="text" ng-model="venue.description" placeholder="Enter the Venue Description"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.sections.$invalid}">
+        <label for="sections" class="control-label">Sections</label>
+        <div id="sectionsControls" class="controls">
+            <select id="sections" name="sections" multiple ng-model="sectionsSelection" ng-options="s.text for s in sectionsSelectionList">
+                <option value="">Choose a Sections</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.capacity.$invalid}">
+        <label for="capacity" class="control-label">Capacity</label>
+        <div id="capacityControls" class="controls">
+            <input id="capacity" name="capacity" type="number" ng-model="venue.capacity" placeholder="Enter the Venue Capacity"></input>
+            <span class="help-inline" ng-show="VenueForm.capacity.$error.number">not a number</span>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.address.street.$invalid}">
+        <label for="address.street" class="control-label">Street</label>
+        <div id="address.streetControls" class="controls">
+            <input id="address.street" name="address.street" type="text" ng-model="venue.address.street" placeholder="Enter the Venue Street"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.address.city.$invalid}">
+        <label for="address.city" class="control-label">City</label>
+        <div id="address.cityControls" class="controls">
+            <input id="address.city" name="address.city" type="text" ng-model="venue.address.city" placeholder="Enter the Venue City"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: VenueForm.address.country.$invalid}">
+        <label for="address.country" class="control-label">Country</label>
+        <div id="address.countryControls" class="controls">
+            <input id="address.country" name="address.country" type="text" ng-model="venue.address.country" placeholder="Enter the Venue Country"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveVenue" name="saveVenue" class="btn btn-primary" ng-disabled="isClean() || VenueForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteVenue" name="deleteVenue" class="btn btn-danger" ng-show="venue.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

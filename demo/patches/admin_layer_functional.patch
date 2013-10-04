@@ -1,125 +1,546 @@
-diff --git ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java
-index 689cc8c..f9aa6c1 100644
---- ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java
-+++ ../demo/src/main/java/org/jboss/jdf/examples/view/PerformanceBean.java
-@@ -25,6 +25,8 @@ import javax.persistence.criteria.Predicate;
- import javax.persistence.criteria.Root;
-
+diff --git ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/PerformanceEndpoint.java ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/PerformanceEndpoint.java
+index 6be5911..c13535d 100644
+--- ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/PerformanceEndpoint.java
++++ ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/PerformanceEndpoint.java
+@@ -7,11 +7,19 @@ import javax.ejb.Stateless;
+ import javax.persistence.EntityManager;
+ import javax.persistence.PersistenceContext;
+ import javax.persistence.TypedQuery;
++import javax.persistence.criteria.CriteriaBuilder;
++import javax.persistence.criteria.CriteriaQuery;
++import javax.persistence.criteria.Predicate;
++import javax.persistence.criteria.Root;
+ import javax.ws.rs.*;
+ import javax.ws.rs.core.Response;
+ import javax.ws.rs.core.Response.Status;
+ import javax.ws.rs.core.UriBuilder;
++import org.jboss.jdf.example.ticketmonster.model.Booking;
  import org.jboss.jdf.example.ticketmonster.model.Performance;
 +import org.jboss.jdf.example.ticketmonster.model.Section;
 +import org.jboss.jdf.example.ticketmonster.model.SectionAllocation;
- import org.jboss.jdf.example.ticketmonster.model.Show;
-
++import org.jboss.jdf.example.ticketmonster.model.Show;
+ import org.jboss.jdf.example.ticketmonster.rest.dto.PerformanceDTO;
+ 
  /**
-@@ -122,8 +124,13 @@ public class PerformanceBean implements Serializable
+@@ -42,6 +50,20 @@ public class PerformanceEndpoint
        {
-          if (this.id == null)
-          {
--            this.entityManager.persist(this.performance);
--            return "search?faces-redirect=true";
-+				this.entityManager.persist(this.performance);
-+				for (Section s : this.performance.getShow().getVenue()
-+						.getSections()) {
-+					this.entityManager.persist(new SectionAllocation(
-+							this.performance, s));
-+				}
-+				return "search?faces-redirect=true";
+          return Response.status(Status.NOT_FOUND).build();
+       }
++      Show show = entity.getShow();
++      show.getPerformances().remove(entity);
++      entity.setShow(null);
++      this.em.merge(show);
++      List<SectionAllocation> sectionAllocations = findSectionAllocationsByPerformance(entity);
++      for(SectionAllocation sectionAllocation: sectionAllocations)
++      {
++         this.em.remove(sectionAllocation);
++      }
++      List<Booking> bookings = findBookingsByPerformance(entity);
++      for(Booking booking: bookings)
++      {
++         this.em.remove(booking);
++      }
+       em.remove(entity);
+       return Response.noContent().build();
+    }
+@@ -88,4 +110,27 @@ public class PerformanceEndpoint
+       entity = em.merge(entity);
+       return Response.noContent().build();
+    }
++
++   public List<SectionAllocation> findSectionAllocationsByPerformance(Performance performance)
++   {
++      CriteriaQuery<SectionAllocation> criteria = this.em
++            .getCriteriaBuilder().createQuery(SectionAllocation.class);
++      Root<SectionAllocation> from = criteria.from(SectionAllocation.class);
++      CriteriaBuilder builder = this.em.getCriteriaBuilder();
++      Predicate performanceIsSame = builder.equal(from.get("performance"), performance);
++      return this.em.createQuery(
++            criteria.select(from).where(performanceIsSame)).getResultList();
++   }
++
++   public List<Booking> findBookingsByPerformance(Performance performance)
++   {
++      CriteriaQuery<Booking> criteria = this.em
++            .getCriteriaBuilder().createQuery(Booking.class);
++      Root<Booking> from = criteria.from(Booking.class);
++      CriteriaBuilder builder = this.em.getCriteriaBuilder();
++      Predicate performanceIsSame = builder.equal(from.get("performance"), performance);
++      return this.em.createQuery(
++            criteria.select(from).where(performanceIsSame)).getResultList();
++   }
++
+ }
+\ No newline at end of file
+diff --git ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedPerformanceDTO.java ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedPerformanceDTO.java
+index 6282eb2..af8ab5b 100644
+--- ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedPerformanceDTO.java
++++ ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedPerformanceDTO.java
+@@ -11,6 +11,7 @@ public class NestedPerformanceDTO implements Serializable
+ 
+    private Long id;
+    private Date date;
++   private String displayTitle;
+ 
+    public NestedPerformanceDTO()
+    {
+@@ -22,6 +23,7 @@ public class NestedPerformanceDTO implements Serializable
+       {
+          this.id = entity.getId();
+          this.date = entity.getDate();
++         this.displayTitle = entity.toString();
+       }
+    }
+ 
+@@ -65,4 +67,9 @@ public class NestedPerformanceDTO implements Serializable
+    {
+       this.date = date;
+    }
++
++   public String getDisplayTitle()
++   {
++      return this.displayTitle;
++   }
+ }
+\ No newline at end of file
+diff --git ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedShowDTO.java ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedShowDTO.java
+index 9af4d19..3c52c52 100644
+--- ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedShowDTO.java
++++ ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedShowDTO.java
+@@ -9,6 +9,7 @@ public class NestedShowDTO implements Serializable
+ {
+ 
+    private Long id;
++   private String displayTitle;
+ 
+    public NestedShowDTO()
+    {
+@@ -19,6 +20,7 @@ public class NestedShowDTO implements Serializable
+       if (entity != null)
+       {
+          this.id = entity.getId();
++         this.displayTitle = entity.toString();
+       }
+    }
+ 
+@@ -50,4 +52,9 @@ public class NestedShowDTO implements Serializable
+    {
+       this.id = id;
+    }
++
++   public String getDisplayTitle()
++   {
++      return this.displayTitle;
++   }
+ }
+\ No newline at end of file
+diff --git ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/PerformanceDTO.java ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/PerformanceDTO.java
+index 259f9ca..37d54f0 100644
+--- ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/PerformanceDTO.java
++++ ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/PerformanceDTO.java
+@@ -14,6 +14,7 @@ public class PerformanceDTO implements Serializable
+    private Long id;
+    private NestedShowDTO show;
+    private Date date;
++   private String displayTitle;
+ 
+    public PerformanceDTO()
+    {
+@@ -26,6 +27,7 @@ public class PerformanceDTO implements Serializable
+          this.id = entity.getId();
+          this.show = new NestedShowDTO(entity.getShow());
+          this.date = entity.getDate();
++         this.displayTitle = entity.toString();
+       }
+    }
+ 
+@@ -73,4 +75,9 @@ public class PerformanceDTO implements Serializable
+    {
+       this.date = date;
+    }
++
++   public String getDisplayTitle()
++   {
++      return this.displayTitle;
++   }
+ }
+\ No newline at end of file
+diff --git ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/ShowDTO.java ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/ShowDTO.java
+index f786568..26818f8 100644
+--- ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/ShowDTO.java
++++ ../demo/src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/ShowDTO.java
+@@ -23,6 +23,7 @@ public class ShowDTO implements Serializable
+    private NestedEventDTO event;
+    private Set<NestedPerformanceDTO> performances = new HashSet<NestedPerformanceDTO>();
+    private NestedVenueDTO venue;
++   private String displayTitle;
+ 
+    public ShowDTO()
+    {
+@@ -49,6 +50,7 @@ public class ShowDTO implements Serializable
+             this.performances.add(new NestedPerformanceDTO(element));
           }
-          else
-          {
-diff --git ../demo/src/main/webapp/admin/index.html ../demo/src/main/webapp/admin/index.html
-index 902113f..4036f32 100644
---- ../demo/src/main/webapp/admin/index.html
-+++ ../demo/src/main/webapp/admin/index.html
-@@ -1,1 +1 @@
--<meta http-equiv="refresh" content="0;url=./faces/admin/index.xhtml" /> 
-\ No newline at end of file
-+<meta http-equiv="refresh" content="0;url=../faces/admin/index.xhtml" />
-\ No newline at end of file
-diff --git ../demo/src/main/webapp/admin/event/view.xhtml ../demo/src/main/webapp/admin/event/view.xhtml
-index 451479f..b952db0 100644
---- ../demo/src/main/webapp/admin/event/view.xhtml
-+++ ../demo/src/main/webapp/admin/event/view.xhtml
-@@ -4,6 +4,7 @@
- 	xmlns:h="http://java.sun.com/jsf/html"
- 	xmlns:f="http://java.sun.com/jsf/core"
- 	xmlns:ui="http://java.sun.com/jsf/facelets"
-+    xmlns:tm="http://java.sun.com/jsf/composite/tm"
- 	template="/resources/scaffold/pageTemplate.xhtml">
-
- 	<f:metadata>
-@@ -31,6 +32,7 @@
- 			<h:outputLabel for="eventBeanEventMediaItem" value="Media Item:"/>
- 			<h:link id="eventBeanEventMediaItem" outcome="/admin/mediaItem/view" value="#{eventBean.event.mediaItem}">
- 				<f:param name="id" value="#{eventBean.event.mediaItem.id}"/>
-+                <tm:image media="#{mediaManager.getPath(eventBean.event.mediaItem)}" />
- 			</h:link>
- 			<h:outputText/>
- 			<h:outputLabel for="eventBeanEventCategory" value="Category:"/>
-diff --git ../demo/src/main/webapp/admin/venue/view.xhtml ../demo/src/main/webapp/admin/venue/view.xhtml
-index 06edc33..6676fbf 100644
---- ../demo/src/main/webapp/admin/venue/view.xhtml
-+++ ../demo/src/main/webapp/admin/venue/view.xhtml
-@@ -4,6 +4,7 @@
- 	xmlns:h="http://java.sun.com/jsf/html"
- 	xmlns:f="http://java.sun.com/jsf/core"
- 	xmlns:ui="http://java.sun.com/jsf/facelets"
-+    xmlns:tm="http://java.sun.com/jsf/composite/tm"
- 	xmlns:forgeview="http://jboss.org/forge/view"
- 	template="/resources/scaffold/pageTemplate.xhtml">
-
-@@ -44,7 +45,8 @@
- 			<h:outputText/>
- 			<h:outputLabel for="venueBeanVenueMediaItem" value="Media Item:"/>
- 			<h:link id="venueBeanVenueMediaItem" outcome="/admin/mediaItem/view" value="#{venueBean.venue.mediaItem}">
--				<f:param name="id" value="#{venueBean.venue.mediaItem.id}"/>
-+                <tm:image media="#{mediaManager.getPath(venueBean.venue.mediaItem)}" />
-+                <f:param name="id" value="#{venueBean.venue.mediaItem.id}"/>
- 			</h:link>
- 			<h:outputText/>
- 			<h:outputLabel for="venueBeanVenueDescription" value="Description:"/>
-diff --git ../demo/src/main/webapp/resources/tm/image.xhtml ../demo/src/main/webapp/resources/tm/image.xhtml
-new file mode 100644
-index 0000000..ceafffb
---- /dev/null
-+++ ../demo/src/main/webapp/resources/tm/image.xhtml
-@@ -0,0 +1,25 @@
-+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-+<html xmlns="http://www.w3.org/1999/xhtml"
-+      xmlns:h="http://java.sun.com/jsf/html"
-+      xmlns:composite="http://java.sun.com/jsf/composite">
-+<head>
-+    <title>Cached Image</title>
-+</head>
-+<body>
+          this.venue = new NestedVenueDTO(entity.getVenue());
++         this.displayTitle = entity.toString();
+       }
+    }
+ 
+@@ -229,4 +231,9 @@ public class ShowDTO implements Serializable
+    {
+       this.venue = venue;
+    }
 +
-+<composite:interface>
-+    <composite:attribute name="media"
-+                         type="org.jboss.jdf.example.ticketmonster.service.MediaPath" />
-+    <composite:attribute name="id" type="java.lang.String" />
-+</composite:interface>
-+
-+<composite:implementation>
-+    <h:graphicImage value="#{cc.attrs.media.url}"
-+                    rendered="#{!cc.attrs.media.cached}" />
-+    <h:graphicImage value="/rest/media/cache/#{cc.attrs.media.url}"
-+                    rendered="#{cc.attrs.media.cached}" />
-+</composite:implementation>
-+
-+</body>
-+</html>
++   public String getDisplayTitle()
++   {
++      return this.displayTitle;
++   }
+ }
 \ No newline at end of file
-diff --git ../demo/src/main/webapp/WEB-INF/web.xml ../demo/src/main/webapp/WEB-INF/web.xml
-index 06edc33..6676fbf 100644
---- ../demo/src/main/webapp/WEB-INF/web.xml
-+++ ../demo/src/main/webapp/WEB-INF/web.xml
-@@ -32,7 +32,4 @@
-   <session-config>
-     <session-timeout>30</session-timeout>
-   </session-config>
--  <welcome-file-list>
--    <welcome-file>faces/index.xhtml</welcome-file>
--  </welcome-file-list>
- </web-app>
-\ No newline at end of file
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/editEventController.js ../demo/src/main/webapp/admin/scripts/controllers/editEventController.js
+index 8bb871b..8fecbce 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/editEventController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/editEventController.js
+@@ -16,7 +16,7 @@ angular.module('ticketmonster').controller('EditEventController', function($scop
+                     };
+                     var labelObject = {
+                         value : item.id,
+-                        text : item.mediaType
++                        text : item.url
+                     };
+                     if($scope.event.mediaItem && item.id == $scope.event.mediaItem.id) {
+                         $scope.mediaItemSelection = labelObject;
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/editPerformanceController.js ../demo/src/main/webapp/admin/scripts/controllers/editPerformanceController.js
+index fc93d6a..98e21fc 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/editPerformanceController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/editPerformanceController.js
+@@ -16,7 +16,7 @@ angular.module('ticketmonster').controller('EditPerformanceController', function
+                     };
+                     var labelObject = {
+                         value : item.id,
+-                        text : item.id
++                        text : item.displayTitle
+                     };
+                     if($scope.performance.show && item.id == $scope.performance.show.id) {
+                         $scope.showSelection = labelObject;
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/editSectionAllocationController.js ../demo/src/main/webapp/admin/scripts/controllers/editSectionAllocationController.js
+index 763fa18..734baae 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/editSectionAllocationController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/editSectionAllocationController.js
+@@ -16,7 +16,7 @@ angular.module('ticketmonster').controller('EditSectionAllocationController', fu
+                     };
+                     var labelObject = {
+                         value : item.id,
+-                        text : item.date
++                        text : item.displayTitle
+                     };
+                     if($scope.sectionAllocation.performance && item.id == $scope.sectionAllocation.performance.id) {
+                         $scope.performanceSelection = labelObject;
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/editShowController.js ../demo/src/main/webapp/admin/scripts/controllers/editShowController.js
+index 04d537a..7e8ecde 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/editShowController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/editShowController.js
+@@ -33,7 +33,7 @@ angular.module('ticketmonster').controller('EditShowController', function($scope
+                     };
+                     var labelObject = {
+                         value : item.id,
+-                        text : item.date
++                        text : item.displayTitle
+                     };
+                     if($scope.show.performances){
+                         $.each($scope.show.performances, function(idx, element) {
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/editTicketPriceController.js ../demo/src/main/webapp/admin/scripts/controllers/editTicketPriceController.js
+index 532ab5e..0f5446d 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/editTicketPriceController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/editTicketPriceController.js
+@@ -16,7 +16,7 @@ angular.module('ticketmonster').controller('EditTicketPriceController', function
+                     };
+                     var labelObject = {
+                         value : item.id,
+-                        text : item.id
++                        text : item.displayTitle
+                     };
+                     if($scope.ticketPrice.show && item.id == $scope.ticketPrice.show.id) {
+                         $scope.showSelection = labelObject;
+@@ -101,6 +101,27 @@ angular.module('ticketmonster').controller('EditTicketPriceController', function
+         if (typeof selection != 'undefined') {
+             $scope.ticketPrice.show = {};
+             $scope.ticketPrice.show.id = selection.value;
++            if($scope.showList) {
++                var selectedShow = $.map($scope.showList, function(show) {
++                    if(show.id === $scope.ticketPrice.show.id) {
++                        return show;
++                    }
++                });
++                if(selectedShow.length > 0) {
++                    selectedShow = selectedShow[0];
++                }
++            }
++            if($scope.sectionList && selectedShow) {
++                var venueSectionList = $.map($scope.sectionList, function(section) {
++                    if(selectedShow.venue.id === section.venue.id) {
++                        return ( {
++                            value : section.id,
++                            text : section.name
++                        });
++                    }
++                });
++                $scope.sectionSelectionList = venueSectionList;
++            }
+         }
+     });
+     $scope.$watch("sectionSelection", function(selection) {
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/editVenueController.js ../demo/src/main/webapp/admin/scripts/controllers/editVenueController.js
+index bc0cbeb..25d8d57 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/editVenueController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/editVenueController.js
+@@ -16,7 +16,7 @@ angular.module('ticketmonster').controller('EditVenueController', function($scop
+                     };
+                     var labelObject = {
+                         value : item.id,
+-                        text : item.mediaType
++                        text : item.url
+                     };
+                     if($scope.venue.mediaItem && item.id == $scope.venue.mediaItem.id) {
+                         $scope.mediaItemSelection = labelObject;
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/newEventController.js ../demo/src/main/webapp/admin/scripts/controllers/newEventController.js
+index 069b0c3..6a9bc4f 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/newEventController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/newEventController.js
+@@ -8,7 +8,7 @@ angular.module('ticketmonster').controller('NewEventController', function ($scop
+         $scope.mediaItemSelectionList = $.map(items, function(item) {
+             return ( {
+                 value : item.id,
+-                text : item.mediaType
++                text : item.url
+             });
+         });
+     });
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/newPerformanceController.js ../demo/src/main/webapp/admin/scripts/controllers/newPerformanceController.js
+index 9899ee4..8ac2a3b 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/newPerformanceController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/newPerformanceController.js
+@@ -8,7 +8,7 @@ angular.module('ticketmonster').controller('NewPerformanceController', function
+         $scope.showSelectionList = $.map(items, function(item) {
+             return ( {
+                 value : item.id,
+-                text : item.id
++                text : item.displayTitle
+             });
+         });
+     });
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/newSectionAllocationController.js ../demo/src/main/webapp/admin/scripts/controllers/newSectionAllocationController.js
+index 4320cb5..52a8143 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/newSectionAllocationController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/newSectionAllocationController.js
+@@ -8,7 +8,7 @@ angular.module('ticketmonster').controller('NewSectionAllocationController', fun
+         $scope.performanceSelectionList = $.map(items, function(item) {
+             return ( {
+                 value : item.id,
+-                text : item.date
++                text : item.displayTitle
+             });
+         });
+     });
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/newShowController.js ../demo/src/main/webapp/admin/scripts/controllers/newShowController.js
+index 01b4a50..4f48f43 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/newShowController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/newShowController.js
+@@ -23,7 +23,7 @@ angular.module('ticketmonster').controller('NewShowController', function ($scope
+         $scope.performancesSelectionList = $.map(items, function(item) {
+             return ( {
+                 value : item.id,
+-                text : item.date
++                text : item.displayTitle
+             });
+         });
+     });
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/newTicketPriceController.js ../demo/src/main/webapp/admin/scripts/controllers/newTicketPriceController.js
+index daf214f..557e372 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/newTicketPriceController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/newTicketPriceController.js
+@@ -8,7 +8,7 @@ angular.module('ticketmonster').controller('NewTicketPriceController', function
+         $scope.showSelectionList = $.map(items, function(item) {
+             return ( {
+                 value : item.id,
+-                text : item.id
++                text : item.displayTitle
+             });
+         });
+     });
+@@ -16,6 +16,27 @@ angular.module('ticketmonster').controller('NewTicketPriceController', function
+         if ( typeof selection != 'undefined') {
+             $scope.ticketPrice.show = {};
+             $scope.ticketPrice.show.id = selection.value;
++            if($scope.showList) {
++                var selectedShow = $.map($scope.showList, function(show) {
++                    if(show.id === $scope.ticketPrice.show.id) {
++                        return show;
++                    }
++                });
++                if(selectedShow.length > 0) {
++                    selectedShow = selectedShow[0];
++                }
++            }
++            if($scope.sectionList && selectedShow) {
++                var venueSectionList = $.map($scope.sectionList, function(section) {
++                    if(selectedShow.venue.id === section.venue.id) {
++                        return ( {
++                            value : section.id,
++                            text : section.name
++                        });
++                    }
++                });
++                $scope.sectionSelectionList = venueSectionList;
++            }
+         }
+     });
+     
+diff --git ../demo/src/main/webapp/admin/scripts/controllers/newVenueController.js ../demo/src/main/webapp/admin/scripts/controllers/newVenueController.js
+index 1e61887..7cc3c12 100644
+--- ../demo/src/main/webapp/admin/scripts/controllers/newVenueController.js
++++ ../demo/src/main/webapp/admin/scripts/controllers/newVenueController.js
+@@ -8,7 +8,7 @@ angular.module('ticketmonster').controller('NewVenueController', function ($scop
+         $scope.mediaItemSelectionList = $.map(items, function(item) {
+             return ( {
+                 value : item.id,
+-                text : item.mediaType
++                text : item.url
+             });
+         });
+     });
+diff --git ../demo/src/main/webapp/admin/views/Event/detail.html ../demo/src/main/webapp/admin/views/Event/detail.html
+index 9f6de06..eacaa82 100644
+--- ../demo/src/main/webapp/admin/views/Event/detail.html
++++ ../demo/src/main/webapp/admin/views/Event/detail.html
+@@ -21,6 +21,8 @@
+         <select id="mediaItem" name="mediaItem" ng-model="mediaItemSelection" ng-options="m.text for m in mediaItemSelectionList"  >
+             <option value="">Choose a Media Item</option>
+         </select>
++        <br/>
++        <img class="img-polaroid span4" ng-hide="!mediaItemSelection.text" ng-src="{{mediaItemSelection.text}}" />
+         </div>
+     </div>
+     <div class="control-group" ng-class="{error: EventForm.category.$invalid}">
+diff --git ../demo/src/main/webapp/admin/views/Event/search.html ../demo/src/main/webapp/admin/views/Event/search.html
+index 815f0d5..04d5104 100644
+--- ../demo/src/main/webapp/admin/views/Event/search.html
++++ ../demo/src/main/webapp/admin/views/Event/search.html
+@@ -19,7 +19,7 @@
+     <div class="control-group">
+         <label for="mediaItem" class="control-label">Media Item</label>
+         <div class="controls">
+-            <select id="mediaItem" name="mediaItem" ng-model="search.mediaItem" ng-options="m as m.mediaType for m in mediaItemList">
++            <select id="mediaItem" name="mediaItem" ng-model="search.mediaItem" ng-options="m as m.url for m in mediaItemList">
+                 <option value="">Choose a Media Item</option>
+             </select>
+         </div>
+@@ -58,7 +58,7 @@
+         <tbody id="search-results-body">
+             <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                 <td><a href="#/Events/edit/{{result.id}}">{{result.name}}</a></td>
+-                    <td><a href="#/Events/edit/{{result.id}}">{{result.mediaItem.mediaType}}</a></td>
++                    <td><a href="#/Events/edit/{{result.id}}">{{result.mediaItem.url}}</a></td>
+                     <td><a href="#/Events/edit/{{result.id}}">{{result.category.description}}</a></td>
+                 <td><a href="#/Events/edit/{{result.id}}">{{result.description}}</a></td>
+             </tr>
+diff --git ../demo/src/main/webapp/admin/views/Performance/search.html ../demo/src/main/webapp/admin/views/Performance/search.html
+index 048be1f..b5c61f0 100644
+--- ../demo/src/main/webapp/admin/views/Performance/search.html
++++ ../demo/src/main/webapp/admin/views/Performance/search.html
+@@ -13,7 +13,7 @@
+     <div class="control-group">
+         <label for="show" class="control-label">Show</label>
+         <div class="controls">
+-            <select id="show" name="show" ng-model="search.show" ng-options="s as s.id for s in showList">
++            <select id="show" name="show" ng-model="search.show" ng-options="s as s.displayTitle for s in showList">
+                 <option value="">Choose a Show</option>
+             </select>
+         </div>
+@@ -35,7 +35,7 @@
+         </thead>
+         <tbody id="search-results-body">
+             <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+-                    <td><a href="#/Performances/edit/{{result.id}}">{{result.show.id}}</a></td>
++                    <td><a href="#/Performances/edit/{{result.id}}">{{result.show.displayTitle}}</a></td>
+                 <td><a href="#/Performances/edit/{{result.id}}">{{result.date| date:'yyyy-MM-dd HH:mm:ss Z'}}</a></td>
+             </tr>
+         </tbody>
+diff --git ../demo/src/main/webapp/admin/views/SectionAllocation/search.html ../demo/src/main/webapp/admin/views/SectionAllocation/search.html
+index fb25092..22ecb89 100644
+--- ../demo/src/main/webapp/admin/views/SectionAllocation/search.html
++++ ../demo/src/main/webapp/admin/views/SectionAllocation/search.html
+@@ -19,7 +19,7 @@
+     <div class="control-group">
+         <label for="performance" class="control-label">Performance</label>
+         <div class="controls">
+-            <select id="performance" name="performance" ng-model="search.performance" ng-options="p as p.date for p in performanceList">
++            <select id="performance" name="performance" ng-model="search.performance" ng-options="p as p.displayTitle for p in performanceList">
+                 <option value="">Choose a Performance</option>
+             </select>
+         </div>
+@@ -51,7 +51,7 @@
+         <tbody id="search-results-body">
+             <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                 <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.occupiedCount}}</a></td>
+-                    <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.performance.date| date:'medium'}}</a></td>
++                    <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.performance.displayTitle}}</a></td>
+                     <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.section.name}}</a></td>
+             </tr>
+         </tbody>
+diff --git ../demo/src/main/webapp/admin/views/TicketPrice/search.html ../demo/src/main/webapp/admin/views/TicketPrice/search.html
+index 9f5cd44..6f136e6 100644
+--- ../demo/src/main/webapp/admin/views/TicketPrice/search.html
++++ ../demo/src/main/webapp/admin/views/TicketPrice/search.html
+@@ -13,7 +13,7 @@
+     <div class="control-group">
+         <label for="show" class="control-label">Show</label>
+         <div class="controls">
+-            <select id="show" name="show" ng-model="search.show" ng-options="s as s.id for s in showList">
++            <select id="show" name="show" ng-model="search.show" ng-options="s as s.displayTitle for s in showList">
+                 <option value="">Choose a Show</option>
+             </select>
+         </div>
+@@ -59,7 +59,7 @@
+         </thead>
+         <tbody id="search-results-body">
+             <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+-                    <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.show.id}}</a></td>
++                    <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.show.displayTitle}}</a></td>
+                     <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.section.name}}</a></td>
+                     <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.ticketCategory.description}}</a></td>
+                 <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.price}}</a></td>
+diff --git ../demo/src/main/webapp/admin/views/Venue/detail.html ../demo/src/main/webapp/admin/views/Venue/detail.html
+index 6794ea6..e04d328 100644
+--- ../demo/src/main/webapp/admin/views/Venue/detail.html
++++ ../demo/src/main/webapp/admin/views/Venue/detail.html
+@@ -18,6 +18,8 @@
+         <select id="mediaItem" name="mediaItem" ng-model="mediaItemSelection" ng-options="m.text for m in mediaItemSelectionList"  >
+             <option value="">Choose a Media Item</option>
+         </select>
++        <br/>
++        <img class="img-polaroid span4" ng-hide="!mediaItemSelection.text" ng-src="{{mediaItemSelection.text}}" />
+         </div>
+     </div>
+     <div class="control-group" ng-class="{error: VenueForm.description.$invalid}">
+diff --git ../demo/src/main/webapp/admin/views/Venue/search.html ../demo/src/main/webapp/admin/views/Venue/search.html
+index f8b022e..bea2c1c 100644
+--- ../demo/src/main/webapp/admin/views/Venue/search.html
++++ ../demo/src/main/webapp/admin/views/Venue/search.html
+@@ -19,7 +19,7 @@
+     <div class="control-group">
+         <label for="mediaItem" class="control-label">Media Item</label>
+         <div class="controls">
+-            <select id="mediaItem" name="mediaItem" ng-model="search.mediaItem" ng-options="m as m.mediaType for m in mediaItemList">
++            <select id="mediaItem" name="mediaItem" ng-model="search.mediaItem" ng-options="m as m.url for m in mediaItemList">
+                 <option value="">Choose a Media Item</option>
+             </select>
+         </div>
+@@ -77,7 +77,7 @@
+         <tbody id="search-results-body">
+             <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                 <td><a href="#/Venues/edit/{{result.id}}">{{result.name}}</a></td>
+-                    <td><a href="#/Venues/edit/{{result.id}}">{{result.mediaItem.mediaType}}</a></td>
++                    <td><a href="#/Venues/edit/{{result.id}}">{{result.mediaItem.url}}</a></td>
+                 <td><a href="#/Venues/edit/{{result.id}}">{{result.description}}</a></td>
+                 <td><a href="#/Venues/edit/{{result.id}}">{{result.capacity}}</a></td>
+                 <td><a href="#/Venues/edit/{{result.id}}">{{result.address.street}}</a></td>

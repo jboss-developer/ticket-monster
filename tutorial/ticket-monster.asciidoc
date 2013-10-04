@@ -15,7 +15,7 @@ include::BusinessLogic.asciidoc[]
 
 include::UserFrontEnd.asciidoc[]
 
-include::AdminJSF.asciidoc[]
+include::AdminHTML5.asciidoc[]
 
 include::DashboardGWT.asciidoc[]
 

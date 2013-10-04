@@ -1,0 +1,94 @@
+<div class="form-horizontal">
+    <h3>Create a new Section</h3>
+    <div class="control-group">
+        <div class="controls">
+            <a id="Create" name="Create" class="btn btn-primary" href="#/Sections/new"><i class="icon-plus-sign icon-white"></i> Create</a>
+        </div>
+    </div>
+</div>
+<hr/>
+<div>
+    <h3>Search for Sections</h3>
+    <form id="SectionSearch" class="form-horizontal">
+    <div class="control-group">
+        <label for="name" class="control-label">Name</label>
+        <div class="controls">
+            <input id="name" name="name" type="text" ng-model="search.name" placeholder="Enter the Section Name"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="description" class="control-label">Description</label>
+        <div class="controls">
+            <input id="description" name="description" type="text" ng-model="search.description" placeholder="Enter the Section Description"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="numberOfRows" class="control-label">Number Of Rows</label>
+        <div class="controls">
+            <input id="numberOfRows" name="numberOfRows" type="text" ng-model="search.numberOfRows" placeholder="Enter the Section Number Of Rows"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="rowCapacity" class="control-label">Row Capacity</label>
+        <div class="controls">
+            <input id="rowCapacity" name="rowCapacity" type="text" ng-model="search.rowCapacity" placeholder="Enter the Section Row Capacity"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="capacity" class="control-label">Capacity</label>
+        <div class="controls">
+            <input id="capacity" name="capacity" type="text" ng-model="search.capacity" placeholder="Enter the Section Capacity"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="venue" class="control-label">Venue</label>
+        <div class="controls">
+            <select id="venue" name="venue" ng-model="search.venue" ng-options="v as v.name for v in venueList">
+                <option value="">Choose a Venue</option>
+            </select>
+        </div>
+    </div>
+        <div class="control-group">
+            <div class="controls">
+                <a id="Search" name="Search" class="btn btn-primary" ng-click="performSearch()"><i class="icon-search icon-white"></i> Search</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="search-results">
+    <table class="table table-bordered table-striped clearfix">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Number Of Rows</th>
+                <th>Row Capacity</th>
+                <th>Capacity</th>
+                <th>Venue</th>
+            </tr>
+        </thead>
+        <tbody id="search-results-body">
+            <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                <td><a href="#/Sections/edit/{{result.id}}">{{result.name}}</a></td>
+                <td><a href="#/Sections/edit/{{result.id}}">{{result.description}}</a></td>
+                <td><a href="#/Sections/edit/{{result.id}}">{{result.numberOfRows}}</a></td>
+                <td><a href="#/Sections/edit/{{result.id}}">{{result.rowCapacity}}</a></td>
+                <td><a href="#/Sections/edit/{{result.id}}">{{result.capacity}}</a></td>
+                    <td><a href="#/Sections/edit/{{result.id}}">{{result.venue.name}}</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="pagination pagination-centered">
+        <ul>
+            <li ng-class="{disabled:currentPage == 0}">
+                <a id="prev" href ng-click="previous()">«</a>
+            </li>
+            <li ng-repeat="n in pageRange" ng-class="{active:currentPage == n}" ng-click="setPage(n)">
+                <a href ng-bind="n + 1">1</a>
+            </li>
+            <li ng-class="{disabled: currentPage == (numberOfPages() - 1)}">
+                <a id="next" href ng-click="next()">»</a>
+            </li>
+        </ul>
+    </div>
+</div>

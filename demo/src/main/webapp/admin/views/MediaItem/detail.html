@@ -1,0 +1,30 @@
+<header ng-switch on="$location.path().indexOf('/MediaItems/new') > -1">
+    <h3 ng-switch-when="true">Create MediaItem</h3>
+    <h3 ng-switch-when="false">View or edit MediaItem</h3>
+</header>
+<form id="MediaItemForm" name="MediaItemForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: MediaItemForm.mediaType.$invalid}">
+        <label for="mediaType" class="control-label">Media Type</label>
+        <div id="mediaTypeControls" class="controls">
+        <select id="mediaType" name="mediaType" ng-model="mediaItem.mediaType" ng-options="m for m in mediaTypeList"  >
+            <option value="">Choose a Media Type</option>
+        </select>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: MediaItemForm.url.$invalid}">
+        <label for="url" class="control-label">Url</label>
+        <div id="urlControls" class="controls">
+            <input id="url" name="url" type="text" ng-model="mediaItem.url" placeholder="Enter the MediaItem Url"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveMediaItem" name="saveMediaItem" class="btn btn-primary" ng-disabled="isClean() || MediaItemForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteMediaItem" name="deleteMediaItem" class="btn btn-danger" ng-show="mediaItem.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

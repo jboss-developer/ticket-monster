@@ -1,0 +1,33 @@
+<header ng-switch on="$location.path().indexOf('/Performances/new') > -1">
+    <h3 ng-switch-when="true">Create Performance</h3>
+    <h3 ng-switch-when="false">View or edit Performance</h3>
+</header>
+<form id="PerformanceForm" name="PerformanceForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: PerformanceForm.show.$invalid}">
+        <label for="show" class="control-label">Show</label>
+        <div id="showControls" class="controls">
+        <select id="show" name="show" ng-model="showSelection" ng-options="s.text for s in showSelectionList" required >
+            <option value="">Choose a Show</option>
+        </select>
+        <span class="help-inline" ng-show="PerformanceForm.show.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: PerformanceForm.date.$invalid}">
+        <label for="date" class="control-label">Date</label>
+        <div id="dateControls" class="controls">
+            <datetime id="date" name="date" required ng-model="performance.date" placeholder="Enter the Performance Date"></datetime>
+            <span class="help-inline" ng-show="PerformanceForm.date.$error.required">required</span> 
+            <span class="help-inline" ng-show="PerformanceForm.date.$error.dateFormat">does not match format "yyyy-MM-dd hh:mm:ss"</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="savePerformance" name="savePerformance" class="btn btn-primary" ng-disabled="isClean() || PerformanceForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deletePerformance" name="deletePerformance" class="btn btn-danger" ng-show="performance.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

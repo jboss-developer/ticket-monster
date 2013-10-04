@@ -1,0 +1,88 @@
+<div class="form-horizontal">
+    <h3>Create a new Ticket</h3>
+    <div class="control-group">
+        <div class="controls">
+            <a id="Create" name="Create" class="btn btn-primary" href="#/Tickets/new"><i class="icon-plus-sign icon-white"></i> Create</a>
+        </div>
+    </div>
+</div>
+<hr/>
+<div>
+    <h3>Search for Tickets</h3>
+    <form id="TicketSearch" class="form-horizontal">
+    <div class="control-group">
+        <label for="ticketCategory" class="control-label">Ticket Category</label>
+        <div class="controls">
+            <select id="ticketCategory" name="ticketCategory" ng-model="search.ticketCategory" ng-options="t as t.description for t in ticketCategoryList">
+                <option value="">Choose a Ticket Category</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="price" class="control-label">Price</label>
+        <div class="controls">
+            <input id="price" name="price" type="text" ng-model="search.price" placeholder="Enter the Ticket Price"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="seat.section" class="control-label">Section</label>
+        <div class="controls">
+            <select id="seat.section" name="seat.section" ng-model="search.seat.section" ng-options="s as s.name for s in seatsectionList">
+                <option value="">Choose a Section</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="seat.rowNumber" class="control-label">Row Number</label>
+        <div class="controls">
+            <input id="seat.rowNumber" name="seat.rowNumber" type="text" ng-model="search.seat.rowNumber" placeholder="Enter the Ticket Row Number"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="seat.number" class="control-label">Number</label>
+        <div class="controls">
+            <input id="seat.number" name="seat.number" type="text" ng-model="search.seat.number" placeholder="Enter the Ticket Number"></input>
+        </div>
+    </div>
+        <div class="control-group">
+            <div class="controls">
+                <a id="Search" name="Search" class="btn btn-primary" ng-click="performSearch()"><i class="icon-search icon-white"></i> Search</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="search-results">
+    <table class="table table-bordered table-striped clearfix">
+        <thead>
+            <tr>
+                <th>Ticket Category</th>
+                <th>Price</th>
+                <th>Section</th>
+                <th>Row Number</th>
+                <th>Number</th>
+            </tr>
+        </thead>
+        <tbody id="search-results-body">
+            <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                    <td><a href="#/Tickets/edit/{{result.id}}">{{result.ticketCategory.description}}</a></td>
+                <td><a href="#/Tickets/edit/{{result.id}}">{{result.price}}</a></td>
+                    <td><a href="#/Tickets/edit/{{result.id}}">{{result.seat.section.name}}</a></td>
+                <td><a href="#/Tickets/edit/{{result.id}}">{{result.seat.rowNumber}}</a></td>
+                <td><a href="#/Tickets/edit/{{result.id}}">{{result.seat.number}}</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="pagination pagination-centered">
+        <ul>
+            <li ng-class="{disabled:currentPage == 0}">
+                <a id="prev" href ng-click="previous()">«</a>
+            </li>
+            <li ng-repeat="n in pageRange" ng-class="{active:currentPage == n}" ng-click="setPage(n)">
+                <a href ng-bind="n + 1">1</a>
+            </li>
+            <li ng-class="{disabled: currentPage == (numberOfPages() - 1)}">
+                <a id="next" href ng-click="next()">»</a>
+            </li>
+        </ul>
+    </div>
+</div>

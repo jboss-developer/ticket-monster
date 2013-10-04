@@ -1,0 +1,455 @@
+= Building the Administration UI using Forge
+:Author: Pete Muir
+
+== What Will You Learn Here?
+
+
+You've just defined the domain model of your application, and all the entities managed directly by the end-users. Now it's time to build an administration GUI for the TicketMonster application using JAX-RS and AngularJS. After reading this guide, you'll understand how to use JBoss Forge to create the JAX-RS resources from the entities and how to create an AngularJS based UI.
+
+We'll round out the guide by revealing the required, yet short and sweet, configuration.
+
+The tutorial will show you how to perform all these steps in JBoss Developer Studio, including screenshots that guide you through.
+
+
+== Setting up Forge
+
+
+=== JBoss Enterprise Application Platform 6
+
+
+If you are using JBoss Enterprise Application Platform 6, Forge is available in JBoss Developer Studio 7.
+
+To show the Forge Console, navigate to _Window -> Show View -> Other_, locate _Forge Console_ and click _OK_. Then click the _Start_ button in top right corner of the view.
+
+
+=== JBoss AS 7
+
+
+If you are using JBoss AS 7, you should install JBoss Forge version 1.4.0.Final or higher. Follow the instructions at link:https://docs.jboss.org/author/display/FORGE/Installation[Installing Forge].
+
+Open a command line and navigate to the root directory of this quickstart. 
+
+Launch Forge by typing the following command:
+
+----
+forge
+----
+
+=== Required Forge Plugins
+
+
+Forge comes with a number of built in plugins, including the "scaffold-x" plugin, which is able to generate a full CRUD UI from JPA entities. The generated UI uses AngularJS as the view layer, with JAX-RS resources providing the backend services. Internally, Forge uses http://metawidget.org/[Metawidget] to create the CRUD screens.
+
+Forge also includes a powerful plugin management system. The AngularJS scaffolding plugin isn't bundled with Forge, but it's easy to install. First use the `forge find-plugin` command to locate it
+
+[source,fsh]
+----
+forge find-plugin angularjs
+----
+
+In this case, the plugin is just called `angularjs` - easy! We can install it using the `forge install-plugin` command:
+
+[source,fsh]
+----
+forge install-plugin angularjs
+----
+
+This will download, compile and install the RichFaces plugin.
+
+
+== Getting started with Forge
+
+
+Forge is a powerful rapid application development (aimed at Java EE 6) and project comprehension tool. It can operate both on projects it creates, and on existing projects, such as TicketMonster. If you want to learn more about Forge ...
+
+When you `cd` into a project with Forge, it inspects the project, and detects what technologies you are using in the project. Let's see this in action:
+
+[source,fsh]
+----
+project list-facets
+----
+
+Those facets detected are colored green.
+
+[[project-list-faces_image]]
+.Output of `project list-facets`
+image::gfx/forge-project-list-facets.png[]
+
+As you can see, Forge has detected all the technologies we are using, such as JPA, JAX-RS, CDI and Bean Validation.
+
+
+== Generating the CRUD UI
+
+
+.Forge Scripts
+*************************************************************************************
+Forge supports the execution of scripts. The generation of the CRUD UI is provided
+as a Forge script in TicketMonster, so you don't need to type the commands everytime
+you want to regenerate the Admin UI. The script will also prompt you to applyTo run the script:
+
+    run admin_layer.fsh
+*************************************************************************************
+
+
+=== Generate the REST resources from the JPA entities
+
+First, we need to generate REST resources for the entities. Run:
+
+[source,fsh]
+----
+rest endpoint-from-entity --contentType application/json org.jboss.jdf.example.ticketmonster.model.* --strategy ROOT_AND_NESTED_DTO
+----
+
+to instruct Forge to generate JAX-RS resources for all the JPA entities in the project. The resources would be represented in JSON to enable the AngularJS-based front-end to communicate with the backend services. Each resource representation is structured to contain the representation of the corresponding JPA entity (the root) and any associated entities (that are represneted as nested objects).
+
+[NOTE]
+==============================================================
+The `ROOT_AND_NESTED_DTO` resource representation enables Forge to create REST resources for complex object graphs without adding Jackson annotations to avoid cycles in the graph. Without this constrained representation, one would have to add annotations like `@JsonIgnore` (to ignore certain undesirable object properties), or `@JsonIdentity` (to represent cycles in JSON without succumbing to StackOverflowErrors or similar such errors/exceptions).
+==============================================================
+
+=== Update the project
+
+Next, we need to setup the AngularJS Scaffold in the project. Run:
+
+[source,fsh]
+----
+scaffold-x setup --scaffoldType angularjs --targetDir admin
+----
+
+to instruct Forge to generate the css, images and JavaScript libraries used by the scaffold.
+
+[[project-scaffold-setup]]
+.Output of `scaffold setup`
+image::gfx/forge-scaffold-setup.png[]
+
+
+=== Scaffold the AngularJS UI from the JPA entities
+
+You can either scaffold the entities one-by-one, which allows you to control which UIs are generated, or you can generate a CRUD UI for all the entities. We'll do the latter:
+
+[source,fsh]
+----
+scaffold-x from src/main/java/org/jboss/jdf/example/ticketmonster/model/* --targetDir admin --overwrite
+----
+
+**************************************************************************************
+Forge asks us whether we want to overwrite every file - which gets a bit tedious! 
+Specifying `--overwrite` allows Forge to overwrite files without prompt - much better!
+**************************************************************************************
+
+[NOTE]
+==============================================================
+Forge will prompt you for additional information when creating the scaffold. For example, you may be prompted to provide information about how different objects should be displayed in the UI. You may also be prompted to specify a different URL for the REST resources used by the AngularJS-based UI.
+The defaults are sufficient since this is a convenience offered by Forge to provide a different value. Forge inspects the project for existing REST resources conforming to a convention and uses it as the default. Likewise, Forge inspects JPA entities and chooses the first displayable value as the default.
+==============================================================
+
+We now have a CRUD UI for all the entities used in TicketMonster!
+
+
+== Test the CRUD UI
+
+
+Let's test our UI on our local JBoss AS instance. As usual, we'll build and deploy using Maven:
+
+----
+mvn clean package jboss-as:deploy
+----
+
+== Make some changes to the UI
+
+Let’s add support for images to the Admin UI. `Events` and `Venues` have `MediaItem`s associated with them, but they're only displayed as URLs. Let's display the corresponding images in the AngularJS views, by adding the required bindings:
+
+.src/main/webapp/admin/views/Event/detail.html
+[source,html]
+------------------------------------------------------------------------------------------
+        ...
+        <div id="mediaItemControls" class="controls">
+        <select id="mediaItem" name="mediaItem" ng-model="mediaItemSelection" ng-options="m.text for m in mediaItemSelectionList"  >
+            <option value="">Choose a Media Item</option>
+        </select>
+        <br/>
+        <img class="img-polaroid span4" ng-hide="!mediaItemSelection.text" ng-src="{{mediaItemSelection.text}}" />
+        </div>
+        ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/views/Venue/detail.html
+[source,html]
+------------------------------------------------------------------------------------------
+        ...
+        <div id="mediaItemControls" class="controls">
+        <select id="mediaItem" name="mediaItem" ng-model="mediaItemSelection" ng-options="m.text for m in mediaItemSelectionList"  >
+            <option value="">Choose a Media Item</option>
+        </select>
+        <br/>
+        <img class="img-polaroid span4" ng-hide="!mediaItemSelection.text" ng-src="{{mediaItemSelection.text}}" />
+        </div>
+        ...
+------------------------------------------------------------------------------------------
+
+The admin site will now display the corresponding image if a media item is associated with the venue or event.
+
+[TIP]
+==============================================================
+The location of the MediaItem is present in the `text` property of the `mediaItemSelection` object.
+The parameter to the `ngSrc` directive is set to this value. This ensures that the browser fetches the image present at this location.
+The expression `src={{mediaItemSelection.text}}` should be avoided since the browser would attempt to fetch the URL with the literal text `{{hash}}` before AngularJS replaces the expression with the actual URL.
+==============================================================
+
+
+Let's also modify the UI to make it more user-friendly. Shows and Performances are displayed in a non-intuitive manner at the moment. Shows are displayed as their object identities, while performances are displayed as date-time values. This makes it difficult to identify them in the views. Let's modify the UI to display more semantically useful values.
+
+These values will be computed at the server-side, since these are already available in the `toString()` implementations of these classes. This would be accomplished by adding a read-only property `displayTitle` to the `Show` and `Performance` REST resource representations:
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/ShowDTO.java
+[source,java]
+------------------------------------------------------------------------------------------
+   ...
+   private Set<NestedPerformanceDTO> performances = new HashSet<NestedPerformanceDTO>();
+   private NestedVenueDTO venue;
+   private String displayTitle;
+ 
+   public ShowDTO()
+         ...
+         }
+         this.venue = new NestedVenueDTO(entity.getVenue());
+         this.displayTitle = entity.toString();
+      }
+   }
+   ...
+   public String getDisplayTitle()
+   {
+      return this.displayTitle;
+   }
+}
+------------------------------------------------------------------------------------------
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/PerformanceDTO.java
+[source,java]
+------------------------------------------------------------------------------------------
+   ...
+   private NestedShowDTO show;
+   private Date date;
+   private String displayTitle;
+
+   public PerformanceDTO()
+         ...
+         this.show = new NestedShowDTO(entity.getShow());
+         this.date = entity.getDate();
+         this.displayTitle = entity.toString();
+      }
+   }
+   ...
+   public String getDisplayTitle()
+   {
+      return this.displayTitle;
+   }
+}
+------------------------------------------------------------------------------------------
+
+And let us do the same for the nested representations:
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedPerformanceDTO.java
+[source,java]
+------------------------------------------------------------------------------------------
+   ...
+   private Long id;
+   private Date date;
+   private String displayTitle;
+
+   public NestedPerformanceDTO()
+         ...
+         this.id = entity.getId();
+         this.date = entity.getDate();
+         this.displayTitle = entity.toString();
+      }
+   }
+   ...
+   public String getDisplayTitle()
+   {
+      return this.displayTitle;
+   }
+}
+------------------------------------------------------------------------------------------
+
+.src/main/java/org/jboss/jdf/example/ticketmonster/rest/dto/NestedShowDTO.java
+[source,java]
+------------------------------------------------------------------------------------------
+   ...
+   private Long id;
+   private String displayTitle;
+
+   public NestedShowDTO()
+      ...
+      {
+         this.id = entity.getId();
+         this.displayTitle = entity.toString();
+      }
+   }
+   ...
+   public String getDisplayTitle()
+   {
+      return this.displayTitle;
+   }
+}
+------------------------------------------------------------------------------------------
+
+We shall now proceed to modify the AngularJS views to use the new properties in the resource representations:
+
+.src/main/webapp/admin/scripts/controllers/editPerformanceController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    var labelObject = {
+     value : item.id,
+     text : item.displayTitle
+    };
+    if($scope.performance.show && item.id == $scope.performance.show.id) {
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/editSectionAllocationController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    var labelObject = {
+     value : item.id,
+     text : item.displayTitle
+    };
+    if($scope.sectionAllocation.performance && item.id == $scope.sectionAllocation.performance.id) {
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/editShowController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    var labelObject = {
+     value : item.id,
+     text : item.displayTitle
+    };
+    if($scope.show.performances){
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/editTicketPriceController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    var labelObject = {
+     value : item.id,
+     text : item.displayTitle
+    };
+    if($scope.ticketPrice.show && item.id == $scope.ticketPrice.show.id) {
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/newPerformanceController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    $scope.showSelectionList = $.map(items, function(item) {
+        return ( {
+            value : item.id,
+            text : item.displayTitle
+        });
+    });
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/newSectionAllocationController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    $scope.performanceSelectionList = $.map(items, function(item) {
+        return ( {
+            value : item.id,
+            text : item.displayTitle
+        });
+    });
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/newShowController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    $scope.performancesSelectionList = $.map(items, function(item) {
+        return ( {
+            value : item.id,
+            text : item.displayTitle
+        });
+    });
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/scripts/controllers/newTicketPriceController.js
+[source,javascript]
+------------------------------------------------------------------------------------------
+    ...
+    $scope.showSelectionList = $.map(items, function(item) {
+        return ( {
+            value : item.id,
+            text : item.displayTitle
+        });
+    });
+    ...
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/views/Performance/search.html
+[source,html]
+------------------------------------------------------------------------------------------
+        <label for="show" class="control-label">Show</label>
+        <div class="controls">
+            <select id="show" name="show" ng-model="search.show" ng-options="s as s.displayTitle for s in showList">
+                <option value="">Choose a Show</option>
+            </select>
+        ...
+        <tbody id="search-results-body">
+            <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                    <td><a href="#/Performances/edit/{{result.id}}">{{result.show.displayTitle}}</a></td>
+                <td><a href="#/Performances/edit/{{result.id}}">{{result.date| date:'yyyy-MM-dd HH:mm:ss Z'}}</a></td>
+            </tr>
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/views/SectionAllocation/search.html
+[source,html]
+------------------------------------------------------------------------------------------
+         <label for="performance" class="control-label">Performance</label>
+         <div class="controls">
+             <select id="performance" name="performance" ng-model="search.performance" ng-options="p as p.displayTitle for p in performanceList">
+                 <option value="">Choose a Performance</option>
+             </select>
+            ...
+          <tbody id="search-results-body">
+            <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.occupiedCount}}</a></td>
+                    <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.performance.displayTitle}}</a></td>
+                    <td><a href="#/SectionAllocations/edit/{{result.id}}">{{result.section.name}}</a></td>
+            </tr>
+------------------------------------------------------------------------------------------
+
+.src/main/webapp/admin/views/TicketPrice/search.html
+[source,html]
+------------------------------------------------------------------------------------------
+        <label for="show" class="control-label">Show</label>
+        <div class="controls">
+            <select id="show" name="show" ng-model="search.show" ng-options="s as s.displayTitle for s in showList">
+                <option value="">Choose a Show</option>
+            </select>
+            ...
+        <tbody id="search-results-body">
+            <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                    <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.show.displayTitle}}</a></td>
+                    <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.section.name}}</a></td>
+                    <td><a href="#/TicketPrices/edit/{{result.id}}">{{result.ticketCategory.description}}</a></td>
+------------------------------------------------------------------------------------------
+
+We can test these changes by running
+
+----
+mvn clean package jboss-as:deploy
+----
+
+as usual.
+

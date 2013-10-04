@@ -1,0 +1,80 @@
+<div class="form-horizontal">
+    <h3>Create a new Booking</h3>
+    <div class="control-group">
+        <div class="controls">
+            <a id="Create" name="Create" class="btn btn-primary" href="#/Bookings/new"><i class="icon-plus-sign icon-white"></i> Create</a>
+        </div>
+    </div>
+</div>
+<hr/>
+<div>
+    <h3>Search for Bookings</h3>
+    <form id="BookingSearch" class="form-horizontal">
+    <div class="control-group">
+        <label for="totalTicketPrice" class="control-label">Total Ticket Price</label>
+        <div class="controls">
+            <input id="totalTicketPrice" name="totalTicketPrice" type="text" ng-model="search.totalTicketPrice" placeholder="Enter the Booking Total Ticket Price"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="cancellationCode" class="control-label">Cancellation Code</label>
+        <div class="controls">
+            <input id="cancellationCode" name="cancellationCode" type="text" ng-model="search.cancellationCode" placeholder="Enter the Booking Cancellation Code"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="contactEmail" class="control-label">Contact Email</label>
+        <div class="controls">
+            <input id="contactEmail" name="contactEmail" type="text" ng-model="search.contactEmail" placeholder="Enter the Booking Contact Email"></input>
+        </div>
+    </div>
+    <div class="control-group">
+        <label for="performance" class="control-label">Performance</label>
+        <div class="controls">
+            <select id="performance" name="performance" ng-model="search.performance" ng-options="p as p.date for p in performanceList">
+                <option value="">Choose a Performance</option>
+            </select>
+        </div>
+    </div>
+        <div class="control-group">
+            <div class="controls">
+                <a id="Search" name="Search" class="btn btn-primary" ng-click="performSearch()"><i class="icon-search icon-white"></i> Search</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="search-results">
+    <table class="table table-bordered table-striped clearfix">
+        <thead>
+            <tr>
+                <th>Total Ticket Price</th>
+                <th>Created On</th>
+                <th>Cancellation Code</th>
+                <th>Contact Email</th>
+                <th>Performance</th>
+            </tr>
+        </thead>
+        <tbody id="search-results-body">
+            <tr ng-repeat="result in searchResults | searchFilter:searchResults | startFrom:currentPage*pageSize | limitTo:pageSize">
+                <td><a href="#/Bookings/edit/{{result.id}}">{{result.totalTicketPrice}}</a></td>
+                <td><a href="#/Bookings/edit/{{result.id}}">{{result.createdOn| date:'yyyy-MM-dd HH:mm:ss Z'}}</a></td>
+                <td><a href="#/Bookings/edit/{{result.id}}">{{result.cancellationCode}}</a></td>
+                <td><a href="#/Bookings/edit/{{result.id}}">{{result.contactEmail}}</a></td>
+                    <td><a href="#/Bookings/edit/{{result.id}}">{{result.performance.date| date:'medium'}}</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="pagination pagination-centered">
+        <ul>
+            <li ng-class="{disabled:currentPage == 0}">
+                <a id="prev" href ng-click="previous()">«</a>
+            </li>
+            <li ng-repeat="n in pageRange" ng-class="{active:currentPage == n}" ng-click="setPage(n)">
+                <a href ng-bind="n + 1">1</a>
+            </li>
+            <li ng-class="{disabled: currentPage == (numberOfPages() - 1)}">
+                <a id="next" href ng-click="next()">»</a>
+            </li>
+        </ul>
+    </div>
+</div>

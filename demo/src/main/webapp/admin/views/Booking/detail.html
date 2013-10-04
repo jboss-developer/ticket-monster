@@ -1,0 +1,59 @@
+<header ng-switch on="$location.path().indexOf('/Bookings/new') > -1">
+    <h3 ng-switch-when="true">Create Booking</h3>
+    <h3 ng-switch-when="false">View or edit Booking</h3>
+</header>
+<form id="BookingForm" name="BookingForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: BookingForm.totalTicketPrice.$invalid}">
+        <label for="totalTicketPrice" class="control-label">Total Ticket Price</label>
+        <div id="totalTicketPriceControls" class="controls">
+            <input id="totalTicketPrice" name="totalTicketPrice" type="number" ng-model="booking.totalTicketPrice" placeholder="Enter the Booking Total Ticket Price"></input>
+            <span class="help-inline" ng-show="BookingForm.totalTicketPrice.$error.number">not a number</span>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: BookingForm.tickets.$invalid}">
+        <label for="tickets" class="control-label">Tickets</label>
+        <div id="ticketsControls" class="controls">
+            <select id="tickets" name="tickets" multiple ng-model="ticketsSelection" ng-options="t.text for t in ticketsSelectionList">
+                <option value="">Choose a Tickets</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: BookingForm.createdOn.$invalid}">
+        <label for="createdOn" class="control-label">Created On</label>
+        <div id="createdOnControls" class="controls">
+            <datetime id="createdOn" name="createdOn" required ng-model="booking.createdOn" placeholder="Enter the Booking Created On"></datetime>
+            <span class="help-inline" ng-show="BookingForm.createdOn.$error.required">required</span> 
+            <span class="help-inline" ng-show="BookingForm.createdOn.$error.dateFormat">does not match format "yyyy-MM-dd hh:mm:ss"</span>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: BookingForm.cancellationCode.$invalid}">
+        <label for="cancellationCode" class="control-label">Cancellation Code</label>
+        <div id="cancellationCodeControls" class="controls">
+            <input id="cancellationCode" name="cancellationCode" type="text" ng-model="booking.cancellationCode" placeholder="Enter the Booking Cancellation Code"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: BookingForm.contactEmail.$invalid}">
+        <label for="contactEmail" class="control-label">Contact Email</label>
+        <div id="contactEmailControls" class="controls">
+            <input id="contactEmail" name="contactEmail" type="text" ng-model="booking.contactEmail" placeholder="Enter the Booking Contact Email"></input>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: BookingForm.performance.$invalid}">
+        <label for="performance" class="control-label">Performance</label>
+        <div id="performanceControls" class="controls">
+        <select id="performance" name="performance" ng-model="performanceSelection" ng-options="p.text for p in performanceSelectionList"  >
+            <option value="">Choose a Performance</option>
+        </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveBooking" name="saveBooking" class="btn btn-primary" ng-disabled="isClean() || BookingForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteBooking" name="deleteBooking" class="btn btn-danger" ng-show="booking.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

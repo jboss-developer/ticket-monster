@@ -1,0 +1,50 @@
+<header ng-switch on="$location.path().indexOf('/TicketPrices/new') > -1">
+    <h3 ng-switch-when="true">Create TicketPrice</h3>
+    <h3 ng-switch-when="false">View or edit TicketPrice</h3>
+</header>
+<form id="TicketPriceForm" name="TicketPriceForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: TicketPriceForm.show.$invalid}">
+        <label for="show" class="control-label">Show</label>
+        <div id="showControls" class="controls">
+        <select id="show" name="show" ng-model="showSelection" ng-options="s.text for s in showSelectionList" required >
+            <option value="">Choose a Show</option>
+        </select>
+        <span class="help-inline" ng-show="TicketPriceForm.show.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: TicketPriceForm.section.$invalid}">
+        <label for="section" class="control-label">Section</label>
+        <div id="sectionControls" class="controls">
+        <select id="section" name="section" ng-model="sectionSelection" ng-options="s.text for s in sectionSelectionList" required >
+            <option value="">Choose a Section</option>
+        </select>
+        <span class="help-inline" ng-show="TicketPriceForm.section.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: TicketPriceForm.ticketCategory.$invalid}">
+        <label for="ticketCategory" class="control-label">Ticket Category</label>
+        <div id="ticketCategoryControls" class="controls">
+        <select id="ticketCategory" name="ticketCategory" ng-model="ticketCategorySelection" ng-options="t.text for t in ticketCategorySelectionList" required >
+            <option value="">Choose a Ticket Category</option>
+        </select>
+        <span class="help-inline" ng-show="TicketPriceForm.ticketCategory.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: TicketPriceForm.price.$invalid}">
+        <label for="price" class="control-label">Price</label>
+        <div id="priceControls" class="controls">
+            <input id="price" name="price" type="number" ng-model="ticketPrice.price" placeholder="Enter the TicketPrice Price"></input>
+            <span class="help-inline" ng-show="TicketPriceForm.price.$error.number">not a number</span>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveTicketPrice" name="saveTicketPrice" class="btn btn-primary" ng-disabled="isClean() || TicketPriceForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteTicketPrice" name="deleteTicketPrice" class="btn btn-danger" ng-show="ticketPrice.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>

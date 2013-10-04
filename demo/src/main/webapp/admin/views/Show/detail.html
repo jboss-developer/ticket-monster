@@ -1,0 +1,50 @@
+<header ng-switch on="$location.path().indexOf('/Shows/new') > -1">
+    <h3 ng-switch-when="true">Create Show</h3>
+    <h3 ng-switch-when="false">View or edit Show</h3>
+</header>
+<form id="ShowForm" name="ShowForm" class="form-horizontal">
+    <div ng-show="displayError" class="alert alert-error">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+    <div class="control-group" ng-class="{error: ShowForm.event.$invalid}">
+        <label for="event" class="control-label">Event</label>
+        <div id="eventControls" class="controls">
+        <select id="event" name="event" ng-model="eventSelection" ng-options="e.text for e in eventSelectionList" required >
+            <option value="">Choose a Event</option>
+        </select>
+        <span class="help-inline" ng-show="ShowForm.event.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: ShowForm.performances.$invalid}">
+        <label for="performances" class="control-label">Performances</label>
+        <div id="performancesControls" class="controls">
+            <select id="performances" name="performances" multiple ng-model="performancesSelection" ng-options="p.text for p in performancesSelectionList">
+                <option value="">Choose a Performances</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: ShowForm.venue.$invalid}">
+        <label for="venue" class="control-label">Venue</label>
+        <div id="venueControls" class="controls">
+        <select id="venue" name="venue" ng-model="venueSelection" ng-options="v.text for v in venueSelectionList" required >
+            <option value="">Choose a Venue</option>
+        </select>
+        <span class="help-inline" ng-show="ShowForm.venue.$error.required">required</span> 
+        </div>
+    </div>
+    <div class="control-group" ng-class="{error: ShowForm.ticketPrices.$invalid}">
+        <label for="ticketPrices" class="control-label">Ticket Prices</label>
+        <div id="ticketPricesControls" class="controls">
+            <select id="ticketPrices" name="ticketPrices" multiple ng-model="ticketPricesSelection" ng-options="t.text for t in ticketPricesSelectionList">
+                <option value="">Choose a Ticket Prices</option>
+            </select>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button id="saveShow" name="saveShow" class="btn btn-primary" ng-disabled="isClean() || ShowForm.$invalid" ng-click="save()"><i class="icon-ok-sign icon-white"></i> Save</button>
+            <button id="cancel" name="cancel" class="btn" ng-click="cancel()"><i class="icon-remove-sign"></i> Cancel</button>
+            <button id="deleteShow" name="deleteShow" class="btn btn-danger" ng-show="show.id" ng-click="remove()"><i class="icon-trash icon-white"></i> Delete</button>
+        </div>
+    <div>
+</form>
