@@ -21,8 +21,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Cancelled;
-import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.Created;
 import org.jboss.jdf.example.ticketmonster.model.Booking;
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Seat;
@@ -33,6 +31,8 @@ import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
 import org.jboss.jdf.example.ticketmonster.service.AllocatedSeats;
 import org.jboss.jdf.example.ticketmonster.service.SeatAllocationService;
 import org.jboss.jdf.example.ticketmonster.util.MultivaluedHashMap;
+import org.jboss.jdf.example.ticketmonster.util.qualifier.Cancelled;
+import org.jboss.jdf.example.ticketmonster.util.qualifier.Created;
 
 /**
  * <p>

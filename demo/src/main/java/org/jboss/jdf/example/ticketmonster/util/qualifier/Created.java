@@ -1,4 +1,4 @@
-package org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier;
+package org.jboss.jdf.example.ticketmonster.util.qualifier;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

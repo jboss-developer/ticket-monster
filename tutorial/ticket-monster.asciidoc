@@ -17,7 +17,7 @@ include::UserFrontEnd.asciidoc[]
 
 include::AdminJSF.asciidoc[]
 
-include::DashboardGWT.asciidoc[]
+include::DashboardHTML5.asciidoc[]
 
 include::HybridUI.asciidoc[]
 

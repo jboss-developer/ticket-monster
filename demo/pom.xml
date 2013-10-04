@@ -45,8 +45,8 @@
                 (you can read this as the JBoss stack of the Java EE 6 APIs, with some extras 
                 tools for your project, such as Arquillian for testing), the jboss-javaee-6.0-with-hibernate 
                 stack (you can read this as the JBoss stack of the Java EE 6 APIs, with extras 
-                from the Hibernate family of projects) and the jboss-javaee-6.0-with-errai
-                stack (you can read this as the JBoss stack of the Java EE 6 APIs, with support for Errai) -->
+                from the Hibernate family of projects) and the jboss-javaee-6.0-with-infinispan
+                stack (you can read this as the JBoss stack of the Java EE 6 APIs, with support for Infinispan) -->
             <dependency>
                 <groupId>org.jboss.bom</groupId>
                 <artifactId>jboss-javaee-6.0-with-tools</artifactId>

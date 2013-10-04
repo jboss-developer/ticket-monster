@@ -21,9 +21,9 @@ import javax.ws.rs.core.Response;
 import org.jboss.jdf.example.ticketmonster.model.Performance;
 import org.jboss.jdf.example.ticketmonster.model.Show;
 import org.jboss.jdf.example.ticketmonster.model.TicketPrice;
-import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.BotMessage;
 import org.jboss.jdf.example.ticketmonster.rest.*;
 import org.jboss.jdf.example.ticketmonster.util.MultivaluedHashMap;
+import org.jboss.jdf.example.ticketmonster.util.qualifier.BotMessage;
 
 @Stateless
 public class Bot {

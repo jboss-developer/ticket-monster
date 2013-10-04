@@ -28,7 +28,7 @@ The services are consumed by various other layers of the application:
 
 * the media management and ticket allocation services encapsulate complex functionality, which in turn is exposed externally by RESTful services that wrap them
 * RESTful services are mainly used by the HTML5 view layer
-* the ticket availability service is used by the Errai-based view layer
+* the ticket availability service is used by the HTML5 and JavaScript based monitor
 
 [TIP]
 .Where to draw the line?
@@ -493,95 +493,6 @@ public class AllocatedSeats {
 }
 ------------------------------------------------------------------------------------------
 
-=== Booking Monitor Service
-
-
-The last service that we create provides data about the current shows and their ticket availability status. It is accessed remotely by Errai through a dedicated RPC mechanism, which requires us to define and implement a service interface. We begin by adding the interface first, using the `@Remote` annotation from Errai to indicate its purpose.
-
-.src/main/java/org/jboss/jdf/example/ticketmonster/monitor/client/shared/BookingMonitorService.java
-[source,java]
------------------------------------------------------------------------------------------
-/**
- * A service used by the booking monitor for retrieving status information.
- *
- * Errai's @Remote annotation indicates that the Service implementation can
- * be used as an RPC endpoint and that this interface can be used on the
- * client for type safe method invocation on this endpoint.
- */
-@Remote
-public interface BookingMonitorService {
-
-    /**
-     * Lists all active {@link Show}s (shows with future performances).
-     *
-     * @return list of shows found.
-     */
-    public List<Show> retrieveShows();
-
-    /**
-     * Constructs a map of performance IDs to the total number of sold tickets.
-     *
-     * @return map of performance IDs to the total number of sold tickets.
-     */
-    public Map<Long, Long> retrieveOccupiedCounts();
-}
------------------------------------------------------------------------------------------
-
-After doing so, we create the service implementation, using the `@Service` annotation to indicate that it should be exposed externally by Errai.
-
-.src/main/java/org/jboss/jdf/example/ticketmonster/service/BookingMonitorServiceImpl.java
-[source,java]
-------------------------------------------------------------------------------------------
-/**
- * Implementation of {@link BookingMonitorService}.
- *
- * Errai's @Service annotation exposes this service as an RPC endpoint.
- */
-@ApplicationScoped 
-@Service
-@SuppressWarnings("unchecked")
-public class BookingMonitorServiceImpl implements BookingMonitorService {
-
-    @Inject
-    private EntityManager entityManager;
-
-    @Override
-    public List<Show> retrieveShows() {
-        Query showQuery = entityManager.createQuery(
-                "select DISTINCT s from Show s JOIN s.performances p " +
-                "WHERE p.date > current_timestamp");
-        return showQuery.getResultList();
-    }
-
-    @Override
-    public Map<Long, Long> retrieveOccupiedCounts() {
-        Map <Long, Long> occupiedCounts = new HashMap<Long, Long>();
-  
-        Query occupiedCountsQuery = entityManager.createQuery(
-            		"select s.performance.id, SUM(s.occupiedCount) from SectionAllocation s " +
-            		"where s.performance.date > current_timestamp GROUP BY s.performance.id");
-        
-        List<Object[]> results = occupiedCountsQuery.getResultList();
-        for (Object[] result : results) {
-            occupiedCounts.put((Long) result[0], (Long) result[1]); 
-        }
-        
-        return occupiedCounts;
-    }
-}
-------------------------------------------------------------------------------------------
-
-[TIP]
-.Implement an interface or not?
-=====================================================================================
-You will find yourself very often facing a dilemma: add an interface for a service or
-not? As you have seen so far and will continue to see next, most of the services in
-TicketMonster do not implement interfaces, except wherever it is a requirement of the
-framework in use (e.g. Errai in this case). In Java EE 6 the requirements for business
-services to implement interfaces have been relaxed significantly, therefore unless 
-there are valid reasons for creating an abstraction (such as multiple possible 
-implementations), we skipped adding interfaces to our services.
-=====================================================================================
 
 == JAX-RS Services
 
@@ -1117,7 +1028,7 @@ of an injection point - the field annotated with `@Inject`.
 
 We would like other parts of the application to be aware of the fact that a new booking has been created, therefore we use the CDI to fire an event. We do so by injecting an `Event<Booking>` instance into the service (indicating that its payload will be a booking). In order to individually identify this event as referring to event creation, we use a CDI qualifier, which we need to add:
 
-.src/main/java/org/jboss/jdf/example/ticketmonster/monitor/client/shared/qualifier/Created.java
+.src/main/java/org/jboss/jdf/example/ticketmonster/util/qualifier/Created.java
 [source, java]
 ------------------------------------------------------------------------------------------
 /**
@@ -1177,7 +1088,7 @@ We use the `@DELETE` annotation to indicate that it will be executed as the resu
 
 We need to notify the other components of the cancellation of the booking, so we fire an event, with a different qualifier.
 
-.src/main/java/org/jboss/jdf/example/ticketmonster/monitor/client/shared/qualifier/Cancelled.java
+.src/main/java/org/jboss/jdf/example/ticketmonster/util/qualifier/Cancelled.java
 [source, java]
 ------------------------------------------------------------------------------------------
 /**

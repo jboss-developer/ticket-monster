@@ -11,10 +11,10 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import org.jboss.jdf.example.ticketmonster.model.Booking;
-import org.jboss.jdf.example.ticketmonster.monitor.client.shared.qualifier.BotMessage;
 import org.jboss.jdf.example.ticketmonster.rest.BookingService;
 import org.jboss.jdf.example.ticketmonster.util.CircularBuffer;
 import org.jboss.jdf.example.ticketmonster.util.MultivaluedHashMap;
+import org.jboss.jdf.example.ticketmonster.util.qualifier.BotMessage;
 
 /**
  * A Bot service that acts as a Facade for the Bot, providing methods to control the Bot state as well as to obtain the current
