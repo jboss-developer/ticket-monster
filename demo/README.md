@@ -4,6 +4,14 @@ TicketMonster is an online ticketing demo application that gets you started with
 
 Here are a few instructions for building and running it. You can learn more about the example from the [tutorial](http://www.jboss.org/jdf/examples/get-started).
 
+## Updating the Performance dates
+
+_NOTE: This step is optional. It is necessary only if you want to update the dates of the Performances in the `import.sql` script in an automated manner. Updating the performance dates ensure that they are always set to some timestamp in the future, and ensures that all performances are visible in the Monitor section of the TicketMonster application.
+
+1. Run the `update_import_sql` Perl script. You'll need the `DateTime`, `DateTime::Format::Strptime` and `Tie::File` Perl modules. These are usually available by default in your Perl installation.
+    
+        $ perl update_import_sql.pl src/main/resources/import.sql
+
 ## Generating the administration site
 
 _NOTE: failure in following this step will cause the link to `http://localhost:8080/ticket-monster/admin` to fail - the administration site is simply not there! It has to be generated first._
