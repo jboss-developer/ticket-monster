@@ -110,6 +110,14 @@ First, select *Start from scratch -> Java EE Web Project* in JBoss Central. Unde
 .JBoss Central
 image::gfx/introduction/jboss_dev_studio_jboss_central.png[]
 
+[TIP]
+=================================================================
+*Java EE Web Project* is the best choice in JBoss Central for getting 
+started with developing a Java EE 6 web application. It will create
+a web application structure and set up the right dependencies for getting
+started with your project.
+=================================================================
+
 You will be prompted with a dialog box that verifies that JBoss Developer Studio is configured correctly. If you are in a brand new workspace, the application server will not be configured yet and you will notice the lack of a check mark on the server/runtime row.
 
 [[new-project-wizard_image]]
