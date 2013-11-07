@@ -81,7 +81,7 @@ public class ShowServiceTest {
         
         List<Show> shows = showService.getAll(queryParameters);
         assertNotNull(shows);
-        assertEquals(2, shows.size());
+        assertEquals(3, shows.size());
         for (Show s: shows) {
             assertEquals("Rock concert of the decade", s.getEvent().getName());
         }

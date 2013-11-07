@@ -34,7 +34,7 @@ public class SearchServiceTest {
     @Test
     public void testResults() {
         ShowResults results = searchService.search("decade", null, null, null, null);
-        assertEquals(2, results.getResults().size());
+        assertEquals(3, results.getResults().size());
         assertEquals("Rock concert of the decade", results.getResults().iterator().next().getEventName());
         
         // some geo tests
@@ -54,7 +54,7 @@ public class SearchServiceTest {
     @Test
     public void testFaceting() {
         ShowResults results = searchService.search("decade", null, null, null, null);
-        assertEquals(2, results.getResults().size());
+        assertEquals(3, results.getResults().size());
         assertEquals("Rock concert of the decade", results.getResults().iterator().next().getEventName());
         for (FacetGroupView group : results.getFacetGroups()) {
             if (group.getName().equals("category")) {
