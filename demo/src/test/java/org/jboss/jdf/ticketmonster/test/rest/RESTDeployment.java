@@ -32,6 +32,8 @@ public class RESTDeployment {
                 .addClass(MediaPath.class)
                 .addClass(MediaManager.class)
                 .addClass(Bootstrap.class)
+                .addClass(BotService.class)
+                .addClass(Bot.class)
                 .addAsLibraries(Maven.resolver()
                         .loadPomFromFile("pom.xml")
                         .resolve("org.infinispan:infinispan-core").withTransitivity().asFile());
