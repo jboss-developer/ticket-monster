@@ -14,19 +14,22 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 public class RESTDeployment {
 
     public static WebArchive deployment() {
-
-
-        return TicketMonsterDeployment.deployment()
-                .addPackage(Booking.class.getPackage())
-                .addPackage(BaseEntityService.class.getPackage())
-                .addPackage(MultivaluedHashMap.class.getPackage())
-                .addPackage(SeatAllocationService.class.getPackage())
-                .addPackage(VenueDTO.class.getPackage())
-                .addPackage(SearchService.class.getPackage())
-                .addPackage(PriceMinBridge.class.getPackage())
-                .addAsLibraries(Maven.resolver()
-                        .loadPomFromFile("pom.xml")
-                        .resolve("org.infinispan:infinispan-core").withTransitivity().asFile());
+        return TicketMonsterDeployment
+            .deployment()
+            .addPackage(Booking.class.getPackage())
+            .addPackage(BaseEntityService.class.getPackage())
+            .addPackage(MultivaluedHashMap.class.getPackage())
+            .addPackage(SeatAllocationService.class.getPackage())
+            .addPackage(VenueDTO.class.getPackage())
+            .addPackage(SearchService.class.getPackage())
+            .addPackage(PriceMinBridge.class.getPackage())
+            .addAsLibraries(
+                Maven
+                    .resolver()
+                    .loadPomFromFile("pom.xml")
+                    .resolve("org.infinispan:infinispan-core", "org.hibernate:hibernate-search-orm",
+                        "org.hibernate:hibernate-search-engine", "org.hibernate:hibernate-search-analyzers").withTransitivity()
+                    .asFile());
     }
     
 }
