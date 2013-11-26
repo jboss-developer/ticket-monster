@@ -1645,9 +1645,13 @@ public class RESTDeployment {
                 .addPackage(VenueDTO.class.getPackage())
                 .addPackage(SearchService.class.getPackage())
                 .addPackage(PriceMinBridge.class.getPackage())
-                .addAsLibraries(Maven.resolver()
-                        .loadPomFromFile("pom.xml")
-                        .resolve("org.infinispan:infinispan-core").withTransitivity().asFile());
+	            .addAsLibraries(
+	                Maven
+	                    .resolver()
+	                    .loadPomFromFile("pom.xml")
+	                    .resolve("org.infinispan:infinispan-core", "org.hibernate:hibernate-search-orm",
+	                        "org.hibernate:hibernate-search-engine", "org.hibernate:hibernate-search-analyzers").withTransitivity()
+	                    .asFile());
     }
     
 }
