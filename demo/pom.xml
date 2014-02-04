@@ -32,7 +32,7 @@
             line below to use version 1.0.4.Final-redhat-9 which is a release certified 
             to work with JBoss EAP 6.1.1. It requires you have access to the JBoss EAP 6.1.1 
             maven repository. -->
-        <jboss.bom.version>1.0.4.Final-redhat-9</jboss.bom.version>
+        <jboss.bom.version>6.2.0.GA</jboss.bom.version>
         <jboss.wfk.bom.version>2.5.0-build-1</jboss.wfk.bom.version>
         <buildhelper.plugin.version>1.7</buildhelper.plugin.version>
 		<!-- Version of Jackson, since we do not rely on the RESTEasy BOM from EAP (yet). -->
@@ -59,7 +59,7 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.jboss.bom</groupId>
+                <groupId>org.jboss.bom.eap</groupId>
                 <artifactId>jboss-javaee-6.0-with-hibernate</artifactId>
                 <version>${jboss.bom.version}</version>
                 <type>pom</type>
