@@ -1,5 +1,6 @@
 = Building The Statistics Dashboard Using HTML5 and JavaScript
 :Author: Vineet Reynolds
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
 
 == What Will You Learn Here?
 

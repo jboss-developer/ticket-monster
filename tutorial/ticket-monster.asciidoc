@@ -1,6 +1,8 @@
 = Ticket Monster Tutorial
 Marius Bogoevici, Pete Muir, Burr Sutter
 :doctype: book
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
+
 ifdef::asciidoctor[]
 // put Asciidoctor-specific settings here
 endif::asciidoctor[]

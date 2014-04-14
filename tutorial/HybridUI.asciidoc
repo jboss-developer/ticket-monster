@@ -1,5 +1,6 @@
 = Creating hybrid mobile versions of the application with Apache Cordova
 :Author: Marius Bogoevici
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
 
 == What will you learn here?
 

@@ -1,5 +1,6 @@
 = Building The User UI Using HTML5
 :Author: Marius Bogoevici
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
 
 == What Will You Learn Here?
 

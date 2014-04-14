@@ -1,5 +1,6 @@
 = Building the Administration UI using Forge
 :Author: Pete Muir
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
 
 == What Will You Learn Here?
 

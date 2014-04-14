@@ -1,5 +1,6 @@
 = What is TicketMonster?
 :Author: Marius Bogoevici
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
 
 
 == Preamble

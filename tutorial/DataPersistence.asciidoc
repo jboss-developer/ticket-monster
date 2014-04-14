@@ -1,5 +1,6 @@
 = Building the persistence layer with JPA2 and Bean Validation
 :Author: Pete Muir
+:thumbnail: http://jboss.org/jdf/images/ticket-monster-splash-2.png
 
 == What will you learn here?
 
