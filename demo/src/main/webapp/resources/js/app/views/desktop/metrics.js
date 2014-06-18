@@ -16,20 +16,20 @@ define([
             _.bind(this.liveUpdate, this);
             this.collection.on("add remove change", this.render, this);
             var self = this;
-            $.when(this.collection.fetch(
+            $.when(this.collection.fetch({
                 error : function() {
                     utilities.displayAlert("Failed to retrieve metrics from the TicketMonster server.");
                 }
-            )).done(function(){
+            })).done(function(){
                 self.liveUpdate();
             });
         },
         liveUpdate : function() {
-            this.collection.fetch(
+            this.collection.fetch({
                 error : function() {
                     utilities.displayAlert("Failed to retrieve metrics from the TicketMonster server.");
                 }
-            );
+            });
             var self = this;
             this.timerObject = setTimeout(function(){
                 self.liveUpdate();
