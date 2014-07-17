@@ -222,7 +222,7 @@ The specific version of the BOM (e.g. `1.0.7.Final`) is likely to change, so do 
 be surprised if the version is slightly different.
 
 The recommended version of the BOM for a runtime (EAP 6) can be 
-obtained by visiting link:http://www.jboss.org/jdf/stack/stacks/[the JBoss Stacks site].
+obtained by visiting link:https://www.jboss.org/developer-materials/#!keyword=Java%20EE&formats=jbossdeveloper_archetype%20jbossdeveloper_bom[the JBoss Stacks site].
 ========================================================================================
 
 [[project_explorer_java_packages_image]]
