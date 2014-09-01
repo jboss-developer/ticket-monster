@@ -1017,6 +1017,7 @@ public class Show implements Serializable {
      * </p>
      */
     @OneToMany(mappedBy = "show", cascade = ALL, fetch = EAGER)
+    @OrderBy("section")
     private Set<TicketPrice> ticketPrices = new HashSet<TicketPrice>();
 
     /* Boilerplate getters and setters */

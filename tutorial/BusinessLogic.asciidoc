@@ -1261,13 +1261,13 @@ public class BookingServiceTest {
     @Test
     @InSequence(1)
     public void testCreateBookings() {
-        BookingRequest br = createBookingRequest(1l, 0, 0, 1, 3);
+        BookingRequest br = createBookingRequest(1l, 0, 3, 0, 2);
         bookingService.createBooking(br);
 
-        BookingRequest br2 = createBookingRequest(2l, 1, 2, 4, 9);
+        BookingRequest br2 = createBookingRequest(2l, 1, 2, 7, 11);
         bookingService.createBooking(br2);
 
-        BookingRequest br3 = createBookingRequest(3l, 0, 0, 1);
+        BookingRequest br3 = createBookingRequest(3l, 0, 3, 1);
         bookingService.createBooking(br3);
     }
     
