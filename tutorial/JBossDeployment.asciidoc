@@ -179,7 +179,7 @@ mvn clean package jboss-as:deploy -Pmysql -s TICKETMONSTER_MAVEN_PROJECT_ROOT/se
 Just like MySQL, you can deploy TicketMonster to JBoss EAP, making use of a 'real' database like PostgreSQL, instead of the default in-memory H2 database. You can follow the procedure outlined as follows:
 
 . Install the PostgreSQL JBDC driver as a new JBoss module.
-.. Define a new JBoss module named `com.mysql` under the `modules` directory of the JBoss EAP installation. Under the `modules/system/layers/base` directory structure, create a directory named `org`, containing sub-directory named `postgresql`, containing a sub-directory named `main`. Place the PostgreSQL JBDC driver in the `main` directory. Finally, define the module via a `module.xml` file with the following contents:
+.. Define a new JBoss module named `org.postgresql` under the `modules` directory of the JBoss EAP installation. Under the `modules/system/layers/base` directory structure, create a directory named `org`, containing sub-directory named `postgresql`, containing a sub-directory named `main`. Place the PostgreSQL JBDC driver in the `main` directory. Finally, define the module via a `module.xml` file with the following contents:
 +
 .EAP_HOME/system/layers/base/com/mysql/main/module.xml
 ----
