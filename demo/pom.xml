@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-parent</artifactId>
+        <version>22</version>
+    </parent>
     <groupId>org.jboss.examples</groupId>
     <artifactId>ticket-monster</artifactId>
-    <version>2.7.0.Final</version>
+    <version>3.0.0.Final-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>ticket-monster</name>
     <description>A starter HTML5 + REST webapp project for use on JBoss EAP.</description>
@@ -21,27 +26,27 @@
     -->
     <repositories>
         <repository>
-            <id>redhat-techpreview-all-repository</id>
-            <url>https://maven.repository.redhat.com/techpreview/all/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+            <id>jboss-enterprise-maven-repository</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
-            <id>redhat-techpreview-all-repository</id>
-            <url>https://maven.repository.redhat.com/techpreview/all/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+            <id>jboss-enterprise-maven-repository</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -58,47 +63,27 @@
         <!-- Specify the JBoss AS directory to be the JBOSS_HOME environment 
             variable -->
         <jboss.home>${env.JBOSS_HOME}</jboss.home>
-        <!-- Define the version of JBoss' Java EE 6 APIs and Tools we want 
+        <!-- Define the version of JBoss' Java EE 7 APIs and Tools we want
             to import. -->
-        <!-- <jboss.bom.version>1.0.4.Final-redhat-9</jboss.bom.version> -->
-        <!-- Alternatively, comment out the above line, and un-comment the 
+        <!-- Alternatively, comment out the above line, and un-comment the
             line below to use version 1.0.4.Final-redhat-9 which is a release certified 
-            to work with JBoss EAP 6.2. It requires you have access to the JBoss EAP 6.2
+            to work with JBoss EAP 7.0. It requires you have access to the JBoss EAP 6.2
             maven repository. -->
-        <version.jboss.bom.eap>6.3.2.GA</version.jboss.bom.eap>
-        <version.jboss.bom.wfk>2.7.0-redhat-1</version.jboss.bom.wfk>
-        <buildhelper.plugin.version>1.7</buildhelper.plugin.version>
+        <version.jboss.bom.eap>7.0.4.GA</version.jboss.bom.eap>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- JBoss distributes a complete set of Java EE 6 APIs including 
+            <!-- JBoss distributes a complete set of Java EE 7 APIs including
                 a Bill of Materials (BOM). A BOM specifies the versions of a "stack" (or 
                 a collection) of artifacts. We use this here so that we always get the correct 
-                versions of artifacts. Here we use the jboss-javaee-6.0-with-tools stack 
-                (you can read this as the JBoss stack of the Java EE 6 APIs, with some extras 
-                tools for your project, such as Arquillian for testing), the jboss-javaee-6.0-with-hibernate 
-                stack (you can read this as the JBoss stack of the Java EE 6 APIs, with extras 
-                from the Hibernate family of projects), and the jboss-javaee-6.0-with-resteasy
-                stack (you can read this as the JBoss stack of the Java EE 6 APIs, with extras
-                from the RESTEasy project). -->
+                versions of artifacts. Here we use the jboss-javaee-7.0-with-tools stack
+                (you can read this as the JBoss stack of the Java EE 7 APIs, with some extras
+                tools for your project, such as Arquillian for testing),
+                -->
             <dependency>
-                <groupId>org.jboss.bom.wfk</groupId>
-                <artifactId>jboss-javaee-6.0-with-tools</artifactId>
-                <version>${version.jboss.bom.wfk}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.bom.eap</groupId>
-                <artifactId>jboss-javaee-6.0-with-hibernate</artifactId>
-                <version>${version.jboss.bom.eap}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.bom.eap</groupId>
-                <artifactId>jboss-javaee-6.0-with-resteasy</artifactId>
+                <groupId>org.jboss.bom</groupId>
+                <artifactId>jboss-eap-javaee7-with-tools</artifactId>
                 <version>${version.jboss.bom.eap}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -135,15 +120,16 @@
             scope as the API is included in JBoss EAP -->
         <dependency>
             <groupId>org.jboss.spec.javax.annotation</groupId>
-            <artifactId>jboss-annotations-api_1.1_spec</artifactId>
+            <artifactId>jboss-annotations-api_1.2_spec</artifactId>
             <scope>provided</scope>
         </dependency>
 
         <!-- Import the JAX-RS API, we use provided scope as the API is included 
             in JBoss EAP -->
+
         <dependency>
             <groupId>org.jboss.spec.javax.ws.rs</groupId>
-            <artifactId>jboss-jaxrs-api_1.1_spec</artifactId>
+            <artifactId>jboss-jaxrs-api_2.0_spec</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -151,7 +137,7 @@
             in JBoss EAP -->
         <dependency>
             <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.0-api</artifactId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -159,7 +145,7 @@
             in JBoss EAP -->
         <dependency>
             <groupId>org.jboss.spec.javax.ejb</groupId>
-            <artifactId>jboss-ejb-api_3.1_spec</artifactId>
+            <artifactId>jboss-ejb-api_3.2_spec</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -167,7 +153,7 @@
             included in JBoss EAP -->
         <dependency>
             <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+            <artifactId>jboss-servlet-api_3.1_spec</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -230,7 +216,7 @@
             fine tuning the content of the JSON responses -->
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jackson-provider</artifactId>
+            <artifactId>resteasy-jackson2-provider</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -248,19 +234,10 @@
         <pluginManagement>
 
             <plugins>
-                <!-- Compiler plugin enforces Java 1.6 compatibility and activates
-              annotation processors -->
                 <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>2.3.1</version>
-                    <configuration>
-                        <source>1.6</source>
-                        <target>1.6</target>
-                    </configuration>
-                </plugin>
-                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-war-plugin</artifactId>
-                    <version>2.1.1</version>
+                    <version>${version.war.plugin}</version>
                     <configuration>
                     	<failOnMissingWebXml>false</failOnMissingWebXml>
                         <archive>
@@ -272,11 +249,11 @@
                 </plugin>
 
                 <!-- The JBoss AS plugin deploys your war to a local JBoss AS container -->
-                <!-- To use run: mvn package jboss-as:deploy -->
+                <!-- To use run: mvn package wildfly:deploy -->
                 <plugin>
-                    <groupId>org.jboss.as.plugins</groupId>
-                    <artifactId>jboss-as-maven-plugin</artifactId>
-                    <version>7.4.Final</version>
+                    <groupId>org.wildfly.plugins</groupId>
+                    <artifactId>wildfly-maven-plugin</artifactId>
+                    <version>1.0.2.Final</version>
                 </plugin>
 
             </plugins>
@@ -296,8 +273,9 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.4.3</version>
+                        <version>${version.surefire.plugin}</version>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
@@ -312,12 +290,12 @@
                 in your JBoss AS instance -->
             <!-- This profile will start a new JBoss AS instance, and execute 
                 the test, shutting it down when done -->
-            <!-- Run with: mvn clean test -Parq-jbossas-managed -->
-            <id>arq-jbossas-managed</id>
+            <!-- Run with: mvn clean test -Parq-managed -->
+            <id>arq-managed</id>
             <dependencies>
                 <dependency>
-                    <groupId>org.jboss.as</groupId>
-                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-managed</artifactId>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -325,13 +303,13 @@
 
         <profile>
             <!-- An optional Arquillian testing profile that executes tests 
-                in a remote JBoss AS instance -->
-            <!-- Run with: mvn clean test -Parq-jbossas-remote -->
-            <id>arq-jbossas-remote</id>
+                in a remote Server instance -->
+            <!-- Run with: mvn clean test -Parq-remote -->
+            <id>arq-remote</id>
             <dependencies>
                 <dependency>
-                    <groupId>org.jboss.as</groupId>
-                    <artifactId>jboss-as-arquillian-container-remote</artifactId>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-remote</artifactId>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -358,8 +336,9 @@
                 </resources>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.4.3</version>
+                        <version>${version.surefire.plugin}</version>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
@@ -389,8 +368,9 @@
                 </resources>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.4.3</version>
+                        <version>${version.surefire.plugin}</version>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
@@ -419,8 +399,9 @@
                 </resources>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.4.3</version>
+                        <version>${version.surefire.plugin}</version>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
@@ -449,8 +430,9 @@
                 </resources>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.4.3</version>
+                        <version>${version.surefire.plugin}</version>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
@@ -490,25 +472,27 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
-		  <!-- When built in OpenShift the 'openshift' profile will be used when invoking mvn. -->
-		  <!-- Use this profile for any OpenShift specific customization your app will need. -->
-		  <!-- By default that is to put the resulting archive into the 'deployments' folder. -->
-		  <!-- http://maven.apache.org/guides/mini/guide-building-for-different-environments.html -->
-		  <id>openshift</id>
-		    <build>
-		      <plugins>
-		        <plugin>
-		          <artifactId>maven-war-plugin</artifactId>
-		          <configuration>
-		            <outputDirectory>deployments</outputDirectory>
-		            <warName>ROOT</warName>
-		          </configuration>
-		        </plugin>
-		      </plugins>
-		    </build>
-		</profile>
+            <!-- When built in OpenShift the 'openshift' profile will be used when invoking mvn. -->
+            <!-- Use this profile for any OpenShift specific customization your app will need. -->
+            <!-- By default that is to put the resulting archive into the 'deployments' folder. -->
+            <!-- http://maven.apache.org/guides/mini/guide-building-for-different-environments.html -->
+            <id>openshift</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>${version.war.plugin}</version>
+                        <configuration>
+                            <outputDirectory>deployments</outputDirectory>
+                            <warName>ROOT</warName>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
     </profiles>
 </project>

@@ -29,8 +29,8 @@
 <span class="nv">$ </span>run admin_layer.fsh
 </pre></div>
 <p>The git patches need to be applied manually. Both the patches are located in the patches sub-directory. To apply the manual changes, first apply the patch located in file <em>admin_layer_functional.patch</em>. Then perform the same for the file <em>admin_layer_graphics.patch</em> if you want to apply the style changes for the generated administration site. You can do so in JBoss Developer Studio, by opening the context-menu on the project (Right-click on the project) and then apply a git patch via <em>Team</em> -&gt; <em>Apply Patch&hellip;</em>. Locate the patch file in the Workspace, select it and click the &lsquo;Next&rsquo; button. In the next dialog, select to apply the patch on the &lsquo;ticket-monster&rsquo; project in the workspace. Click Finish in the final page of the wizard after satisfying that the patch applies cleanly.</p></li>
-<li><p>Deployment to JBoss EAP 6.3 is optional. The project can be built and deployed to a running instance of JBoss EAP through the following command in JBoss Forge:</p>
-<div class="highlight"><pre><span class="nv">$ </span>build clean package jboss-as:deploy
+<li><p>Deployment to JBoss EAP 7.0 is optional. The project can be built and deployed to a running instance of JBoss EAP through the following command in JBoss Forge:</p>
+<div class="highlight"><pre><span class="nv">$ </span>build clean package wildfly:deploy
 </pre></div></li>
 </ol>
 
@@ -43,10 +43,10 @@
 
 <p>If you want to run the Arquillian tests as part of the build, you can enable one of the two available Arquillian profiles.</p>
 
-<p>For running the tests in an <em>already running</em> application server instance, use the <code>arq-jbossas-remote</code> profile.</p>
+<p>For running the tests in an <em>already running</em> application server instance, use the <code>arq-remote</code> profile.</p>
 <div class="highlight"><pre><span class="n">mvn</span> <span class="n">clean</span> <span class="n">package</span> <span class="o">-</span><span class="n">Parq</span><span class="o">-</span><span class="n">jbossas</span><span class="o">-</span><span class="n">remote</span>
 </pre></div>
-<p>If you want the test runner to <em>start</em> an application server instance, use the <code>arq-jbossas-managed</code> profile. You must set up the <code>JBOSS_HOME</code> property to point to the server location, or update the <code>src/main/test/resources/arquillian.xml</code> file.</p>
+<p>If you want the test runner to <em>start</em> an application server instance, use the <code>arq-managed</code> profile. You must set up the <code>JBOSS_HOME</code> property to point to the server location, or update the <code>src/main/test/resources/arquillian.xml</code> file.</p>
 <div class="highlight"><pre><span class="n">mvn</span> <span class="n">clean</span> <span class="n">package</span> <span class="o">-</span><span class="n">Parq</span><span class="o">-</span><span class="n">jbossas</span><span class="o">-</span><span class="n">managed</span>
 </pre></div>
 <h3><a id="building-ticketmonster-with-postgresql-for-openshift" class="anchor" href="#building-ticketmonster-with-postgresql-for-openshift"><span class="anchor-icon"></span></a>Building TicketMonster with Postgresql (for OpenShift)</h3>
@@ -61,11 +61,11 @@
 </pre></div>
 <h2><a id="running-ticketmonster" class="anchor" href="#running-ticketmonster"><span class="anchor-icon"></span></a>Running TicketMonster</h2>
 
-<p>You can run TicketMonster into a local JBoss EAP 6.3 instance or on OpenShift.</p>
+<p>You can run TicketMonster into a local JBoss EAP 7.0 instance or on OpenShift.</p>
 
 <h3><a id="running-ticketmonster-locally" class="anchor" href="#running-ticketmonster-locally"><span class="anchor-icon"></span></a>Running TicketMonster locally</h3>
 
-<h4><a id="start-jboss-enterprise-application-platform-63" class="anchor" href="#start-jboss-enterprise-application-platform-63"><span class="anchor-icon"></span></a>Start JBoss Enterprise Application Platform 6.3</h4>
+<h4><a id="start-jboss-enterprise-application-platform-63" class="anchor" href="#start-jboss-enterprise-application-platform-63"><span class="anchor-icon"></span></a>Start JBoss Enterprise Application Platform 7.0</h4>
 
 <ol>
 <li>Open a command line and navigate to the root of the JBoss server directory.</li>
@@ -82,7 +82,7 @@
 <li><p>Type this command to build and deploy the archive into a running server instance.</p>
 <div class="highlight"><pre><span class="n">mvn</span> <span class="n">clean</span> <span class="n">package</span> <span class="n">jboss</span><span class="o">-</span><span class="n">as</span><span class="o">:</span><span class="n">deploy</span>
 </pre></div>
-<p>(You can use the <code>arq-jbossas-remote</code> profile for running tests as well)</p></li>
+<p>(You can use the <code>arq-remote</code> profile for running tests as well)</p></li>
 <li><p>This will deploy <code>target/ticket-monster.war</code> to the running instance of the server.</p></li>
 <li><p>Now you can see the application running at <code>http://localhost:8080/ticket-monster</code></p></li>
 </ol>

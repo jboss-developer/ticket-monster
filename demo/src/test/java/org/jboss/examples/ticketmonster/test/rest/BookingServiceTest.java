@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 import javax.persistence.NoResultException;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -20,7 +21,6 @@ import org.jboss.examples.ticketmonster.model.Show;
 import org.jboss.examples.ticketmonster.model.Ticket;
 import org.jboss.examples.ticketmonster.model.TicketPrice;
 import org.jboss.examples.ticketmonster.rest.*;
-import org.jboss.examples.ticketmonster.util.MultivaluedHashMap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -126,7 +126,7 @@ public class BookingServiceTest {
     public void testPagination() {
 
         // Test pagination logic
-        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<java.lang.String, java.lang.String>();
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<String, String>();
 
         queryParameters.add("first", "2");
         queryParameters.add("maxResults", "1");

@@ -14,6 +14,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +22,6 @@ import javax.enterprise.context.RequestScoped;
 
 import org.jboss.examples.ticketmonster.model.MediaItem;
 import org.jboss.examples.ticketmonster.model.MediaType;
-import org.jboss.examples.ticketmonster.util.Base64;
 import org.jboss.examples.ticketmonster.util.Reflections;
 
 /**
@@ -144,7 +144,7 @@ public class MediaManager {
      * files.
      */
     private String getCachedFileName(String url) {
-        return Base64.encodeToString(url.getBytes(), false);
+        return Base64.getEncoder().encodeToString(url.getBytes());
     }
 
     /**

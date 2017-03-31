@@ -29,9 +29,9 @@ Before building and running TicketMonster, you must generate the administration 
 
     The git patches need to be applied manually. Both the patches are located in the patches sub-directory. To apply the manual changes, first apply the patch located in file _admin_layer_functional.patch_. Then perform the same for the file _admin_layer_graphics.patch_ if you want to apply the style changes for the generated administration site. You can do so in JBoss Developer Studio, by opening the context-menu on the project (Right-click on the project) and then apply a git patch via _Team_ -> _Apply Patch..._. Locate the patch file in the Workspace, select it and click the 'Next' button. In the next dialog, select to apply the patch on the 'ticket-monster' project in the workspace. Click Finish in the final page of the wizard after satisfying that the patch applies cleanly.
 
-4. Deployment to JBoss EAP 6.3 is optional. The project can be built and deployed to a running instance of JBoss EAP through the following command in JBoss Forge:
+4. Deployment to JBoss EAP 7.0 is optional. The project can be built and deployed to a running instance of JBoss EAP through the following command in JBoss Forge:
 
-	    $ build clean package jboss-as:deploy
+	    $ build clean package wildfly:deploy
 
 ## Building TicketMonster
 
@@ -43,13 +43,13 @@ TicketMonster can be built from Maven, by runnning the following Maven command:
 	
 If you want to run the Arquillian tests as part of the build, you can enable one of the two available Arquillian profiles.
 
-For running the tests in an _already running_ application server instance, use the `arq-jbossas-remote` profile.
+For running the tests in an _already running_ application server instance, use the `arq-remote` profile.
 
-    mvn clean package -Parq-jbossas-remote
+    mvn clean package -Parq-remote
 
-If you want the test runner to _start_ an application server instance, use the `arq-jbossas-managed` profile. You must set up the `JBOSS_HOME` property to point to the server location, or update the `src/main/test/resources/arquillian.xml` file.
+If you want the test runner to _start_ an application server instance, use the `arq-managed` profile. You must set up the `JBOSS_HOME` property to point to the server location, or update the `src/main/test/resources/arquillian.xml` file.
 
-    mvn clean package -Parq-jbossas-managed
+    mvn clean package -Parq-managed
 	
 ### Building TicketMonster with Postgresql (for OpenShift)
 
@@ -65,11 +65,11 @@ If you intend to deploy into [OpenShift](http://openshift.com), you can use the 
 	
 ## Running TicketMonster
 
-You can run TicketMonster into a local JBoss EAP 6.3 instance or on OpenShift.
+You can run TicketMonster into a local JBoss EAP 7.0 instance or on OpenShift.
 
 ### Running TicketMonster locally
 
-#### Start JBoss Enterprise Application Platform 6.3
+#### Start JBoss Enterprise Application Platform 7.0
 
 1. Open a command line and navigate to the root of the JBoss server directory.
 2. The following shows the command line to start the server with the web profile:
@@ -82,9 +82,9 @@ You can run TicketMonster into a local JBoss EAP 6.3 instance or on OpenShift.
 1. Make sure you have started the JBoss Server as described above.
 2. Type this command to build and deploy the archive into a running server instance.
 
-        mvn clean package jboss-as:deploy
+        mvn clean package wildfly:deploy
 	
-	(You can use the `arq-jbossas-remote` profile for running tests as well)
+	(You can use the `arq-remote` profile for running tests as well)
 
 3. This will deploy `target/ticket-monster.war` to the running instance of the server.
 4. Now you can see the application running at `http://localhost:8080/ticket-monster`

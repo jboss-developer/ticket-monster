@@ -6,13 +6,13 @@ import static org.junit.Assert.assertNotNull;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.examples.ticketmonster.model.Show;
 import org.jboss.examples.ticketmonster.rest.ShowService;
-import org.jboss.examples.ticketmonster.util.MultivaluedHashMap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +43,7 @@ public class ShowServiceTest {
     public void testPagination() {
         
         // Test pagination logic
-        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<java.lang.String, java.lang.String>();
+        MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<String, String>();
 
         queryParameters.add("first", "2");
         queryParameters.add("maxResults", "1");

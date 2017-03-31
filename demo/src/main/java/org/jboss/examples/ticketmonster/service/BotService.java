@@ -9,11 +9,11 @@ import javax.ejb.Timer;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.ws.rs.core.MultivaluedHashMap;
 
 import org.jboss.examples.ticketmonster.model.Booking;
 import org.jboss.examples.ticketmonster.rest.BookingService;
 import org.jboss.examples.ticketmonster.util.CircularBuffer;
-import org.jboss.examples.ticketmonster.util.MultivaluedHashMap;
 import org.jboss.examples.ticketmonster.util.qualifier.BotMessage;
 
 /**

@@ -16,13 +16,13 @@ import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.Response;
 
 import org.jboss.examples.ticketmonster.model.Performance;
 import org.jboss.examples.ticketmonster.model.Show;
 import org.jboss.examples.ticketmonster.model.TicketPrice;
 import org.jboss.examples.ticketmonster.rest.*;
-import org.jboss.examples.ticketmonster.util.MultivaluedHashMap;
 import org.jboss.examples.ticketmonster.util.qualifier.BotMessage;
 
 @Stateless
@@ -72,7 +72,7 @@ public class Bot {
     @Timeout
     public void book(Timer timer) {
         // Select a show at random
-        Show show = selectAtRandom(showService.getAll(MultivaluedHashMap.<String, String>empty()));
+        Show show = selectAtRandom(showService.getAll(new MultivaluedHashMap<>()));
 
         // Select a performance at random
         Performance performance = selectAtRandom(show.getPerformances());
